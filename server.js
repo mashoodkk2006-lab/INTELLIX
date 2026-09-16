@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const session = require('express-session');
 const cors = require('cors');
 const path = require('path');
@@ -57,6 +57,19 @@ app.get('/events/:slug', (req, res, next) => {
 app.get('/verify', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/verify.html'));
 });
+
+// Secret Admin Login URL — only accessible via /asdf
+const ADMIN_SECRET_PATH = process.env.ADMIN_SECRET_PATH || '/asdf';
+app.get(ADMIN_SECRET_PATH, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/login.html'));
+});
+
+// Secret Dashboard prefix — redirect dashboard access through secret path
+app.get('/dashboard', (req, res) => res.status(404).send('Not Found'));
+app.get('/dashboard/*', (req, res) => res.status(404).send('Not Found'));
+
+// Block direct access to login.html
+app.get('/login.html', (req, res) => res.status(404).send('Not Found'));
 
 // API Routes
 app.use('/api', apiRoutes);
