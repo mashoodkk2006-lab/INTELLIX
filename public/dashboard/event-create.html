@@ -57,11 +57,11 @@
               <div class="form-row">
                 <div class="form-group" style="grid-column: span 2;">
                   <label class="form-label">Event Title <span class="required-star">*</span></label>
-                  <input type="text" name="title" class="form-control" placeholder="e.g. Code Hunt 2026: Algorithmic Quest" required>
+                  <input type="text" name="title" class="form-control" placeholder="" required>
                 </div>
                 <div class="form-group">
                   <label class="form-label">Event Code (Short ID) <span class="required-star">*</span></label>
-                  <input type="text" name="code" class="form-control" placeholder="e.g. CH26" maxlength="8" required>
+                  <input type="text" name="code" class="form-control" placeholder="" maxlength="8" required>
                   <span class="form-hint">Used in Registration IDs (e.g. INTELLIX-CH26-2026-0001)</span>
                 </div>
                 <div class="form-group">
@@ -87,18 +87,18 @@
                 </div>
                 <div class="form-group" style="grid-column: span 2;">
                   <label class="form-label">Venue / Hall Location <span class="required-star">*</span></label>
-                  <input type="text" name="venue" class="form-control" placeholder="e.g. Turing Computing Lab, Block B" required>
+                  <input type="text" name="venue" class="form-control" placeholder="" required>
                 </div>
               </div>
 
               <div class="form-group">
                 <label class="form-label">Event Description <span class="required-star">*</span></label>
-                <textarea name="description" class="form-control" style="min-height: 100px;" placeholder="Comprehensive summary of event goals, structure, and challenge details..." required></textarea>
+                <textarea name="description" class="form-control" style="min-height: 100px;" placeholder="" required></textarea>
               </div>
 
               <div class="form-group">
                 <label class="form-label">Rules & Eligibility Guidelines</label>
-                <textarea name="rules" class="form-control" style="min-height: 100px;" placeholder="1. Individual or Duo participation permitted.&#10;2. Bring college ID card.&#10;3. External libraries prohibited."></textarea>
+                <textarea name="rules" class="form-control" style="min-height: 100px;" placeholder=""></textarea>
               </div>
 
               <div class="form-group">
@@ -147,7 +147,7 @@
 
                 <div class="form-group" id="max-team-members-group" style="display: none;">
                   <label class="form-label">Maximum Team Members <span class="required-star">*</span></label>
-                  <input type="number" name="max_team_members" id="max-team-members-input" class="form-control" value="4" min="2" max="30" placeholder="e.g. 4">
+                  <input type="number" name="max_team_members" id="max-team-members-input" class="form-control" value="4" min="2" max="30" placeholder="">
                   <span class="form-hint">Maximum number of members allowed per team (including team lead).</span>
                 </div>
               </div>
@@ -298,7 +298,7 @@
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label">Field Label (Question)</label>
-                <input type="text" class="form-control" value="${f.label}" onchange="updateField('${f.id}', 'label', this.value)" placeholder="e.g. Team Name" required>
+                <input type="text" class="form-control" value="${f.label}" onchange="updateField('${f.id}', 'label', this.value)" placeholder="" required>
               </div>
 
               <div class="form-group">
@@ -326,7 +326,7 @@
             ${isOptionsNeeded ? `
               <div class="form-group">
                 <label class="form-label">Options (Comma separated)</label>
-                <input type="text" class="form-control" value="${f.options || ''}" onchange="updateField('${f.id}', 'options', this.value)" placeholder="Option 1, Option 2, Option 3">
+                <input type="text" class="form-control" value="${f.options || ''}" onchange="updateField('${f.id}', 'options', this.value)" placeholder="">
               </div>
             ` : ''}
           </div>

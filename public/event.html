@@ -163,13 +163,13 @@
           <div class="form-row">
             <div class="form-group">
               <label class="form-label" for="reg-fullname">Full Name <span class="required-star">*</span></label>
-              <input type="text" id="reg-fullname" name="full_name" class="form-control" placeholder="e.g. Mashood"
+              <input type="text" id="reg-fullname" name="full_name" class="form-control" placeholder=""
                 required>
             </div>
             <div class="form-group">
               <label class="form-label" for="reg-regno">Register Number <span class="required-star">*</span></label>
               <input type="text" id="reg-regno" name="register_number" class="form-control"
-                placeholder="e.g. 921721106001" required>
+                placeholder="" required>
             </div>
           </div>
 
@@ -208,12 +208,12 @@
           <div class="form-row">
             <div class="form-group">
               <label class="form-label" for="reg-email">Email Address <span class="required-star">*</span></label>
-              <input type="email" id="reg-email" name="email" class="form-control" placeholder="student@college.edu"
+              <input type="email" id="reg-email" name="email" class="form-control" placeholder=""
                 required>
             </div>
             <div class="form-group">
               <label class="form-label" for="reg-phone">Phone Number <span class="required-star">*</span></label>
-              <input type="tel" id="reg-phone" name="phone" class="form-control" placeholder="+91 98765 43210" required>
+              <input type="tel" id="reg-phone" name="phone" class="form-control" placeholder="" required>
             </div>
           </div>
 
@@ -230,7 +230,7 @@
 
             <div class="form-group">
               <label class="form-label" for="reg-team-name">Team Name <span class="required-star">*</span></label>
-              <input type="text" id="reg-team-name" name="team_name" class="form-control" placeholder="e.g. Code Warriors">
+              <input type="text" id="reg-team-name" name="team_name" class="form-control" placeholder="">
             </div>
 
             <div class="form-group">
@@ -472,8 +472,8 @@
       container.innerHTML = currentTeamMembers.map((m, idx) => `
         <div style="display: flex; gap: 0.5rem; align-items: center; background: var(--bg-secondary); padding: 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
           <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); min-width: 65px;">#${idx + 2} Member:</span>
-          <input type="text" class="form-control form-control-sm team-member-name" data-idx="${idx}" placeholder="Full Name" value="${m.name || ''}" style="flex: 1; padding: 0.35rem 0.5rem; font-size: 0.85rem;" required>
-          <input type="text" class="form-control form-control-sm team-member-reg" data-idx="${idx}" placeholder="Register No / Email" value="${m.identifier || ''}" style="flex: 1; padding: 0.35rem 0.5rem; font-size: 0.85rem;" required>
+          <input type="text" class="form-control form-control-sm team-member-name" data-idx="${idx}" placeholder="" value="${m.name || ''}" style="flex: 1; padding: 0.35rem 0.5rem; font-size: 0.85rem;" required>
+          <input type="text" class="form-control form-control-sm team-member-reg" data-idx="${idx}" placeholder="" value="${m.identifier || ''}" style="flex: 1; padding: 0.35rem 0.5rem; font-size: 0.85rem;" required>
           <button type="button" class="btn btn-sm btn-secondary" onclick="removeTeamMemberRow(${idx})" style="padding: 0.25rem 0.5rem; color: #ef4444;" title="Remove member">&times;</button>
         </div>
       `).join('');
@@ -570,7 +570,7 @@
             return `
                 <div class="form-group">
                   <label class="form-label">${f.field_label} ${reqStar}</label>
-                  <textarea name="custom_${f.field_name}" class="form-control" placeholder="Enter details..." ${reqAttr}></textarea>
+                  <textarea name="custom_${f.field_name}" class="form-control" placeholder="" ${reqAttr}></textarea>
                 </div>
               `;
           } else {
@@ -578,7 +578,7 @@
                 <div class="form-group">
                   <label class="form-label">${f.field_label} ${reqStar}</label>
                   <input type="${f.field_type === 'number' ? 'number' : (f.field_type === 'email' ? 'email' : 'text')}" 
-                         name="custom_${f.field_name}" class="form-control" placeholder="Enter ${f.field_label}" ${reqAttr}>
+                         name="custom_${f.field_name}" class="form-control" placeholder="" ${reqAttr}>
                 </div>
               `;
           }
