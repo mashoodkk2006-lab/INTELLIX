@@ -194,7 +194,7 @@ async function createEvent(req, res) {
 
     let posterUrl = null;
     if (req.file) {
-      posterUrl = `/uploads/posters/${req.file.filename}`;
+      posterUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
     }
 
     const createdBy = req.session && req.session.admin ? req.session.admin.id : null;
@@ -326,7 +326,7 @@ async function updateEvent(req, res) {
 
     let posterUrl = existing[0].poster_url;
     if (req.file) {
-      posterUrl = `/uploads/posters/${req.file.filename}`;
+      posterUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
     }
 
     await query(

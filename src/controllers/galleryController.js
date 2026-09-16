@@ -30,7 +30,7 @@ async function uploadGalleryPhoto(req, res) {
       return res.status(400).json({ success: false, message: 'Photo file is required' });
     }
 
-    const imageUrl = `/uploads/gallery/${req.file.filename}`;
+    const imageUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
 
     const [result] = await query(
       'INSERT INTO event_gallery (event_id, caption, image_url) VALUES (?, ?, ?)',

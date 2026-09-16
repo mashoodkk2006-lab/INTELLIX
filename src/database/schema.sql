@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS events (
     venue VARCHAR(180) NOT NULL,
     description TEXT NOT NULL,
     rules TEXT,
-    poster_url VARCHAR(255),
+    poster_url LONGTEXT,
     status ENUM('draft', 'published', 'completed', 'cancelled') NOT NULL DEFAULT 'published',
     registration_open TINYINT(1) NOT NULL DEFAULT 1,
     registration_start DATETIME,
@@ -143,7 +143,7 @@ CREATE TABLE IF NOT EXISTS achievements (
     position VARCHAR(60) NOT NULL,
     event_date DATE NOT NULL,
     description TEXT,
-    image_url VARCHAR(255),
+    image_url LONGTEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -152,7 +152,7 @@ CREATE TABLE IF NOT EXISTS event_gallery (
     id INT AUTO_INCREMENT PRIMARY KEY,
     event_id INT,
     caption VARCHAR(255),
-    image_url VARCHAR(255) NOT NULL,
+    image_url LONGTEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -163,7 +163,7 @@ CREATE TABLE IF NOT EXISTS association_members (
     role VARCHAR(80) NOT NULL,
     department VARCHAR(80) NOT NULL,
     short_bio VARCHAR(255),
-    photo_url VARCHAR(255),
+    photo_url LONGTEXT,
     display_order INT NOT NULL DEFAULT 0,
     is_active TINYINT(1) NOT NULL DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

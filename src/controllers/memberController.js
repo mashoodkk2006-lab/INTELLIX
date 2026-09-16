@@ -23,7 +23,7 @@ async function createMember(req, res) {
 
     let photoUrl = null;
     if (req.file) {
-      photoUrl = `/uploads/members/${req.file.filename}`;
+      photoUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
     }
 
     const [result] = await query(
@@ -54,7 +54,7 @@ async function updateMember(req, res) {
 
     let photoUrl = existing[0].photo_url;
     if (req.file) {
-      photoUrl = `/uploads/members/${req.file.filename}`;
+      photoUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
     }
 
     await query(

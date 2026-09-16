@@ -24,7 +24,7 @@ async function createAchievement(req, res) {
 
     let imageUrl = null;
     if (req.file) {
-      imageUrl = `/uploads/achievements/${req.file.filename}`;
+      imageUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
     }
 
     const [result] = await query(
@@ -55,7 +55,7 @@ async function updateAchievement(req, res) {
 
     let imageUrl = existing[0].image_url;
     if (req.file) {
-      imageUrl = `/uploads/achievements/${req.file.filename}`;
+      imageUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
     }
 
     await query(
