@@ -137,22 +137,38 @@ async function initDb() {
 }
 
 async function initMySQLSchema(pool) {
+  // Split on semicolons that appear after a line ending (handles multi-line statements)
   const schemaPath = path.join(__dirname, '../database/schema.sql');
-  if (fs.existsSync(schemaPath)) {
-    const schemaSql = fs.readFileSync(schemaPath, 'utf8');
-    const statements = schemaSql
-      .split(/;\s*$/m)
-      .map(s => s.trim())
-      .filter(s => s.length > 0 && !s.startsWith('--'));
+  if (!fs.existsSync(schemaPath)) {
+    console.warn('[Database] schema.sql not found, skipping MySQL schema init.');
+    return;
+  }
 
-    for (const stmt of statements) {
-      try {
-        await pool.query(stmt);
-      } catch (err) {
-        // Table or index may already exist
+  const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+  // Remove comment lines, then split on ; followed by optional whitespace/newlines
+  const cleaned = schemaSql
+    .split('\n')
+    .filter(line => !line.trim().startsWith('--'))
+    .join('\n');
+
+  const statements = cleaned
+    .split(/;(\s*\n|\s*$)/)
+    .map(s => s.trim())
+    .filter(s => s.length > 5); // skip empty/whitespace-only chunks
+
+  console.log(`[Database] Running ${statements.length} schema statements on MySQL...`);
+  let created = 0;
+  for (const stmt of statements) {
+    try {
+      await pool.query(stmt);
+      created++;
+    } catch (err) {
+      if (!err.message.includes('already exists') && !err.message.includes('Duplicate')) {
+        console.warn('[Database] Schema stmt warning:', err.message.substring(0, 120));
       }
     }
   }
+  console.log(`[Database] Schema init complete (${created}/${statements.length} statements succeeded).`);
 }
 
 async function initSQLiteSchema(client) {
