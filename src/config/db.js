@@ -22,38 +22,53 @@ async function initDb() {
   const password = process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : '';
   const database = process.env.DB_NAME || 'association_portal';
   const port = parseInt(process.env.DB_PORT || '3306');
+  const useSsl = process.env.DB_SSL === 'true' || process.env.DB_SSL === '1' || (process.env.DATABASE_URL && process.env.DATABASE_URL.includes('ssl'));
+  const sslOptions = useSsl ? { rejectUnauthorized: false } : undefined;
 
   try {
     const mysql = require('mysql2/promise');
     
-    // First connect without database to ensure database exists
-    let adminConn;
-    try {
-      adminConn = await mysql.createConnection({
+    let pool;
+    if (process.env.DATABASE_URL) {
+      pool = mysql.createPool({
+        uri: process.env.DATABASE_URL,
+        ssl: sslOptions,
+        waitForConnections: true,
+        connectionLimit: 10,
+        queueLimit: 0,
+        enableKeepAlive: true
+      });
+    } else {
+      // First try to ensure database exists if permissions allow
+      try {
+        const adminConn = await mysql.createConnection({
+          host,
+          port,
+          user,
+          password,
+          ssl: sslOptions,
+          connectTimeout: 4000
+        });
+        await adminConn.query(`CREATE DATABASE IF NOT EXISTS \`${database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+        await adminConn.end();
+      } catch (adminErr) {
+        // Table or database might already exist or cloud provider restricts CREATE DATABASE
+      }
+
+      pool = mysql.createPool({
         host,
         port,
         user,
         password,
-        connectTimeout: 3000
+        database,
+        ssl: sslOptions,
+        waitForConnections: true,
+        connectionLimit: 10,
+        queueLimit: 0,
+        enableKeepAlive: true,
+        keepAliveInitialDelay: 0
       });
-      await adminConn.query(`CREATE DATABASE IF NOT EXISTS \`${database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
-      await adminConn.end();
-    } catch (adminErr) {
-      // It might already exist or user has restricted permissions to create DB directly
     }
-
-    const pool = mysql.createPool({
-      host,
-      port,
-      user,
-      password,
-      database,
-      waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0,
-      enableKeepAlive: true,
-      keepAliveInitialDelay: 0
-    });
 
     // Test connection
     const [test] = await pool.query('SELECT 1 as connected');
