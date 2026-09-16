@@ -234,8 +234,8 @@ async function downloadCertificate(req, res) {
       return res.status(404).send('Certificate not found');
     }
 
-    const cert = certs[0];
-    const certDir = path.join(__dirname, '../../uploads/certificates');
+    const baseUploadDir = process.env.UPLOADS_DIR || path.join(__dirname, '../../uploads');
+    const certDir = path.join(baseUploadDir, 'certificates');
     const filePath = path.join(certDir, `${cleanCode}.pdf`);
 
     // Regenerate if file was cleared (e.g. Render ephemeral filesystem restart)

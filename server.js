@@ -13,9 +13,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Ensure upload folders exist
+const uploadsDir = process.env.UPLOADS_DIR || path.join(__dirname, 'uploads');
 const uploadDirs = ['posters', 'achievements', 'gallery', 'members', 'certificates', 'general'];
 uploadDirs.forEach(dir => {
-  const p = path.join(__dirname, 'uploads', dir);
+  const p = path.join(uploadsDir, dir);
   if (!fs.existsSync(p)) {
     fs.mkdirSync(p, { recursive: true });
   }
@@ -46,7 +47,7 @@ app.use(session({
 
 // Static files
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(uploadsDir));
 
 // Clean URL routing helpers
 app.get('/events/:slug', (req, res, next) => {

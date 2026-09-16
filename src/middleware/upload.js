@@ -15,7 +15,8 @@ const storage = multer.diskStorage({
       subfolder = 'members';
     }
 
-    const uploadPath = path.join(__dirname, '../../uploads', subfolder);
+    const baseUploadDir = process.env.UPLOADS_DIR || path.join(__dirname, '../../uploads');
+    const uploadPath = path.join(baseUploadDir, subfolder);
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath, { recursive: true });
     }
