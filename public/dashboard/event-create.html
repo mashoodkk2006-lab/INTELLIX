@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Event & Form Builder | Admin Portal</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <style>
+    .section-divider {
+      border-top: 1px solid var(--border-color);
+      padding-top: 2rem;
+      margin-top: 2rem;
+    }
+    .custom-field-item {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      position: relative;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-layout">
+    <div id="dashboard-sidebar-container"></div>
+
+    <main class="dashboard-main">
+      <header class="dashboard-topbar">
+        <div>
+          <h3 style="font-size: 1.15rem;">Event Creator & Dynamic Form Builder</h3>
+        </div>
+        <div>
+          <a href="/dashboard/events.html" class="btn btn-outline btn-sm">&larr; Back to Events</a>
+        </div>
+      </header>
+
+      <div class="dashboard-content">
+        <form id="create-event-form" enctype="multipart/form-data">
+          <!-- 1. Basic Details -->
+          <div class="card" style="margin-bottom: 2rem;">
+            <div class="card-body" style="padding: 2rem;">
+              <div class="badge" style="margin-bottom: 0.5rem;">STEP 1</div>
+              <h3 style="margin-bottom: 1.5rem;">Basic Event Information</h3>
+
+              <div class="form-row">
+                <div class="form-group" style="grid-column: span 2;">
+                  <label class="form-label">Event Title <span class="required-star">*</span></label>
+                  <input type="text" name="title" class="form-control" placeholder="e.g. Code Hunt 2026: Algorithmic Quest" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Event Code (Short ID) <span class="required-star">*</span></label>
+                  <input type="text" name="code" class="form-control" placeholder="e.g. CH26" maxlength="8" required>
+                  <span class="form-hint">Used in Registration IDs (e.g. INTELLIX-CH26-2026-0001)</span>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Category / Event Type <span class="required-star">*</span></label>
+                  <select name="event_type" class="form-select" required>
+                    <option value="Technical Competition">Technical Competition</option>
+                    <option value="Hackathon">Hackathon</option>
+                    <option value="Workshop & Bootcamp">Workshop & Bootcamp</option>
+                    <option value="Symposium & Paper Presentation">Symposium & Paper Presentation</option>
+                    <option value="Non-Technical / Esports">Non-Technical / Esports</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Start Date & Time <span class="required-star">*</span></label>
+                  <input type="datetime-local" name="start_datetime" class="form-control" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">End Date & Time <span class="required-star">*</span></label>
+                  <input type="datetime-local" name="end_datetime" class="form-control" required>
+                </div>
+                <div class="form-group" style="grid-column: span 2;">
+                  <label class="form-label">Venue / Hall Location <span class="required-star">*</span></label>
+                  <input type="text" name="venue" class="form-control" placeholder="e.g. Turing Computing Lab, Block B" required>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Event Description <span class="required-star">*</span></label>
+                <textarea name="description" class="form-control" style="min-height: 100px;" placeholder="Comprehensive summary of event goals, structure, and challenge details..." required></textarea>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Rules & Eligibility Guidelines</label>
+                <textarea name="rules" class="form-control" style="min-height: 100px;" placeholder="1. Individual or Duo participation permitted.&#10;2. Bring college ID card.&#10;3. External libraries prohibited."></textarea>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Event Poster Image (Optional)</label>
+                <input type="file" name="poster" class="form-control" accept="image/*">
+                <span class="form-hint">Accepted formats: JPG, PNG, WebP (Max 5MB)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Registration Settings -->
+          <div class="card" style="margin-bottom: 2rem;">
+            <div class="card-body" style="padding: 2rem;">
+              <div class="badge" style="margin-bottom: 0.5rem;">STEP 2</div>
+              <h3 style="margin-bottom: 1.5rem;">Registration Parameters</h3>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Registration Status</label>
+                  <label class="form-check" style="margin-top: 0.5rem;">
+                    <input type="checkbox" name="registration_open" value="1" checked>
+                    <span>Enable Public Registrations</span>
+                  </label>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Maximum Participant Capacity <span class="required-star">*</span></label>
+                  <input type="number" name="max_participants" class="form-control" value="100" min="1" required>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Registration Deadline <span class="required-star">*</span></label>
+                  <input type="datetime-local" name="registration_deadline" class="form-control" required>
+                </div>
+              </div>
+
+              <div class="form-row" style="margin-top: 1rem;">
+                <div class="form-group">
+                  <label class="form-label">Participation Type <span class="required-star">*</span></label>
+                  <select name="participation_type" id="participation-type-select" class="form-select" required>
+                    <option value="individual" selected>Individual</option>
+                    <option value="team">Team</option>
+                  </select>
+                  <span class="form-hint">Select whether students participate individually or as a team.</span>
+                </div>
+
+                <div class="form-group" id="max-team-members-group" style="display: none;">
+                  <label class="form-label">Maximum Team Members <span class="required-star">*</span></label>
+                  <input type="number" name="max_team_members" id="max-team-members-input" class="form-control" value="4" min="2" max="30" placeholder="e.g. 4">
+                  <span class="form-hint">Maximum number of members allowed per team (including team lead).</span>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Custom Confirmation Message</label>
+                <input type="text" name="confirmation_message" class="form-control" value="Congratulations! Your event registration is confirmed. Please bring your registration pass.">
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Dynamic Registration Form Builder -->
+          <div class="card" style="margin-bottom: 2rem; border-color: var(--text-primary);">
+            <div class="card-body" style="padding: 2rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                  <div class="badge badge-success" style="margin-bottom: 0.5rem;">STEP 3 • CORE FEATURE</div>
+                  <h3>Dynamic Registration Form Builder</h3>
+                  <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                    Configure event-specific form questions. Default fields are automatically included.
+                  </p>
+                </div>
+                <button type="button" class="btn btn-primary btn-sm" id="add-field-btn">+ Add Custom Field</button>
+              </div>
+
+              <!-- Default Fields Notice -->
+              <div class="card" style="background-color: var(--bg-secondary); border-style: dashed; padding: 1.25rem; margin-bottom: 1.5rem;">
+                <h4 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.5rem;">
+                  Default Mandatory Fields (Always Present):
+                </h4>
+                <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+                  <span class="badge">Full Name</span>
+                  <span class="badge">Register Number</span>
+                  <span class="badge">Department</span>
+                  <span class="badge">Semester</span>
+                  <span class="badge">Email Address</span>
+                  <span class="badge">Phone Number</span>
+                </div>
+              </div>
+
+              <!-- Custom Fields Container -->
+              <div id="custom-fields-list">
+                <!-- Injected via JavaScript -->
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Certificate Settings -->
+          <div class="card" style="margin-bottom: 2.5rem;">
+            <div class="card-body" style="padding: 2rem;">
+              <div class="badge" style="margin-bottom: 0.5rem;">STEP 4</div>
+              <h3 style="margin-bottom: 1.5rem;">Digital Certificate Settings</h3>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-check" style="margin-top: 0.5rem;">
+                    <input type="checkbox" name="cert_enabled" value="1" checked>
+                    <span>Enable Participation Certificates</span>
+                  </label>
+                </div>
+                <div class="form-group">
+                  <label class="form-check" style="margin-top: 0.5rem;">
+                    <input type="checkbox" name="cert_winner_enabled" value="1" checked>
+                    <span>Enable Winner / Runner-Up Certificates</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Certificate Title</label>
+                  <input type="text" name="cert_title" class="form-control" value="Certificate of Participation">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Authorized Signatory Name</label>
+                  <input type="text" name="cert_signatory_name" class="form-control" value="Dr. Eleanor Sterling">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Authorized Signatory Designation</label>
+                  <input type="text" name="cert_signatory_designation" class="form-control" value="Head of Department, AI & ML">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Certificate Citation / Description Text</label>
+                <input type="text" name="cert_description" class="form-control" value="for active and meritorious participation in the department event.">
+              </div>
+            </div>
+          </div>
+
+          <div id="create-error-msg" style="color: #ef4444; font-size: 0.95rem; margin-bottom: 1rem; display: none;"></div>
+
+          <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+            <a href="/dashboard/events.html" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary btn-lg" id="submit-event-btn">
+              Publish Event & Registration Form &rarr;
+            </button>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/theme.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/dashboard/js/dashboard-common.js"></script>
+  <script>
+    let customFields = [
+      {
+        id: 'f1',
+        label: 'Preferred Programming Language',
+        name: 'preferred_language',
+        type: 'dropdown',
+        required: true,
+        options: 'Python 3.12, C++ 20, Java 21'
+      },
+      {
+        id: 'f2',
+        label: 'Participation Mode',
+        name: 'participation_mode',
+        type: 'radio',
+        required: true,
+        options: 'Individual, Team of 2'
+      }
+    ];
+
+    function renderCustomFields() {
+      const container = document.getElementById('custom-fields-list');
+      if (customFields.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 2rem; color: var(--text-muted); border: 1px dashed var(--border-color); border-radius: var(--radius-sm);">
+            No custom fields added yet. Click <strong>+ Add Custom Field</strong> above if this event requires team details, tracks, or URLs.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = customFields.map((f, index) => {
+        const isOptionsNeeded = f.type === 'dropdown' || f.type === 'radio';
+
+        return `
+          <div class="custom-field-item" data-id="${f.id}">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-weight: 700; font-size: 0.9rem;">Field #${index + 1}</span>
+              <button type="button" class="btn btn-danger btn-sm" onclick="removeField('${f.id}')">Remove</button>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Field Label (Question)</label>
+                <input type="text" class="form-control" value="${f.label}" onchange="updateField('${f.id}', 'label', this.value)" placeholder="e.g. Team Name" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Field Type</label>
+                <select class="form-select" onchange="updateField('${f.id}', 'type', this.value)">
+                  <option value="text" ${f.type === 'text' ? 'selected' : ''}>Text (Single line)</option>
+                  <option value="number" ${f.type === 'number' ? 'selected' : ''}>Number</option>
+                  <option value="email" ${f.type === 'email' ? 'selected' : ''}>Email</option>
+                  <option value="phone" ${f.type === 'phone' ? 'selected' : ''}>Phone</option>
+                  <option value="dropdown" ${f.type === 'dropdown' ? 'selected' : ''}>Dropdown Selection</option>
+                  <option value="radio" ${f.type === 'radio' ? 'selected' : ''}>Radio Buttons (Single choice)</option>
+                  <option value="checkbox" ${f.type === 'checkbox' ? 'selected' : ''}>Checkbox</option>
+                  <option value="textarea" ${f.type === 'textarea' ? 'selected' : ''}>Textarea (Multi line)</option>
+                </select>
+              </div>
+
+              <div class="form-group" style="justify-content: center;">
+                <label class="form-check" style="margin-top: 1.5rem;">
+                  <input type="checkbox" ${f.required ? 'checked' : ''} onchange="updateField('${f.id}', 'required', this.checked)">
+                  <span>Mandatory / Required</span>
+                </label>
+              </div>
+            </div>
+
+            ${isOptionsNeeded ? `
+              <div class="form-group">
+                <label class="form-label">Options (Comma separated)</label>
+                <input type="text" class="form-control" value="${f.options || ''}" onchange="updateField('${f.id}', 'options', this.value)" placeholder="Option 1, Option 2, Option 3">
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function addField() {
+      const newId = 'f_' + Date.now();
+      customFields.push({
+        id: newId,
+        label: 'Custom Question',
+        name: 'custom_field_' + customFields.length,
+        type: 'text',
+        required: false,
+        options: ''
+      });
+      renderCustomFields();
+    }
+
+    function updateField(id, key, val) {
+      const field = customFields.find(f => f.id === id);
+      if (field) {
+        field[key] = val;
+        if (key === 'type') {
+          renderCustomFields();
+        }
+      }
+    }
+
+    function removeField(id) {
+      customFields = customFields.filter(f => f.id !== id);
+      renderCustomFields();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderCustomFields();
+
+      // Participation Type dynamic toggle
+      const partTypeSelect = document.getElementById('participation-type-select');
+      const maxTeamGroup = document.getElementById('max-team-members-group');
+      const maxTeamInput = document.getElementById('max-team-members-input');
+
+      function updateParticipationFields() {
+        if (partTypeSelect.value === 'team') {
+          maxTeamGroup.style.display = 'block';
+          maxTeamInput.required = true;
+        } else {
+          maxTeamGroup.style.display = 'none';
+          maxTeamInput.required = false;
+        }
+      }
+
+      if (partTypeSelect) {
+        partTypeSelect.addEventListener('change', updateParticipationFields);
+        updateParticipationFields();
+      }
+
+      document.getElementById('add-field-btn').addEventListener('click', addField);
+
+      // Form submission
+      document.getElementById('create-event-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = document.getElementById('submit-event-btn');
+        const errDiv = document.getElementById('create-error-msg');
+        errDiv.style.display = 'none';
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Creating Event...';
+
+        const formData = new FormData(e.target);
+        // Attach serialized custom fields from builder
+        formData.append('custom_fields', JSON.stringify(customFields));
+
+        try {
+          const res = await fetch('/api/events', {
+            method: 'POST',
+            body: formData
+          });
+
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.message || 'Failed to create event');
+          }
+
+          showToast('Event and dynamic form created successfully!', 'success');
+          setTimeout(() => {
+            window.location.href = '/dashboard/events.html';
+          }, 800);
+        } catch (err) {
+          errDiv.innerText = err.message;
+          errDiv.style.display = 'block';
+          submitBtn.disabled = false;
+          submitBtn.innerText = 'Publish Event & Registration Form →';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

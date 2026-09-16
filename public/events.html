@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Events Schedule | INTELLIX </title>
+  <meta name="description"
+    content="Browse upcoming hackathons, workshops, coding challenges and past events conducted by the INTELLIX.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  <link rel="stylesheet" href="/css/welcome-loader.css">
+  <script>
+    (function () {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (sessionStorage.getItem('intellix_welcome_shown') && urlParams.get('welcome') !== 'true') {
+        document.documentElement.classList.add('welcome-bypassed');
+      }
+    })();
+  </script>
+  <script src="/js/welcome-loader.js" defer></script>
+</head>
+
+<body>
+  <!-- Animated Welcome / Loading Screen -->
+  <div id="welcome-loader" aria-hidden="true">
+    <div class="welcome-loader-backdrop">
+      <div class="welcome-bg-glow"></div>
+      <div class="welcome-bg-orb welcome-bg-orb-1"></div>
+      <div class="welcome-bg-orb welcome-bg-orb-2"></div>
+    </div>
+    <div class="welcome-stage" id="welcome-stage">
+      <div class="welcome-brand" id="welcome-brand">
+        <div class="welcome-logo-wrap" id="welcome-logo-wrap">
+          <img src="/assets/logo.png" alt="INTELLIX Logo" class="welcome-logo-img" id="welcome-logo-img">
+        </div>
+        <div class="welcome-text-wrap" id="welcome-text-wrap">
+          <div class="welcome-title" id="welcome-title">INTELLIX</div>
+          <div class="welcome-subtitle" id="welcome-subtitle">AL-AZHAR College of Engg & Tech</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <canvas id="bg-canvas"></canvas>
+
+  <header class="navbar">
+    <div class="container navbar-inner">
+      <a href="/" class="nav-brand" id="nav-brand-link">
+        <div class="nav-brand-logo" id="target-brand-logo"><img src="/assets/logo.png" alt="Intellix Logo"></div>
+        <div id="target-brand-text">
+          <div id="target-brand-title">INTELLIX</div>
+          <div id="target-brand-subtitle" style="font-size: 0.68rem; font-weight: 500; color: var(--text-muted); line-height: 1;">AL-AZHAR College of
+            Engg & Tech</div>
+        </div>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="/" class="nav-link">Home</a></li>
+        <li><a href="/events.html" class="nav-link active">Events</a></li>
+        <li><a href="/achievements.html" class="nav-link">Achievements</a></li>
+        <li><a href="/gallery.html" class="nav-link">Gallery</a></li>
+        <li><a href="/members.html" class="nav-link">Members</a></li>
+        <li><a href="/verify.html" class="nav-link">Verify Certificate</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <button class="theme-toggle-btn" aria-label="Toggle theme"></button>
+        <button class="hamburger-btn" aria-label="Open mobile menu">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <nav class="mobile-nav">
+    <a href="/" class="mobile-nav-link">Home</a>
+    <a href="/events.html" class="mobile-nav-link">Events</a>
+    <a href="/achievements.html" class="mobile-nav-link">Achievements</a>
+    <a href="/gallery.html" class="mobile-nav-link">Gallery</a>
+    <a href="/members.html" class="mobile-nav-link">Association Members</a>
+    <a href="/verify.html" class="mobile-nav-link">Verify Certificate</a>
+  </nav>
+
+  <main class="section">
+    <div class="container">
+      <div style="margin-bottom: 2.5rem;">
+        <div class="badge" style="margin-bottom: 0.5rem;">PROGRAM SCHEDULE</div>
+        <h1>Department Events & Competitions</h1>
+        <p style="font-size: 1.1rem; margin-top: 0.5rem; max-width: 600px;">
+          Explore upcoming departmental bootcamps, national hackathons, and technical symposiums. Register directly
+          using your student credentials.
+        </p>
+      </div>
+
+      <!-- Filters and Search -->
+      <div
+        style="display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; justify-content: space-between; align-items: center;">
+        <div class="tabs" style="margin-bottom: 0;" id="event-tabs">
+          <button class="tab-btn active" data-tab="upcoming">Upcoming Events (<span
+              id="count-upcoming">0</span>)</button>
+          <button class="tab-btn" data-tab="past">Past Events (<span id="count-past">0</span>)</button>
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+          <input type="text" id="event-search" class="form-control" placeholder="Search events..."
+            style="width: 240px;">
+          <select id="event-type-filter" class="form-select" style="width: 170px;">
+            <option value="">All Categories</option>
+            <option value="Technical">Technical</option>
+            <option value="Hackathon">Hackathon</option>
+            <option value="Workshop">Workshop</option>
+            <option value="Symposium">Symposium</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Events Grid -->
+      <div id="events-grid"
+        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.75rem;">
+        <div style="grid-column: 1/-1; text-align: center; padding: 4rem;">
+          <span class="spinner"></span>
+          <p style="margin-top: 1rem;">Loading events catalogue...</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <div>&copy; 2026 INTELLIX.</div>
+        <div><a href="/login.html">Admin Management Access</a></div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/theme.js"></script>
+  <script src="/js/background.js"></script>
+  <script src="/js/api.js"></script>
+  <script>
+    let allEvents = [];
+    let currentTab = 'upcoming';
+
+    async function loadEvents() {
+      try {
+        const res = await fetchJson('/api/events');
+        if (res.success) {
+          allEvents = res.events;
+          updateCounts();
+          renderEvents();
+        }
+      } catch (err) {
+        document.getElementById('events-grid').innerHTML = `
+          <div class="empty-state" style="grid-column: 1/-1;">
+            <p style="color: #ef4444;">Failed to load events: ${err.message}</p>
+          </div>
+        `;
+      }
+    }
+
+    function updateCounts() {
+      const upcoming = allEvents.filter(e => e.timing_state === 'upcoming' || e.timing_state === 'ongoing');
+      const past = allEvents.filter(e => e.timing_state === 'past');
+      document.getElementById('count-upcoming').innerText = upcoming.length;
+      document.getElementById('count-past').innerText = past.length;
+    }
+
+    function renderEvents() {
+      const query = document.getElementById('event-search').value.toLowerCase().trim();
+      const typeFilter = document.getElementById('event-type-filter').value;
+      const grid = document.getElementById('events-grid');
+
+      const filtered = allEvents.filter(evt => {
+        const matchesTab = currentTab === 'upcoming'
+          ? (evt.timing_state === 'upcoming' || evt.timing_state === 'ongoing')
+          : (evt.timing_state === 'past');
+
+        const matchesSearch = !query ||
+          evt.title.toLowerCase().includes(query) ||
+          evt.description.toLowerCase().includes(query) ||
+          evt.venue.toLowerCase().includes(query) ||
+          evt.code.toLowerCase().includes(query);
+
+        const matchesType = !typeFilter || evt.event_type.toLowerCase().includes(typeFilter.toLowerCase());
+
+        return matchesTab && matchesSearch && matchesType;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state" style="grid-column: 1/-1;">
+            <div class="empty-state-icon">📅</div>
+            <h3>No events found</h3>
+            <p>There are no events matching your criteria in this view.</p>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(evt => {
+        const dateStr = formatDate(evt.start_datetime, true);
+        const isUpcoming = evt.timing_state !== 'past';
+
+        let statusBadge = '';
+        if (!isUpcoming) {
+          statusBadge = `<span class="badge">Completed</span>`;
+        } else if (evt.can_register) {
+          statusBadge = `<span class="badge badge-success">Registration Open</span>`;
+        } else {
+          statusBadge = `<span class="badge badge-danger">Registration Closed</span>`;
+        }
+
+        return `
+          <div class="card card-hover fade-in-up">
+            <div style="height: 160px; background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-card)); display: flex; align-items: center; justify-content: center; position: relative; border-bottom: 1px solid var(--border-color);">
+              ${evt.poster_url
+            ? `<img src="${evt.poster_url}" alt="${evt.title}" style="width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;">`
+            : `<span style="font-weight: 800; font-size: 1.5rem; letter-spacing: 0.05em; color: var(--text-muted);">${evt.code}</span>`}
+              <div style="position: absolute; top: 0.75rem; right: 0.75rem; z-index: 2;">${statusBadge}</div>
+            </div>
+            <div class="card-body">
+              <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">${evt.event_type}</span>
+              <h3 style="font-size: 1.25rem;"><a href="/events/${evt.slug}">${evt.title}</a></h3>
+              <p style="font-size: 0.875rem; line-clamp: 3; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                ${evt.description}
+              </p>
+              <div style="display: flex; flex-direction: column; gap: 0.4rem; margin-top: auto; font-size: 0.825rem; color: var(--text-secondary);">
+                <div>📅 <strong>Date:</strong> ${dateStr}</div>
+                <div>📍 <strong>Venue:</strong> ${evt.venue}</div>
+                ${isUpcoming ? `<div>🎟️ <strong>Capacity:</strong> ${evt.registered_count || 0} / ${evt.max_participants} registered (${evt.seats_available} seats left)</div>` : `<div>👥 <strong>Participants:</strong> ${evt.registered_count || 0} attended</div>`}
+              </div>
+            </div>
+            <div class="card-footer">
+              ${evt.can_register
+            ? `<a href="/events/${evt.slug}#register" class="btn btn-primary btn-sm btn-block">Register Now &rarr;</a>`
+            : `<a href="/events/${evt.slug}" class="btn btn-outline btn-sm btn-block">View Event Details &rarr;</a>`}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      initScrollReveals();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadEvents();
+
+      // Tab switcher
+      document.querySelectorAll('#event-tabs .tab-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll('#event-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentTab = btn.dataset.tab;
+          renderEvents();
+        });
+      });
+
+      document.getElementById('event-search').addEventListener('input', renderEvents);
+      document.getElementById('event-type-filter').addEventListener('change', renderEvents);
+    });
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Association Members | INTELLIX</title>
+  <meta name="description" content="Faculty advisors, student coordinators, and executive committee of the INTELLIX.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  <link rel="stylesheet" href="/css/welcome-loader.css">
+  <script>
+    (function () {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (sessionStorage.getItem('intellix_welcome_shown') && urlParams.get('welcome') !== 'true') {
+        document.documentElement.classList.add('welcome-bypassed');
+      }
+    })();
+  </script>
+  <script src="/js/welcome-loader.js" defer></script>
+</head>
+<body>
+  <!-- Animated Welcome / Loading Screen -->
+  <div id="welcome-loader" aria-hidden="true">
+    <div class="welcome-loader-backdrop">
+      <div class="welcome-bg-glow"></div>
+      <div class="welcome-bg-orb welcome-bg-orb-1"></div>
+      <div class="welcome-bg-orb welcome-bg-orb-2"></div>
+    </div>
+    <div class="welcome-stage" id="welcome-stage">
+      <div class="welcome-brand" id="welcome-brand">
+        <div class="welcome-logo-wrap" id="welcome-logo-wrap">
+          <img src="/assets/logo.png" alt="INTELLIX Logo" class="welcome-logo-img" id="welcome-logo-img">
+        </div>
+        <div class="welcome-text-wrap" id="welcome-text-wrap">
+          <div class="welcome-title" id="welcome-title">INTELLIX</div>
+          <div class="welcome-subtitle" id="welcome-subtitle">AL-AZHAR College of Engg & Tech</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <canvas id="bg-canvas"></canvas>
+
+  <header class="navbar">
+    <div class="container navbar-inner">
+      <a href="/" class="nav-brand" id="nav-brand-link">
+        <div class="nav-brand-logo" id="target-brand-logo"><img src="/assets/logo.png" alt="Intellix Logo"></div>
+        <div id="target-brand-text">
+          <div id="target-brand-title">INTELLIX</div>
+          <div id="target-brand-subtitle" style="font-size: 0.68rem; font-weight: 500; color: var(--text-muted); line-height: 1;">AL-AZHAR College of
+            Engg & Tech</div>
+        </div>
+      </a>
+      <ul class="nav-links">
+        <li><a href="/" class="nav-link">Home</a></li>
+        <li><a href="/events.html" class="nav-link">Events</a></li>
+        <li><a href="/achievements.html" class="nav-link">Achievements</a></li>
+        <li><a href="/gallery.html" class="nav-link">Gallery</a></li>
+        <li><a href="/members.html" class="nav-link active">Members</a></li>
+        <li><a href="/verify.html" class="nav-link">Verify Certificate</a></li>
+      </ul>
+      <div class="nav-actions">
+        <button class="theme-toggle-btn" aria-label="Toggle theme"></button>
+      </div>
+    </div>
+  </header>
+
+  <main class="section">
+    <div class="container">
+      <div style="margin-bottom: 2.5rem;">
+        <div class="badge" style="margin-bottom: 0.5rem;">LEADERSHIP & COMMITTEE</div>
+        <h1>Association Executive Board</h1>
+        <p style="font-size: 1.1rem; margin-top: 0.5rem; max-width: 600px;">
+          Meet the faculty patrons and student coordinators spearheading technical workshops, symposiums, and student mentorship.
+        </p>
+      </div>
+
+      <div id="members-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.75rem;">
+        <div style="grid-column: 1/-1; text-align: center; padding: 4rem;">
+          <span class="spinner"></span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <div>&copy; 2026 INTELLIX • AL-AZHAR College of Engg & Tech.</div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/theme.js"></script>
+  <script src="/js/background.js"></script>
+  <script src="/js/api.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const res = await fetchJson('/api/members');
+        const grid = document.getElementById('members-grid');
+        if (res.success) {
+          grid.innerHTML = res.members.map(m => `
+            <div class="card card-hover fade-in-up">
+              <div class="card-body" style="align-items: center; text-align: center; padding: 2.25rem 1.5rem;">
+                <div style="width: 72px; height: 72px; border-radius: 50%; background: var(--bg-tertiary); border: 2px solid var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1rem;">
+                  ${m.photo_url ? `<img src="${m.photo_url}" alt="${m.name}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : m.name.charAt(0)}
+                </div>
+                <h3 style="font-size: 1.2rem; margin-bottom: 0.25rem;">${m.name}</h3>
+                <span class="badge badge-pill" style="margin-bottom: 0.75rem;">${m.role}</span>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">${m.department}</p>
+                <p style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.6;">
+                  ${m.short_bio || ''}
+                </p>
+              </div>
+            </div>
+          `).join('');
+
+          initScrollReveals();
+        }
+      } catch (err) {
+        document.getElementById('members-grid').innerHTML = `<p style="color:#ef4444;text-align:center;">Failed to load members</p>`;
+      }
+    });
+  </script>
+</body>
+</html>

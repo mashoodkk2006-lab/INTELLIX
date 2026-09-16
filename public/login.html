@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Portal Login | INTELLIX </title>
+  <meta name="description"
+    content="Secure administrative authentication for Student Coordinators, HOD, and Registration Admins.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  <style>
+    .login-container {
+      min-height: 85vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.25rem;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 440px;
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 2.5rem 2rem;
+      box-shadow: var(--shadow-lg);
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="bg-canvas"></canvas>
+
+  <header class="navbar">
+    <div class="container navbar-inner">
+      <a href="/" class="nav-brand">
+        <div class="nav-brand-logo"><img src="/assets/logo.png" alt="Intellix Logo"></div>
+        <div>INTELLIX</div>
+      </a>
+      <div class="nav-actions">
+        <button class="theme-toggle-btn" aria-label="Toggle theme"></button>
+        <a href="/" class="btn btn-outline btn-sm">&larr; Back to Portal</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="login-container">
+    <div class="login-card fade-in">
+      <div style="text-align: center; margin-bottom: 2rem;">
+        <div class="badge badge-pill" style="margin-bottom: 0.75rem;">RESTRICTED ACCESS</div>
+        <h2>Admin Authentication</h2>
+        <p style="font-size: 0.875rem; margin-top: 0.25rem;">
+          Sign in to manage events, participants, attendance, and certificates.
+        </p>
+      </div>
+
+      <form id="login-form">
+        <div class="form-group">
+          <label class="form-label" for="username">Username or Email</label>
+          <input type="text" id="username" name="username" class="form-control" placeholder="e.g. coordinator" required
+            autofocus>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <input type="password" id="password" name="password" class="form-control" placeholder="••••••••••••" required>
+        </div>
+
+        <div id="login-error" style="color: #ef4444; font-size: 0.85rem; margin-bottom: 1rem; display: none;"></div>
+
+        <button type="submit" class="btn btn-primary btn-block" id="login-submit-btn" style="margin-top: 0.5rem;">
+          Sign In to Dashboard &rarr;
+        </button>
+      </form>
+
+      <div
+        style="margin-top: 1.75rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color); font-size: 0.8rem; color: var(--text-muted); text-align: center;">
+        <div>Default Initial Student Coordinator: <strong>coordinator</strong> / <strong>admin123</strong></div>
+        <div style="margin-top: 0.25rem;">(Configured via .env for first-time bootstrap)</div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/theme.js"></script>
+  <script src="/js/background.js"></script>
+  <script src="/js/api.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Check if already authenticated
+      try {
+        const meRes = await fetchJson('/api/auth/me');
+        if (meRes.success && meRes.admin) {
+          window.location.href = '/dashboard/';
+          return;
+        }
+      } catch (e) { }
+
+      document.getElementById('login-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('login-submit-btn');
+        const err = document.getElementById('login-error');
+        err.style.display = 'none';
+
+        btn.disabled = true;
+        btn.innerText = 'Authenticating...';
+
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+
+        try {
+          const res = await fetchJson('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+          });
+
+          if (res.success) {
+            showToast('Signed in successfully', 'success');
+            const redirectParam = new URLSearchParams(window.location.search).get('redirect');
+            window.location.href = redirectParam || '/dashboard/';
+          }
+        } catch (error) {
+          err.innerText = error.message || 'Invalid username or password';
+          err.style.display = 'block';
+          btn.disabled = false;
+          btn.innerText = 'Sign In to Dashboard →';
+        }
+      });
+    });
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registration Confirmed | INTELLIX </title>
+  <meta name="description" content="Official Event Registration Pass and Entry Slip.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  <style>
+    .pass-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      max-width: 620px;
+      margin: 0 auto;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .pass-header {
+      background-color: var(--bg-secondary);
+      border-bottom: 1px dashed var(--border-color);
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .pass-body {
+      padding: 2.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .pass-row {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.75rem;
+      font-size: 0.95rem;
+    }
+
+    .pass-row:last-child {
+      border-bottom: none;
+    }
+
+    .pass-label {
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .pass-val {
+      font-weight: 700;
+      color: var(--text-primary);
+      text-align: right;
+    }
+
+    .qr-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      gap: 0.75rem;
+    }
+
+    @media print {
+      body {
+        background: white !important;
+        color: black !important;
+      }
+
+      .navbar,
+      .footer,
+      .no-print,
+      #bg-canvas {
+        display: none !important;
+      }
+
+      .pass-card {
+        border: 2px solid black !important;
+        box-shadow: none !important;
+        background: white !important;
+        color: black !important;
+      }
+
+      .pass-val,
+      .pass-label,
+      h1,
+      h2,
+      h3 {
+        color: black !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="bg-canvas"></canvas>
+
+  <header class="navbar no-print">
+    <div class="container navbar-inner">
+      <a href="/" class="nav-brand">
+        <div class="nav-brand-logo"><img src="/assets/logo.png" alt="Intellix Logo"></div>
+        <div>INTELLIX</div>
+      </a>
+      <div class="nav-actions">
+        <button class="theme-toggle-btn" aria-label="Toggle theme"></button>
+        <a href="/events.html" class="btn btn-outline btn-sm">All Events</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="section">
+    <div class="container">
+      <div class="pass-card fade-in">
+        <div class="pass-header">
+          <div class="badge badge-success" style="margin-bottom: 0.75rem;">✓ REGISTRATION SUCCESSFUL</div>
+          <h2>Official Event Entry Pass</h2>
+          <p style="font-size: 0.9rem; margin-top: 0.25rem;">INTELLIX • AL-AZHAR College of Engg & Tech</p>
+        </div>
+
+        <div class="pass-body">
+          <div class="qr-container">
+            <div id="pass-qr-image-wrapper">
+              <span class="spinner"></span>
+            </div>
+            <div style="font-size: 0.85rem; font-weight: 700; letter-spacing: 0.05em;" id="pass-code-text">REG CODE:
+              LOADING...</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">Present this QR pass at the registration desk on
+              event day</div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <div class="pass-row">
+              <span class="pass-label">Registration ID</span>
+              <span class="pass-val" id="pass-reg-id" style="font-size: 1.1rem; letter-spacing: 0.02em;">--</span>
+            </div>
+            <div class="pass-row">
+              <span class="pass-label">Event</span>
+              <span class="pass-val" id="pass-event-title">--</span>
+            </div>
+            <div class="pass-row">
+              <span class="pass-label">Participant Name</span>
+              <span class="pass-val" id="pass-participant">--</span>
+            </div>
+            <div class="pass-row">
+              <span class="pass-label">Register Number</span>
+              <span class="pass-val" id="pass-regno">--</span>
+            </div>
+            <div class="pass-row">
+              <span class="pass-label">Department & Semester</span>
+              <span class="pass-val" id="pass-dept-sem">--</span>
+            </div>
+            <div class="pass-row">
+              <span class="pass-label">Venue</span>
+              <span class="pass-val" id="pass-venue">--</span>
+            </div>
+            <div class="pass-row">
+              <span class="pass-label">Event Date & Time</span>
+              <span class="pass-val" id="pass-datetime">--</span>
+            </div>
+          </div>
+
+          <div class="no-print"
+            style="display: flex; gap: 1rem; margin-top: 1rem; justify-content: center; flex-wrap: wrap;">
+            <button class="btn btn-primary" onclick="window.print()">
+              🖨️ Print / Download Registration Pass
+            </button>
+            <a href="/events.html" class="btn btn-outline">
+              Return to Events
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer no-print">
+    <div class="container">
+      <div class="footer-bottom">
+        <div>&copy; 2026 INTELLIX.</div>
+        <div><a href="/">Home</a></div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/theme.js"></script>
+  <script src="/js/background.js"></script>
+  <script src="/js/api.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const stored = sessionStorage.getItem('last_registration');
+      if (!stored) {
+        window.location.href = '/events.html';
+        return;
+      }
+
+      const reg = JSON.parse(stored);
+      document.getElementById('pass-reg-id').innerText = reg.registration_code;
+      document.getElementById('pass-code-text').innerText = `REG CODE: ${reg.registration_code}`;
+      document.getElementById('pass-event-title').innerText = reg.event_title;
+      document.getElementById('pass-participant').innerText = reg.full_name;
+      document.getElementById('pass-regno').innerText = reg.register_number;
+      document.getElementById('pass-dept-sem').innerText = `${reg.department} (${reg.semester})`;
+      document.getElementById('pass-venue').innerText = reg.event_venue || 'Department Hall';
+      document.getElementById('pass-datetime').innerText = formatDate(reg.event_date, true);
+
+      if (reg.qr_code) {
+        document.getElementById('pass-qr-image-wrapper').innerHTML = `
+          <img src="${reg.qr_code}" alt="Registration QR Code" style="width: 140px; height: 140px; border-radius: var(--radius-sm); background: white; padding: 4px;">
+        `;
+      }
+    });
+  </script>
+</body>
+
+</html>

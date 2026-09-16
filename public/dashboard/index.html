@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Overview | Association Admin Portal</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+  <div class="dashboard-layout">
+    <div id="dashboard-sidebar-container"></div>
+
+    <main class="dashboard-main">
+      <header class="dashboard-topbar">
+        <div>
+          <h3 style="font-size: 1.15rem;">Operational Dashboard</h3>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <button class="theme-toggle-btn" aria-label="Toggle theme"></button>
+          <a href="/dashboard/event-create.html" class="btn btn-primary btn-sm">+ Create Event</a>
+        </div>
+      </header>
+
+      <div class="dashboard-content">
+        <!-- Stat Grid -->
+        <div class="stat-grid" id="dash-stats">
+          <div class="stat-card">
+            <span class="stat-card-title">Events Conducted</span>
+            <span class="stat-card-value" id="dash-stat-events">--</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card-title">Upcoming Events</span>
+            <span class="stat-card-value" id="dash-stat-upcoming">--</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card-title">Total Registrations</span>
+            <span class="stat-card-value" id="dash-stat-registrations">--</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card-title">Certificates Issued</span>
+            <span class="stat-card-value" id="dash-stat-certificates">--</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card-title">Attendance Rate</span>
+            <span class="stat-card-value" id="dash-stat-attendance">--%</span>
+          </div>
+        </div>
+
+        <!-- Quick Operations Section -->
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.75rem;">
+          <!-- Active Events Table -->
+          <div class="card">
+            <div class="card-body" style="padding: 1.25rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h4>Active Department Events</h4>
+                <a href="/dashboard/events.html" class="btn btn-outline btn-sm">All Events &rarr;</a>
+              </div>
+              <div class="table-container">
+                <table class="table" id="dash-events-table">
+                  <thead>
+                    <tr>
+                      <th>Code</th>
+                      <th>Event Title</th>
+                      <th>Type</th>
+                      <th>Date</th>
+                      <th>Registered</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td colspan="6" style="text-align: center; padding: 2rem;"><span class="spinner"></span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Shortcuts & Role Info -->
+          <div class="card">
+            <div class="card-body" style="padding: 1.5rem;">
+              <h4 style="margin-bottom: 1rem;">Quick Actions</h4>
+              <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <a href="/dashboard/event-create.html" class="btn btn-secondary btn-sm" style="justify-content: flex-start;">
+                  <span>➕</span> Create Event & Form Builder
+                </a>
+                <a href="/dashboard/registrations.html" class="btn btn-secondary btn-sm" style="justify-content: flex-start;">
+                  <span>👥</span> View Participant Registrations
+                </a>
+                <a href="/dashboard/attendance.html" class="btn btn-secondary btn-sm" style="justify-content: flex-start;">
+                  <span>✓</span> Mark Event Attendance
+                </a>
+                <a href="/dashboard/certificates.html" class="btn btn-secondary btn-sm" style="justify-content: flex-start;">
+                  <span>📜</span> Generate Digital Certificates
+                </a>
+                <a href="/dashboard/admins.html" class="btn btn-secondary btn-sm" style="justify-content: flex-start;">
+                  <span>🛡️</span> Manage Admin Roles & Permissions
+                </a>
+                <a href="/dashboard/about.html" class="btn btn-secondary btn-sm" style="justify-content: flex-start;">
+                  <span>ℹ️</span> Edit About Us Section
+                </a>
+              </div>
+
+              <div style="margin-top: 1.75rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color); font-size: 0.8rem; color: var(--text-muted);">
+                <p><strong>System Note:</strong> The Student Coordinator possesses primary administrative operational control over events, forms, attendance, and sub-admin accounts.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/theme.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/dashboard/js/dashboard-common.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      // 1. Load Stats
+      try {
+        const sRes = await fetchJson('/api/stats');
+        if (sRes.success) {
+          document.getElementById('dash-stat-events').innerText = sRes.stats.events_conducted;
+          document.getElementById('dash-stat-upcoming').innerText = sRes.stats.upcoming_events;
+          document.getElementById('dash-stat-registrations').innerText = sRes.stats.total_registrations;
+          document.getElementById('dash-stat-certificates').innerText = sRes.stats.certificates_issued;
+          document.getElementById('dash-stat-attendance').innerText = `${sRes.stats.attendance_rate}%`;
+        }
+      } catch (e) {}
+
+      // 2. Load Events
+      try {
+        const eRes = await fetchJson('/api/events');
+        const tbody = document.querySelector('#dash-events-table tbody');
+        if (eRes.success) {
+          if (eRes.events.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No events found.</td></tr>`;
+            return;
+          }
+
+          tbody.innerHTML = eRes.events.slice(0, 5).map(e => `
+            <tr>
+              <td><strong>${e.code}</strong></td>
+              <td><a href="/events/${e.slug}" target="_blank" style="font-weight: 600;">${e.title}</a></td>
+              <td><span class="badge">${e.event_type}</span></td>
+              <td>${formatDate(e.start_datetime)}</td>
+              <td>${e.registered_count || 0} / ${e.max_participants}</td>
+              <td>
+                <a href="/dashboard/registrations.html?eventId=${e.id}" class="btn btn-outline btn-sm">Participants</a>
+              </td>
+            </tr>
+          `).join('');
+        }
+      } catch (e) {}
+    });
+  </script>
+</body>
+</html>

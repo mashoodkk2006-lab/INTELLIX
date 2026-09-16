@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage About Us Section | INTELLIX Coordinator Dashboard</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <style>
+    .editor-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 1.75rem;
+      align-items: start;
+    }
+    @media (max-width: 1024px) {
+      .editor-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .preview-sticky {
+      position: sticky;
+      top: 1.5rem;
+    }
+    .preview-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      box-shadow: var(--shadow-md);
+    }
+    .preview-badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.25rem 0.75rem;
+      border-radius: var(--radius-full);
+      background: var(--badge-bg);
+      color: var(--badge-text);
+      border: 1px solid var(--badge-border);
+      margin-bottom: 0.75rem;
+    }
+    .preview-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.4rem;
+      color: var(--text-primary);
+    }
+    .preview-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-bottom: 1.25rem;
+      line-height: 1.4;
+    }
+    .preview-card-item {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      margin-bottom: 0.85rem;
+    }
+    .preview-card-item h5 {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.35rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .preview-card-item p {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-layout">
+    <div id="dashboard-sidebar-container"></div>
+
+    <main class="dashboard-main">
+      <header class="dashboard-topbar">
+        <div>
+          <h3 style="font-size: 1.15rem;">About Us Content Management</h3>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">
+            Update association details, vision, initiatives, and purpose displayed on the public portal.
+          </p>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <a href="/#about-section" target="_blank" class="btn btn-outline btn-sm">View On Public Portal ↗</a>
+          <button type="button" class="btn btn-primary btn-sm" id="top-save-btn">
+            <span>💾</span> Save Changes
+          </button>
+        </div>
+      </header>
+
+      <div class="dashboard-content">
+        <!-- Notification Alert -->
+        <div id="status-alert" style="display: none; margin-bottom: 1.5rem;"></div>
+
+        <div class="editor-grid">
+          <!-- Form Section -->
+          <div class="card">
+            <div class="card-body" style="padding: 1.75rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
+                <div>
+                  <h4 style="font-size: 1.1rem; margin-bottom: 0.25rem;">Official Association Information</h4>
+                  <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;" id="last-updated-meta">
+                    Loading content details...
+                  </p>
+                </div>
+                <span class="badge badge-success" id="sync-status-badge">Live Synchronized</span>
+              </div>
+
+              <form id="about-form">
+                <!-- Row 1: Title & Badge -->
+                <div class="form-row">
+                  <div class="form-group" style="flex: 2;">
+                    <label class="form-label">Association Title <span class="required-star">*</span></label>
+                    <input type="text" name="title" id="inp-title" class="form-control" placeholder="e.g. INTELLIX Association" required>
+                  </div>
+                  <div class="form-group" style="flex: 1;">
+                    <label class="form-label">Badge Tag</label>
+                    <input type="text" name="badge_text" id="inp-badge" class="form-control" placeholder="e.g. ABOUT OUR ASSOCIATION">
+                  </div>
+                </div>
+
+                <!-- Subtitle / Department -->
+                <div class="form-group">
+                  <label class="form-label">Subtitle / Department Affiliation <span class="required-star">*</span></label>
+                  <input type="text" name="subtitle" id="inp-subtitle" class="form-control" placeholder="Department of Artificial Intelligence & Machine Learning..." required>
+                </div>
+
+                <!-- Slogan / Quote -->
+                <div class="form-group">
+                  <label class="form-label">Association Motto / Quote</label>
+                  <input type="text" name="quote_text" id="inp-quote" class="form-control" placeholder="e.g. Igniting Ideas, Inspiring Innovation, Building Intelligence">
+                </div>
+
+                <!-- Introduction / Description -->
+                <div class="form-group">
+                  <label class="form-label">Association Introduction & Overview <span class="required-star">*</span></label>
+                  <textarea name="description" id="inp-desc" class="form-control" rows="4" placeholder="Comprehensive introduction introducing INTELLIX, its origin, culture, and members..." required></textarea>
+                  <small style="font-size: 0.75rem; color: var(--text-muted);">Displays prominently as the main narrative of the About section.</small>
+                </div>
+
+                <!-- 2-Column: Purpose & Vision -->
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Purpose Statement <span class="required-star">*</span></label>
+                    <textarea name="purpose" id="inp-purpose" class="form-control" rows="3" placeholder="Core mission and why the association exists..." required></textarea>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Vision for the Future <span class="required-star">*</span></label>
+                    <textarea name="vision" id="inp-vision" class="form-control" rows="3" placeholder="Long-term vision in AI, computing and tech leadership..." required></textarea>
+                  </div>
+                </div>
+
+                <!-- Activities & Technical Initiatives -->
+                <div class="form-group">
+                  <label class="form-label">Activities, Events & Technical Initiatives <span class="required-star">*</span></label>
+                  <textarea name="activities" id="inp-activities" class="form-control" rows="3" placeholder="Hackathons, coding symposiums, workshops, hands-on bootcamps..." required></textarea>
+                </div>
+
+                <!-- Student Engagement & Community -->
+                <div class="form-group">
+                  <label class="form-label">Student Engagement & Community Culture <span class="required-star">*</span></label>
+                  <textarea name="student_engagement" id="inp-engagement" class="form-control" rows="3" placeholder="Peer mentoring, open labs, leadership teams, skill development..." required></textarea>
+                </div>
+
+                <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color);">
+                  <button type="button" class="btn btn-secondary" id="reset-btn">Discard Changes</button>
+                  <button type="submit" class="btn btn-primary" id="save-btn">
+                    <span id="save-spinner" class="spinner" style="display: none; width: 14px; height: 14px;"></span>
+                    <span id="save-label">Save & Update Public Site</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Live Preview Sticky Panel -->
+          <div class="preview-sticky">
+            <div class="preview-box">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+                <span style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Live Portal Preview</span>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">Real-time rendering</span>
+              </div>
+
+              <!-- Rendered Preview Content -->
+              <div id="preview-container">
+                <span class="preview-badge" id="prev-badge">ABOUT OUR ASSOCIATION</span>
+                <h4 class="preview-title" id="prev-title">INTELLIX Association</h4>
+                <div class="preview-subtitle" id="prev-subtitle">Department of Artificial Intelligence & Machine Learning</div>
+                
+                <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 1.25rem;" id="prev-desc">
+                  Short introduction about the association will appear here...
+                </p>
+
+                <div class="preview-card-item">
+                  <h5>🎯 Purpose</h5>
+                  <p id="prev-purpose">Core purpose description...</p>
+                </div>
+
+                <div class="preview-card-item">
+                  <h5>🔭 Vision</h5>
+                  <p id="prev-vision">Future-looking vision description...</p>
+                </div>
+
+                <div class="preview-card-item">
+                  <h5>⚡ Activities & Technical Initiatives</h5>
+                  <p id="prev-activities">Hackathons, symposiums, coding competitions...</p>
+                </div>
+
+                <div class="preview-card-item">
+                  <h5>🤝 Student Engagement</h5>
+                  <p id="prev-engagement">Student community, workshops, collaborative building...</p>
+                </div>
+
+                <div style="margin-top: 1rem; padding: 0.75rem 1rem; border-left: 3px solid var(--border-focus); background: var(--bg-tertiary); border-radius: 0 var(--radius-sm) var(--radius-sm) 0;">
+                  <span style="font-size: 0.78rem; font-style: italic; color: var(--text-primary);" id="prev-quote">
+                    "Igniting Ideas, Inspiring Innovation, Building Intelligence."
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/theme.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/dashboard/js/dashboard-common.js"></script>
+  <script>
+    let currentData = null;
+
+    // Synchronize inputs with preview panel
+    function syncPreview() {
+      document.getElementById('prev-badge').textContent = document.getElementById('inp-badge').value || 'ABOUT OUR ASSOCIATION';
+      document.getElementById('prev-title').textContent = document.getElementById('inp-title').value || 'INTELLIX Association';
+      document.getElementById('prev-subtitle').textContent = document.getElementById('inp-subtitle').value || '';
+      document.getElementById('prev-desc').textContent = document.getElementById('inp-desc').value || '';
+      document.getElementById('prev-purpose').textContent = document.getElementById('inp-purpose').value || '';
+      document.getElementById('prev-vision').textContent = document.getElementById('inp-vision').value || '';
+      document.getElementById('prev-activities').textContent = document.getElementById('inp-activities').value || '';
+      document.getElementById('prev-engagement').textContent = document.getElementById('inp-engagement').value || '';
+      document.getElementById('prev-quote').textContent = `"${document.getElementById('inp-quote').value || ''}"`;
+    }
+
+    // Populate form with fetched data
+    function populateForm(data) {
+      currentData = data;
+      document.getElementById('inp-title').value = data.title || '';
+      document.getElementById('inp-badge').value = data.badge_text || '';
+      document.getElementById('inp-subtitle').value = data.subtitle || '';
+      document.getElementById('inp-quote').value = data.quote_text || '';
+      document.getElementById('inp-desc').value = data.description || '';
+      document.getElementById('inp-purpose').value = data.purpose || '';
+      document.getElementById('inp-vision').value = data.vision || '';
+      document.getElementById('inp-activities').value = data.activities || '';
+      document.getElementById('inp-engagement').value = data.student_engagement || '';
+
+      const updatedStr = data.updated_at ? formatDate(data.updated_at, true) : 'Never';
+      const updatedBy = data.updated_by || 'Coordinator';
+      document.getElementById('last-updated-meta').innerHTML = `Last updated: <strong>${updatedStr}</strong> by <strong>${updatedBy}</strong>`;
+
+      syncPreview();
+    }
+
+    // Load about data from server
+    async function loadAboutContent() {
+      try {
+        const res = await fetchJson('/api/about');
+        if (res.success && res.about) {
+          populateForm(res.about);
+        }
+      } catch (err) {
+        showAlert('danger', 'Failed to load About Us details: ' + err.message);
+      }
+    }
+
+    // Show status alert
+    function showAlert(type, message) {
+      const alertBox = document.getElementById('status-alert');
+      alertBox.className = `alert alert-${type} fade-in`;
+      alertBox.style.display = 'block';
+      alertBox.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span>${message}</span>
+          <button type="button" style="background:none;border:none;color:inherit;cursor:pointer;font-size:1.1rem;" onclick="this.parentElement.parentElement.style.display='none'">&times;</button>
+        </div>
+      `;
+      alertBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // Save changes to backend
+    async function saveAboutContent(e) {
+      if (e) e.preventDefault();
+      const saveBtn = document.getElementById('save-btn');
+      const saveSpinner = document.getElementById('save-spinner');
+      const saveLabel = document.getElementById('save-label');
+
+      saveBtn.disabled = true;
+      saveSpinner.style.display = 'inline-block';
+      saveLabel.textContent = 'Saving & Publishing...';
+
+      const payload = {
+        title: document.getElementById('inp-title').value,
+        badge_text: document.getElementById('inp-badge').value,
+        subtitle: document.getElementById('inp-subtitle').value,
+        quote_text: document.getElementById('inp-quote').value,
+        description: document.getElementById('inp-desc').value,
+        purpose: document.getElementById('inp-purpose').value,
+        vision: document.getElementById('inp-vision').value,
+        activities: document.getElementById('inp-activities').value,
+        student_engagement: document.getElementById('inp-engagement').value
+      };
+
+      try {
+        const res = await fetchJson('/api/about', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.success) {
+          populateForm(res.about);
+          showAlert('success', '<strong>Success!</strong> About Us section updated and immediately live on the public portal.');
+          if (typeof showToast === 'function') {
+            showToast('About Us section updated successfully!', 'success');
+          }
+        } else {
+          showAlert('danger', res.message || 'Error updating content');
+        }
+      } catch (err) {
+        showAlert('danger', 'Server error: ' + err.message);
+      } finally {
+        saveBtn.disabled = false;
+        saveSpinner.style.display = 'none';
+        saveLabel.textContent = 'Save & Update Public Site';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      // 1. Check Auth & Load
+      await checkAdminAuth();
+      await loadAboutContent();
+
+      // 2. Real-time preview event listeners
+      const inputs = ['inp-title', 'inp-badge', 'inp-subtitle', 'inp-quote', 'inp-desc', 'inp-purpose', 'inp-vision', 'inp-activities', 'inp-engagement'];
+      inputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', syncPreview);
+      });
+
+      // 3. Form submit & buttons
+      document.getElementById('about-form').addEventListener('submit', saveAboutContent);
+      document.getElementById('top-save-btn').addEventListener('click', () => {
+        document.getElementById('about-form').requestSubmit();
+      });
+      document.getElementById('reset-btn').addEventListener('click', () => {
+        if (currentData) populateForm(currentData);
+      });
+    });
+  </script>
+</body>
+</html>

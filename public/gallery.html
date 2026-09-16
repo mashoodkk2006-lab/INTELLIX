@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Event Gallery | INTELLIX </title>
+  <meta name="description" content="Moments and snapshots from college department events, hackathons, and ceremonies.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  <link rel="stylesheet" href="/css/welcome-loader.css">
+  <script>
+    (function () {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (sessionStorage.getItem('intellix_welcome_shown') && urlParams.get('welcome') !== 'true') {
+        document.documentElement.classList.add('welcome-bypassed');
+      }
+    })();
+  </script>
+  <script src="/js/welcome-loader.js" defer></script>
+</head>
+
+<body>
+  <!-- Animated Welcome / Loading Screen -->
+  <div id="welcome-loader" aria-hidden="true">
+    <div class="welcome-loader-backdrop">
+      <div class="welcome-bg-glow"></div>
+      <div class="welcome-bg-orb welcome-bg-orb-1"></div>
+      <div class="welcome-bg-orb welcome-bg-orb-2"></div>
+    </div>
+    <div class="welcome-stage" id="welcome-stage">
+      <div class="welcome-brand" id="welcome-brand">
+        <div class="welcome-logo-wrap" id="welcome-logo-wrap">
+          <img src="/assets/logo.png" alt="INTELLIX Logo" class="welcome-logo-img" id="welcome-logo-img">
+        </div>
+        <div class="welcome-text-wrap" id="welcome-text-wrap">
+          <div class="welcome-title" id="welcome-title">INTELLIX</div>
+          <div class="welcome-subtitle" id="welcome-subtitle">AL-AZHAR College of Engg & Tech</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <canvas id="bg-canvas"></canvas>
+
+  <header class="navbar">
+    <div class="container navbar-inner">
+      <a href="/" class="nav-brand" id="nav-brand-link">
+        <div class="nav-brand-logo" id="target-brand-logo"><img src="/assets/logo.png" alt="Intellix Logo"></div>
+        <div id="target-brand-text">
+          <div id="target-brand-title">INTELLIX</div>
+          <div id="target-brand-subtitle" style="font-size: 0.68rem; font-weight: 500; color: var(--text-muted); line-height: 1;">AL-AZHAR College of
+            Engg & Tech</div>
+        </div>
+      </a>
+      <ul class="nav-links">
+        <li><a href="/" class="nav-link">Home</a></li>
+        <li><a href="/events.html" class="nav-link">Events</a></li>
+        <li><a href="/achievements.html" class="nav-link">Achievements</a></li>
+        <li><a href="/gallery.html" class="nav-link active">Gallery</a></li>
+        <li><a href="/members.html" class="nav-link">Members</a></li>
+        <li><a href="/verify.html" class="nav-link">Verify Certificate</a></li>
+      </ul>
+      <div class="nav-actions">
+        <button class="theme-toggle-btn" aria-label="Toggle theme"></button>
+      </div>
+    </div>
+  </header>
+
+  <main class="section">
+    <div class="container">
+      <div style="margin-bottom: 2.5rem;">
+        <div class="badge" style="margin-bottom: 0.5rem;">MEDIA VAULT</div>
+        <h1>Event Photo Gallery</h1>
+        <p style="font-size: 1.1rem; margin-top: 0.5rem; max-width: 600px;">
+          Highlights and memorable moments from past department hackathons, prize distributions, and academic workshops.
+        </p>
+      </div>
+
+      <div id="gallery-grid"
+        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
+        <div style="grid-column: 1/-1; text-align: center; padding: 4rem;">
+          <span class="spinner"></span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <div>&copy; 2026 INTELLIX • AL-AZHAR College of Engg & Tech.</div>
+        <div><a href="/events.html">Events Schedule</a></div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/theme.js"></script>
+  <script src="/js/background.js"></script>
+  <script src="/js/api.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const res = await fetchJson('/api/gallery');
+        const grid = document.getElementById('gallery-grid');
+        if (res.success) {
+          if (res.photos.length === 0) {
+            grid.innerHTML = `
+              <div class="empty-state" style="grid-column: 1/-1;">
+                <div class="empty-state-icon">📷</div>
+                <h3>No Photos Yet</h3>
+                <p>Event photographs will be uploaded after upcoming technical workshops.</p>
+              </div>
+            `;
+            return;
+          }
+
+          grid.innerHTML = res.photos.map(p => `
+            <div class="card card-hover fade-in-up">
+              <img src="${p.image_url}" alt="${p.caption || 'Event moment'}" class="card-image">
+              <div class="card-body" style="padding: 1rem;">
+                <p style="font-size: 0.875rem; color: var(--text-primary); font-weight: 500;">
+                  ${p.caption || 'Department Event Moment'}
+                </p>
+                ${p.event_title ? `<span style="font-size: 0.75rem; color: var(--text-muted);">${p.event_title}</span>` : ''}
+              </div>
+            </div>
+          `).join('');
+
+          initScrollReveals();
+        }
+      } catch (err) {
+        document.getElementById('gallery-grid').innerHTML = `<p style="color:#ef4444;text-align:center;">Failed to load gallery</p>`;
+      }
+    });
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,419 @@
+/* ==========================================================================
+   INTELLIX Association Portal - Animated Welcome / Loading Screen
+   ========================================================================== */
+
+/* Immediate bypass when already shown in current browser session */
+html.welcome-bypassed #welcome-loader {
+  display: none !important;
+}
+
+html.welcome-bypassed .nav-brand {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* Prevent scrolling while welcome screen is active */
+body.welcome-active {
+  overflow: hidden !important;
+}
+
+/* Initial state of the real navbar brand during welcome playback:
+   Kept in DOM at exact layout position with opacity 0 so getBoundingClientRect() is 100% accurate */
+.navbar-brand-pending {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Ensure navbar brand text children have inline-block dimensions matching the text glyphs exactly */
+#target-brand-text {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+}
+
+#target-brand-title {
+  display: inline-block !important;
+  font-weight: 700 !important;
+  font-size: 1.15rem !important;
+  letter-spacing: -0.01em !important;
+  line-height: 1.2 !important;
+  color: var(--text-primary) !important;
+}
+
+#target-brand-subtitle {
+  display: inline-block !important;
+  font-size: 0.68rem !important;
+  font-weight: 500 !important;
+  color: var(--text-muted) !important;
+  line-height: 1 !important;
+}
+
+/* Full-screen Loading Overlay */
+#welcome-loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  pointer-events: auto;
+  user-select: none;
+  background-color: transparent;
+}
+
+/* ==========================================================================
+   SUBTLE ANIMATED BACKGROUND: Slow, smooth ambient glow and drifting orbs
+   ========================================================================== */
+.welcome-loader-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--bg-primary, #0a0a0a);
+  z-index: 1;
+  opacity: 1;
+  overflow: hidden;
+  will-change: opacity;
+}
+
+/* Central ambient breathing glow */
+.welcome-bg-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 650px;
+  height: 650px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.045) 0%,
+    rgba(99, 102, 241, 0.035) 32%,
+    rgba(59, 130, 246, 0.018) 55%,
+    transparent 72%
+  );
+  filter: blur(65px);
+  animation: pulseAmbientGlow 7.5s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+[data-theme="light"] .welcome-bg-glow {
+  background: radial-gradient(
+    circle,
+    rgba(59, 130, 246, 0.055) 0%,
+    rgba(99, 102, 241, 0.03) 35%,
+    rgba(0, 0, 0, 0.015) 55%,
+    transparent 72%
+  );
+}
+
+/* Soft floating abstract ambient orbs for subtle, high-end motion */
+.welcome-bg-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(85px);
+  pointer-events: none;
+  opacity: 0.65;
+  will-change: transform;
+}
+
+.welcome-bg-orb-1 {
+  width: 460px;
+  height: 460px;
+  top: 18%;
+  left: 22%;
+  background: radial-gradient(
+    circle,
+    rgba(59, 130, 246, 0.075) 0%,
+    rgba(37, 99, 235, 0.02) 60%,
+    transparent 80%
+  );
+  animation: floatOrb1 12s ease-in-out infinite alternate;
+}
+
+.welcome-bg-orb-2 {
+  width: 520px;
+  height: 520px;
+  bottom: 14%;
+  right: 18%;
+  background: radial-gradient(
+    circle,
+    rgba(139, 92, 246, 0.065) 0%,
+    rgba(99, 102, 241, 0.018) 60%,
+    transparent 80%
+  );
+  animation: floatOrb2 14s ease-in-out infinite alternate;
+}
+
+[data-theme="light"] .welcome-bg-orb-1 {
+  background: radial-gradient(
+    circle,
+    rgba(59, 130, 246, 0.06) 0%,
+    rgba(37, 99, 235, 0.015) 60%,
+    transparent 80%
+  );
+}
+
+[data-theme="light"] .welcome-bg-orb-2 {
+  background: radial-gradient(
+    circle,
+    rgba(99, 102, 241, 0.05) 0%,
+    rgba(139, 92, 246, 0.012) 60%,
+    transparent 80%
+  );
+}
+
+@keyframes pulseAmbientGlow {
+  0% {
+    transform: translate(-50%, -50%) scale(0.94);
+    opacity: 0.75;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.06);
+    opacity: 1;
+  }
+}
+
+@keyframes floatOrb1 {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(50px, -35px, 0) scale(1.06);
+  }
+  100% {
+    transform: translate3d(-25px, 25px, 0) scale(0.96);
+  }
+}
+
+@keyframes floatOrb2 {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-45px, 35px, 0) scale(0.95);
+  }
+  100% {
+    transform: translate3d(35px, -25px, 0) scale(1.05);
+  }
+}
+
+/* Stage container holding the branding elements in viewport center */
+.welcome-stage {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* Floating brand container */
+.welcome-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+}
+
+/* Logo container in center stage */
+.welcome-logo-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.94);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+}
+
+.welcome-logo-wrap.revealed {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Logo image: rendered at clean, crisp large dimensions without artificial blur */
+.welcome-logo-img {
+  width: 120px;
+  height: auto;
+  max-height: 75px;
+  object-fit: contain;
+  display: block;
+}
+
+/* Text container in center stage */
+.welcome-text-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+}
+
+.welcome-text-wrap.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ==========================================================================
+   GLASS GLOSSY SHEEN TEXT ANIMATION: Subtle reflective liquid shine
+   ========================================================================== */
+.welcome-title {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 2.3rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  display: inline-block;
+  white-space: nowrap;
+  position: relative;
+  background: linear-gradient(
+    115deg,
+    #ffffff 0%,
+    #ffffff 30%,
+    rgba(255, 255, 255, 0.62) 42%,
+    rgba(255, 255, 255, 1) 48%,
+    rgba(220, 242, 255, 1) 51%,
+    rgba(255, 255, 255, 1) 54%,
+    rgba(255, 255, 255, 0.62) 60%,
+    #ffffff 72%,
+    #ffffff 100%
+  );
+  background-size: 300% 100%;
+  background-position: 100% 0;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  will-change: background-position, filter;
+}
+
+[data-theme="light"] .welcome-title {
+  background: linear-gradient(
+    115deg,
+    #0a0a0a 0%,
+    #0a0a0a 30%,
+    rgba(10, 10, 10, 0.52) 42%,
+    #2563eb 48%,
+    #60a5fa 51%,
+    #2563eb 54%,
+    rgba(10, 10, 10, 0.52) 60%,
+    #0a0a0a 72%,
+    #0a0a0a 100%
+  );
+  background-size: 300% 100%;
+  background-position: 100% 0;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Glass glossy sweep active state: glides from left to right during the resting pause */
+.welcome-title.glass-glossy {
+  animation: glassGlossSweep 1.15s cubic-bezier(0.4, 0, 0.2, 1) 0.85s forwards;
+}
+
+@keyframes glassGlossSweep {
+  0% {
+    background-position: 100% 0;
+    filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0));
+  }
+  50% {
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.28));
+  }
+  100% {
+    background-position: 0% 0;
+    filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0));
+  }
+}
+
+/* College department subtitle - exact match to navbar styles */
+.welcome-subtitle {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 1.36rem;
+  font-weight: 500;
+  color: var(--text-muted, #888888);
+  line-height: 1;
+  margin-top: 0.35rem;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .welcome-logo-img {
+    width: 100px;
+    max-height: 63px;
+  }
+
+  .welcome-title {
+    font-size: 1.95rem;
+  }
+
+  .welcome-subtitle {
+    font-size: 1.15rem;
+  }
+
+  .welcome-bg-glow {
+    width: 450px;
+    height: 450px;
+  }
+
+  .welcome-bg-orb-1,
+  .welcome-bg-orb-2 {
+    width: 320px;
+    height: 320px;
+  }
+}
+
+@media (max-width: 480px) {
+  .welcome-logo-img {
+    width: 84px;
+    max-height: 53px;
+  }
+
+  .welcome-title {
+    font-size: 1.65rem;
+  }
+
+  .welcome-subtitle {
+    font-size: 0.98rem;
+  }
+}
+
+/* Accessibility: respect user prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .welcome-logo-wrap,
+  .welcome-text-wrap {
+    transition: opacity 0.2s ease !important;
+    transform: none !important;
+  }
+  .welcome-title {
+    animation: none !important;
+    background-position: 0% 0 !important;
+  }
+  .welcome-bg-glow,
+  .welcome-bg-orb {
+    animation: none !important;
+    display: none !important;
+  }
+  .welcome-loader-backdrop {
+    transition: opacity 0.3s ease !important;
+  }
+}

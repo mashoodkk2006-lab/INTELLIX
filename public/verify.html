@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Certificate | INTELLIX </title>
+  <meta name="description"
+    content="Public portal for cryptographic and authenticity verification of INTELLIX digital certificates.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  <link rel="stylesheet" href="/css/welcome-loader.css">
+  <script>
+    (function () {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (sessionStorage.getItem('intellix_welcome_shown') && urlParams.get('welcome') !== 'true') {
+        document.documentElement.classList.add('welcome-bypassed');
+      }
+    })();
+  </script>
+  <script src="/js/welcome-loader.js" defer></script>
+  <style>
+    .verify-box {
+      max-width: 620px;
+      margin: 0 auto;
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 2.5rem 2rem;
+      box-shadow: var(--shadow-md);
+    }
+
+    .result-card {
+      margin-top: 2rem;
+      padding: 1.75rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background-color: var(--bg-secondary);
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Animated Welcome / Loading Screen -->
+  <div id="welcome-loader" aria-hidden="true">
+    <div class="welcome-loader-backdrop">
+      <div class="welcome-bg-glow"></div>
+      <div class="welcome-bg-orb welcome-bg-orb-1"></div>
+      <div class="welcome-bg-orb welcome-bg-orb-2"></div>
+    </div>
+    <div class="welcome-stage" id="welcome-stage">
+      <div class="welcome-brand" id="welcome-brand">
+        <div class="welcome-logo-wrap" id="welcome-logo-wrap">
+          <img src="/assets/logo.png" alt="INTELLIX Logo" class="welcome-logo-img" id="welcome-logo-img">
+        </div>
+        <div class="welcome-text-wrap" id="welcome-text-wrap">
+          <div class="welcome-title" id="welcome-title">INTELLIX</div>
+          <div class="welcome-subtitle" id="welcome-subtitle">AL-AZHAR College of Engg & Tech</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <canvas id="bg-canvas"></canvas>
+
+  <header class="navbar">
+    <div class="container navbar-inner">
+      <a href="/" class="nav-brand" id="nav-brand-link">
+        <div class="nav-brand-logo" id="target-brand-logo"><img src="/assets/logo.png" alt="Intellix Logo"></div>
+        <div id="target-brand-text">
+          <div id="target-brand-title">INTELLIX</div>
+          <div id="target-brand-subtitle" style="font-size: 0.68rem; font-weight: 500; color: var(--text-muted); line-height: 1;">AL-AZHAR College of
+            Engg & Tech</div>
+        </div>
+      </a>
+      <ul class="nav-links">
+        <li><a href="/" class="nav-link">Home</a></li>
+        <li><a href="/events.html" class="nav-link">Events</a></li>
+        <li><a href="/achievements.html" class="nav-link">Achievements</a></li>
+        <li><a href="/verify.html" class="nav-link active">Verify Certificate</a></li>
+      </ul>
+      <div class="nav-actions">
+        <button class="theme-toggle-btn" aria-label="Toggle theme"></button>
+      </div>
+    </div>
+  </header>
+
+  <main class="section">
+    <div class="container">
+      <div class="verify-box fade-in">
+        <div class="badge badge-pill" style="margin-bottom: 0.75rem;">CREDENTIAL VERIFICATION</div>
+        <h2 style="margin-bottom: 0.5rem;">Verify Digital Certificate</h2>
+        <p style="margin-bottom: 1.75rem; font-size: 0.95rem;">
+          Enter the unique Certificate ID (found on the bottom of the certificate or encoded in the QR code) to verify
+          its validity.
+        </p>
+
+        <form id="verify-form" style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+          <input type="text" id="cert-input" class="form-control" placeholder="e.g. INTELLIX-CERT-2026-0001"
+            style="flex-grow: 1; font-family: monospace; font-weight: 600;" required>
+          <button type="submit" class="btn btn-primary" id="verify-btn">Verify Authenticity &rarr;</button>
+        </form>
+
+        <div id="verify-result" class="result-card">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <div>&copy; 2026 INTELLIX • AL-AZHAR College of Engg & Tech.</div>
+        <div>All issued certificates are tamper-proof and verifiable.</div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/theme.js"></script>
+  <script src="/js/background.js"></script>
+  <script src="/js/api.js"></script>
+  <script>
+    async function performVerification(code) {
+      const resultCard = document.getElementById('verify-result');
+      const verifyBtn = document.getElementById('verify-btn');
+
+      resultCard.style.display = 'block';
+      resultCard.innerHTML = `
+        <div style="text-align: center; padding: 1.5rem;">
+          <span class="spinner"></span>
+          <p style="margin-top: 0.5rem; font-size: 0.9rem;">Verifying credential records...</p>
+        </div>
+      `;
+
+      verifyBtn.disabled = true;
+
+      try {
+        const res = await fetchJson(`/api/certificates/verify?code=${encodeURIComponent(code.trim())}`);
+        if (res.success && res.valid) {
+          const c = res.certificate;
+          resultCard.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 0.6rem; color: #4ade80; margin-bottom: 1.25rem;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <h3 style="color: #4ade80; font-size: 1.25rem;">Certificate Verified & Authentic</h3>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.925rem;">
+              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                <span style="color: var(--text-muted);">Participant Name</span>
+                <span style="font-weight: 700;">${c.participant_name}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                <span style="color: var(--text-muted);">Event Name</span>
+                <span style="font-weight: 600;">${c.event_title}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                <span style="color: var(--text-muted);">Certificate Title</span>
+                <span>${c.certificate_title}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                <span style="color: var(--text-muted);">Issue Date</span>
+                <span>${formatDate(c.issue_date)}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                <span style="color: var(--text-muted);">Certificate ID</span>
+                <span style="font-family: monospace; font-weight: 700;">${c.code}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding-bottom: 0.5rem;">
+                <span style="color: var(--text-muted);">Authorized Signatory</span>
+                <span>${c.signatory_name} (${c.signatory_designation})</span>
+              </div>
+            </div>
+
+            <div style="margin-top: 1.5rem; text-align: center;">
+              <a href="${c.download_url}" target="_blank" class="btn btn-outline btn-sm">
+                📥 Download Official PDF Copy
+              </a>
+            </div>
+          `;
+        }
+      } catch (err) {
+        resultCard.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 0.6rem; color: #ef4444; margin-bottom: 0.5rem;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            <h3 style="color: #ef4444; font-size: 1.15rem;">Certificate Not Found</h3>
+          </div>
+          <p style="font-size: 0.875rem; color: var(--text-secondary);">
+            The Certificate ID "<strong>${code}</strong>" could not be verified in the association registry. Please verify the ID format and try again.
+          </p>
+        `;
+      } finally {
+        verifyBtn.disabled = false;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const initialId = params.get('id');
+      if (initialId) {
+        document.getElementById('cert-input').value = initialId;
+        performVerification(initialId);
+      }
+
+      document.getElementById('verify-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const code = document.getElementById('cert-input').value;
+        if (code) {
+          performVerification(code);
+        }
+      });
+    });
+  </script>
+</body>
+
+</html>

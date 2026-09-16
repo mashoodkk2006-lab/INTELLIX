@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Photo Gallery | Admin Portal</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+  <div class="dashboard-layout">
+    <div id="dashboard-sidebar-container"></div>
+
+    <main class="dashboard-main">
+      <header class="dashboard-topbar">
+        <div>
+          <h3 style="font-size: 1.15rem;">Event Photo Gallery Management</h3>
+        </div>
+        <div>
+          <button class="btn btn-primary btn-sm" onclick="openUploadModal()">+ Upload Photo</button>
+        </div>
+      </header>
+
+      <div class="dashboard-content">
+        <div class="card">
+          <div class="card-body" style="padding: 1.5rem;">
+            <div id="gallery-manage-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.5rem;">
+              <div style="grid-column: 1/-1; text-align: center; padding: 2.5rem;"><span class="spinner"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Upload Modal -->
+  <div class="modal-backdrop" id="gallery-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>Upload Event Photograph</h3>
+        <button class="modal-close-btn" onclick="closeUploadModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="gallery-form" enctype="multipart/form-data">
+          <div class="form-group">
+            <label class="form-label">Photo File <span class="required-star">*</span></label>
+            <input type="file" name="photo" class="form-control" accept="image/*" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Caption / Description</label>
+            <input type="text" name="caption" class="form-control" placeholder="e.g. Inauguration of Code Hunt 2026">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Associated Event (Optional)</label>
+            <select name="event_id" id="gallery-event-select" class="form-select">
+              <option value="">General Association Media</option>
+            </select>
+          </div>
+
+          <div class="modal-footer" style="padding-left:0; padding-right:0;">
+            <button type="button" class="btn btn-secondary" onclick="closeUploadModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="upload-btn">Upload to Gallery</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/theme.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/dashboard/js/dashboard-common.js"></script>
+  <script>
+    async function loadGallery() {
+      try {
+        const [gRes, eRes] = await Promise.all([
+          fetchJson('/api/gallery'),
+          fetchJson('/api/events')
+        ]);
+
+        if (eRes.success) {
+          const select = document.getElementById('gallery-event-select');
+          select.innerHTML = '<option value="">General Media</option>' + eRes.events.map(e => `<option value="${e.id}">${e.title}</option>`).join('');
+        }
+
+        const grid = document.getElementById('gallery-manage-grid');
+        if (gRes.success) {
+          if (gRes.photos.length === 0) {
+            grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 3rem;">No gallery photos uploaded yet.</div>`;
+            return;
+          }
+
+          grid.innerHTML = gRes.photos.map(p => `
+            <div class="card" style="overflow: hidden;">
+              <img src="${p.image_url}" alt="${p.caption || 'Event image'}" style="width: 100%; height: 160px; object-fit: cover;">
+              <div style="padding: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                <p style="font-size: 0.85rem; font-weight: 500; line-clamp: 1;">${p.caption || 'No caption'}</p>
+                <button class="btn btn-sm btn-danger" onclick="deletePhoto(${p.id})">Delete</button>
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (e) {}
+    }
+
+    function openUploadModal() { document.getElementById('gallery-modal').classList.add('open'); }
+    function closeUploadModal() { document.getElementById('gallery-modal').classList.remove('open'); }
+
+    async function deletePhoto(id) {
+      if (!confirm('Delete photo?')) return;
+      try {
+        const res = await fetchJson(`/api/gallery/${id}`, { method: 'DELETE' });
+        if (res.success) {
+          showToast('Photo deleted', 'success');
+          loadGallery();
+        }
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadGallery();
+
+      document.getElementById('gallery-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('upload-btn');
+        btn.disabled = true;
+        btn.innerText = 'Uploading...';
+
+        const formData = new FormData(e.target);
+        try {
+          const res = await fetch('/api/gallery', {
+            method: 'POST',
+            body: formData
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.message || 'Upload failed');
+
+          showToast('Photo uploaded successfully', 'success');
+          closeUploadModal();
+          e.target.reset();
+          loadGallery();
+        } catch (err) {
+          showToast(err.message, 'error');
+        } finally {
+          btn.disabled = false;
+          btn.innerText = 'Upload to Gallery';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

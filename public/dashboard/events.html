@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Events | Association Admin Portal</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+  <div class="dashboard-layout">
+    <div id="dashboard-sidebar-container"></div>
+
+    <main class="dashboard-main">
+      <header class="dashboard-topbar">
+        <div>
+          <h3 style="font-size: 1.15rem;">Department Event Catalogue</h3>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <a href="/dashboard/event-create.html" class="btn btn-primary btn-sm">+ Create New Event</a>
+        </div>
+      </header>
+
+      <div class="dashboard-content">
+        <div class="card">
+          <div class="card-body" style="padding: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
+              <input type="text" id="event-filter-input" class="form-control" placeholder="Search by title, code, venue..." style="max-width: 320px;">
+              <span id="events-total-count" style="font-size: 0.875rem; color: var(--text-muted);">Loading events...</span>
+            </div>
+
+            <div class="table-container">
+              <table class="table" id="events-table">
+                <thead>
+                  <tr>
+                    <th>Code</th>
+                    <th>Event Details</th>
+                    <th>Date & Venue</th>
+                    <th>Registrations</th>
+                    <th>Registration Toggle</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td colspan="7" style="text-align: center; padding: 2.5rem;"><span class="spinner"></span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/theme.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/dashboard/js/dashboard-common.js"></script>
+  <script>
+    let eventsList = [];
+
+    async function loadEvents() {
+      try {
+        const res = await fetchJson('/api/events');
+        if (res.success) {
+          eventsList = res.events;
+          renderTable();
+        }
+      } catch (err) {
+        document.querySelector('#events-table tbody').innerHTML = `
+          <tr><td colspan="7" style="text-align: center; color: #ef4444;">Failed to load events: ${err.message}</td></tr>
+        `;
+      }
+    }
+
+    function renderTable() {
+      const query = document.getElementById('event-filter-input').value.toLowerCase().trim();
+      const tbody = document.querySelector('#events-table tbody');
+
+      const filtered = eventsList.filter(e => 
+        !query ||
+        e.title.toLowerCase().includes(query) ||
+        e.code.toLowerCase().includes(query) ||
+        e.venue.toLowerCase().includes(query)
+      );
+
+      document.getElementById('events-total-count').innerText = `Total: ${filtered.length} events`;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">No matching events found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(evt => {
+        const regIsOpen = evt.registration_open === 1 || evt.registration_open === true;
+        const toggleBtnText = regIsOpen ? 'Close Reg' : 'Open Reg';
+        const toggleBtnClass = regIsOpen ? 'btn-outline' : 'btn-primary';
+
+        return `
+          <tr>
+            <td><strong>${evt.code}</strong></td>
+            <td>
+              <div style="font-weight: 700;"><a href="/events/${evt.slug}" target="_blank">${evt.title}</a></div>
+              <span class="badge" style="font-size: 0.7rem; margin-top: 0.2rem;">${evt.event_type}</span>
+            </td>
+            <td>
+              <div style="font-size: 0.85rem;">📅 ${formatDate(evt.start_datetime, true)}</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted);">📍 ${evt.venue}</div>
+            </td>
+            <td>
+              <div style="font-weight: 600;">${evt.registered_count || 0} / ${evt.max_participants}</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">${evt.seats_available} seats left</div>
+            </td>
+            <td>
+              <button class="btn btn-sm ${toggleBtnClass}" onclick="toggleReg(${evt.id})">
+                ${toggleBtnText}
+              </button>
+            </td>
+            <td>
+              <span class="badge ${evt.status === 'published' ? 'badge-success' : 'badge-warning'}">${evt.status}</span>
+            </td>
+            <td>
+              <div style="display: flex; gap: 0.35rem; flex-wrap: wrap;">
+                <a href="/dashboard/registrations.html?eventId=${evt.id}" class="btn btn-sm btn-secondary" title="View Registrations">Participants</a>
+                <a href="/dashboard/attendance.html?eventId=${evt.id}" class="btn btn-sm btn-outline" title="Take Attendance">Attendance</a>
+                <a href="/dashboard/certificates.html?eventId=${evt.id}" class="btn btn-sm btn-outline" title="Generate Certificates">Certs</a>
+                <button class="btn btn-sm btn-danger" onclick="deleteEvent(${evt.id}, '${evt.title.replace(/'/g, "\\'")}')">Del</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function toggleReg(id) {
+      try {
+        const res = await fetchJson(`/api/events/${id}/toggle-registration`, { method: 'PATCH' });
+        if (res.success) {
+          showToast(res.message, 'success');
+          loadEvents();
+        }
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function deleteEvent(id, title) {
+      if (!confirm(`Are you sure you want to permanently delete event "${title}" and all its participant data?`)) {
+        return;
+      }
+      try {
+        const res = await fetchJson(`/api/events/${id}`, { method: 'DELETE' });
+        if (res.success) {
+          showToast('Event deleted successfully', 'success');
+          loadEvents();
+        }
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadEvents();
+      document.getElementById('event-filter-input').addEventListener('input', renderTable);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,335 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin RBAC & Sub-Admins | Association Admin Portal</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+  <div class="dashboard-layout">
+    <div id="dashboard-sidebar-container"></div>
+
+    <main class="dashboard-main">
+      <header class="dashboard-topbar">
+        <div>
+          <h3 style="font-size: 1.15rem;">Admin User Accounts & Granular RBAC</h3>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <button class="btn btn-primary btn-sm" onclick="openCreateAdminModal()">+ Create Admin Account</button>
+        </div>
+      </header>
+
+      <div class="dashboard-content">
+        <div class="card">
+          <div class="card-body" style="padding: 1.5rem;">
+            <div style="margin-bottom: 1.25rem;">
+              <h4 style="margin-bottom: 0.35rem;">Administrative Access Matrix</h4>
+              <p style="font-size: 0.85rem; color: var(--text-muted);">
+                Student Coordinator holds primary system control. Sub-admins can be restricted to specific events with granular permission flags.
+              </p>
+            </div>
+
+            <div class="table-container">
+              <table class="table" id="admins-table">
+                <thead>
+                  <tr>
+                    <th>Admin Name</th>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Assigned Events</th>
+                    <th>Granular Permissions</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td colspan="7" style="text-align: center; padding: 2.5rem;"><span class="spinner"></span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Create Admin Modal -->
+  <div class="modal-backdrop" id="admin-modal">
+    <div class="modal-dialog modal-dialog-lg">
+      <div class="modal-header">
+        <h3 id="admin-modal-title">Create Administrative Account</h3>
+        <button class="modal-close-btn" onclick="closeAdminModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="admin-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Full Name <span class="required-star">*</span></label>
+              <input type="text" name="full_name" class="form-control" placeholder="e.g. Sarah Jenkins (Reg Desk 01)" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Username <span class="required-star">*</span></label>
+              <input type="text" name="username" class="form-control" placeholder="e.g. regadmin2" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Email Address <span class="required-star">*</span></label>
+              <input type="email" name="email" class="form-control" placeholder="admin@intellix-association.edu" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Password <span class="required-star">*</span></label>
+              <input type="password" name="password" class="form-control" placeholder="••••••••••••" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Administrative Role <span class="required-star">*</span></label>
+            <select name="role" id="admin-role-select" class="form-select" required>
+              <option value="registration_admin">Registration Admin (Event-Scoped Desk Operator)</option>
+              <option value="hod">HOD (Supervisory View & Approval)</option>
+              <option value="coordinator">Student Coordinator (Super Administrator)</option>
+            </select>
+          </div>
+
+          <!-- Event Assignment -->
+          <div class="form-group" id="event-assignment-section" style="border-top: 1px solid var(--border-color); padding-top: 1rem;">
+            <label class="form-label">Assign to Specific Events</label>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.6rem;">
+              Registration admins will only be permitted to view and manage participants for the checked events.
+            </p>
+            <div id="events-checkbox-list" style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 140px; overflow-y: auto; padding: 0.5rem; background: var(--bg-secondary); border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+              <!-- Injected by JS -->
+            </div>
+          </div>
+
+          <!-- Granular Permissions -->
+          <div class="form-group" style="border-top: 1px solid var(--border-color); padding-top: 1rem;">
+            <label class="form-label">Configurable Permissions</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.5rem;">
+              <label class="form-check">
+                <input type="checkbox" name="can_view_registrations" value="1" checked>
+                <span>View Registrations</span>
+              </label>
+              <label class="form-check">
+                <input type="checkbox" name="can_manage_registrations" value="1" checked>
+                <span>Manage Registrations</span>
+              </label>
+              <label class="form-check">
+                <input type="checkbox" name="can_mark_attendance" value="1" checked>
+                <span>Mark Attendance</span>
+              </label>
+              <label class="form-check">
+                <input type="checkbox" name="can_generate_certificates" value="1">
+                <span>Generate Certificates</span>
+              </label>
+              <label class="form-check">
+                <input type="checkbox" name="can_create_events" value="1">
+                <span>Create Events</span>
+              </label>
+              <label class="form-check">
+                <input type="checkbox" name="can_delete_events" value="1">
+                <span>Delete Events</span>
+              </label>
+              <label class="form-check">
+                <input type="checkbox" name="can_manage_admins" value="1">
+                <span>Manage Other Admins</span>
+              </label>
+            </div>
+          </div>
+
+          <div id="admin-form-error" style="color: #ef4444; font-size: 0.85rem; margin-top: 0.75rem; display: none;"></div>
+
+          <div class="modal-footer" style="padding-left: 0; padding-right: 0; margin-top: 1.5rem;">
+            <button type="button" class="btn btn-secondary" onclick="closeAdminModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="save-admin-btn">Save Account &rarr;</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/theme.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/dashboard/js/dashboard-common.js"></script>
+  <script>
+    let adminsList = [];
+    let allEvents = [];
+
+    async function loadAdmins() {
+      try {
+        const [aRes, eRes] = await Promise.all([
+          fetchJson('/api/admins'),
+          fetchJson('/api/events')
+        ]);
+
+        if (aRes.success) {
+          adminsList = aRes.admins;
+          renderAdminsTable();
+        }
+        if (eRes.success) {
+          allEvents = eRes.events;
+        }
+      } catch (err) {
+        document.querySelector('#admins-table tbody').innerHTML = `
+          <tr><td colspan="7" style="text-align: center; color: #ef4444;">Access restricted or failed to load: ${err.message}</td></tr>
+        `;
+      }
+    }
+
+    function renderAdminsTable() {
+      const tbody = document.querySelector('#admins-table tbody');
+      if (adminsList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">No admin accounts.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = adminsList.map(a => {
+        const p = a.permissions || {};
+        const permList = [];
+        if (p.can_view_registrations) permList.push('View Reg');
+        if (p.can_manage_registrations) permList.push('Manage Reg');
+        if (p.can_mark_attendance) permList.push('Attendance');
+        if (p.can_generate_certificates) permList.push('Certs');
+        if (p.can_create_events) permList.push('Create Event');
+        if (p.can_manage_admins) permList.push('Manage Admins');
+
+        const assignedLabels = (a.assignedEvents && a.assignedEvents.length > 0)
+          ? a.assignedEvents.map(e => `<span class="badge badge-pill">${e.code}</span>`).join(' ')
+          : (a.role === 'coordinator' ? '<span style="font-size:0.8rem;color:var(--text-muted);">All Events (Global)</span>' : '<span style="font-size:0.8rem;color:var(--text-muted);">None Assigned</span>');
+
+        const roleBadge = a.role === 'coordinator' ? '<span class="badge badge-warning">Coordinator (Main)</span>' :
+                          a.role === 'hod' ? '<span class="badge">HOD</span>' :
+                          '<span class="badge badge-success">Registration Admin</span>';
+
+        return `
+          <tr>
+            <td>
+              <div style="font-weight: 700;">${a.full_name}</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">${a.email}</div>
+            </td>
+            <td><code>${a.username}</code></td>
+            <td>${roleBadge}</td>
+            <td>${assignedLabels}</td>
+            <td>
+              <div style="display: flex; gap: 0.3rem; flex-wrap: wrap;">
+                ${permList.map(item => `<span class="badge" style="font-size: 0.65rem;">${item}</span>`).join('')}
+              </div>
+            </td>
+            <td>
+              <span class="badge ${a.is_active ? 'badge-success' : 'badge-danger'}">
+                ${a.is_active ? 'Active' : 'Disabled'}
+              </span>
+            </td>
+            <td>
+              ${a.role !== 'coordinator' ? `
+                <button class="btn btn-sm btn-danger" onclick="deleteAdmin(${a.id}, '${a.username}')">Delete</button>
+              ` : '<span style="font-size: 0.75rem; color: var(--text-muted);">Protected</span>'}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function openCreateAdminModal() {
+      const checkboxContainer = document.getElementById('events-checkbox-list');
+      if (allEvents.length === 0) {
+        checkboxContainer.innerHTML = '<span style="font-size:0.8rem; color:var(--text-muted);">No events created yet.</span>';
+      } else {
+        checkboxContainer.innerHTML = allEvents.map(e => `
+          <label class="form-check" style="font-size: 0.85rem;">
+            <input type="checkbox" name="assigned_events" value="${e.id}">
+            <span>${e.code}: ${e.title}</span>
+          </label>
+        `).join('');
+      }
+
+      document.getElementById('admin-form-error').style.display = 'none';
+      document.getElementById('admin-modal').classList.add('open');
+    }
+
+    function closeAdminModal() {
+      document.getElementById('admin-modal').classList.remove('open');
+    }
+
+    async function deleteAdmin(id, username) {
+      if (!confirm(`Permanently remove admin account "${username}"?`)) return;
+      try {
+        const res = await fetchJson(`/api/admins/${id}`, { method: 'DELETE' });
+        if (res.success) {
+          showToast('Admin deleted successfully', 'success');
+          loadAdmins();
+        }
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadAdmins();
+
+      document.getElementById('admin-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = document.getElementById('save-admin-btn');
+        const errDiv = document.getElementById('admin-form-error');
+        errDiv.style.display = 'none';
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Saving...';
+
+        const form = e.target;
+        const assigned = Array.from(form.querySelectorAll('input[name="assigned_events"]:checked')).map(cb => parseInt(cb.value, 10));
+
+        const payload = {
+          full_name: form.full_name.value,
+          username: form.username.value,
+          email: form.email.value,
+          password: form.password.value,
+          role: form.role.value,
+          assigned_events: assigned,
+          permissions: {
+            can_view_registrations: form.can_view_registrations.checked,
+            can_manage_registrations: form.can_manage_registrations.checked,
+            can_mark_attendance: form.can_mark_attendance.checked,
+            can_generate_certificates: form.can_generate_certificates.checked,
+            can_create_events: form.can_create_events.checked,
+            can_delete_events: form.can_delete_events.checked,
+            can_manage_admins: form.can_manage_admins.checked
+          }
+        };
+
+        try {
+          const res = await fetchJson('/api/admins', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          if (res.success) {
+            showToast('Admin account created successfully', 'success');
+            closeAdminModal();
+            form.reset();
+            loadAdmins();
+          }
+        } catch (err) {
+          errDiv.innerText = err.message;
+          errDiv.style.display = 'block';
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.innerText = 'Save Account →';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

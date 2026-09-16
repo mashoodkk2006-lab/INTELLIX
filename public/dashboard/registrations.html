@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Participant Registrations | Association Admin Portal</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+  <div class="dashboard-layout">
+    <div id="dashboard-sidebar-container"></div>
+
+    <main class="dashboard-main">
+      <header class="dashboard-topbar">
+        <div>
+          <h3 style="font-size: 1.15rem;">Participant Registrations</h3>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <button class="btn btn-primary btn-sm" id="export-csv-btn">📥 Export to CSV</button>
+        </div>
+      </header>
+
+      <div class="dashboard-content">
+        <!-- Event Selector & Search -->
+        <div class="card" style="margin-bottom: 1.5rem;">
+          <div class="card-body" style="padding: 1.25rem;">
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+              <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                <div class="form-group" style="margin-bottom: 0; width: 280px;">
+                  <label class="form-label" style="font-size: 0.8rem;">Filter by Event</label>
+                  <select id="event-select" class="form-select"></select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0; width: 240px;">
+                  <label class="form-label" style="font-size: 0.8rem;">Search Participant</label>
+                  <input type="text" id="participant-search" class="form-control" placeholder="Name, Reg No, Email...">
+                </div>
+              </div>
+
+              <div id="registration-summary-badge" style="font-size: 0.875rem; font-weight: 600;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Participants Table -->
+        <div class="card">
+          <div class="card-body" style="padding: 1.5rem;">
+            <div class="table-container">
+              <table class="table" id="participants-table">
+                <thead>
+                  <tr>
+                    <th>Reg ID</th>
+                    <th>Full Name</th>
+                    <th>Register Number</th>
+                    <th>Department & Sem</th>
+                    <th>Contact</th>
+                    <th>Attendance</th>
+                    <th>Custom Fields</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td colspan="8" style="text-align: center; padding: 2.5rem;"><span class="spinner"></span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Custom Fields View Modal -->
+  <div class="modal-backdrop" id="custom-details-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="custom-modal-title">Participant Dynamic Responses</h3>
+        <button class="modal-close-btn" onclick="closeCustomModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="custom-modal-body">
+        <!-- Injected by JS -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeCustomModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/theme.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/dashboard/js/dashboard-common.js"></script>
+  <script>
+    let currentEventId = null;
+    let registrationsData = [];
+
+    async function initPage() {
+      try {
+        const res = await fetchJson('/api/events');
+        if (res.success && res.events.length > 0) {
+          const select = document.getElementById('event-select');
+          select.innerHTML = res.events.map(e => `
+            <option value="${e.id}">${e.code}: ${e.title}</option>
+          `).join('');
+
+          // URL param check
+          const urlParams = new URLSearchParams(window.location.search);
+          const initialEvent = urlParams.get('eventId');
+          if (initialEvent) {
+            select.value = initialEvent;
+          }
+
+          currentEventId = select.value;
+          select.addEventListener('change', () => {
+            currentEventId = select.value;
+            loadRegistrations();
+          });
+
+          loadRegistrations();
+        }
+      } catch (e) {}
+    }
+
+    async function loadRegistrations() {
+      if (!currentEventId) return;
+      const tbody = document.querySelector('#participants-table tbody');
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 2.5rem;"><span class="spinner"></span></td></tr>`;
+
+      try {
+        const res = await fetchJson(`/api/events/${currentEventId}/registrations`);
+        if (res.success) {
+          registrationsData = res.registrations;
+          renderRegistrationsTable();
+        }
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #ef4444;">Failed to load: ${err.message}</td></tr>`;
+      }
+    }
+
+    function renderRegistrationsTable() {
+      const query = document.getElementById('participant-search').value.toLowerCase().trim();
+      const tbody = document.querySelector('#participants-table tbody');
+
+      const filtered = registrationsData.filter(r =>
+        !query ||
+        r.full_name.toLowerCase().includes(query) ||
+        r.register_number.toLowerCase().includes(query) ||
+        r.registration_code.toLowerCase().includes(query) ||
+        r.email.toLowerCase().includes(query) ||
+        (r.department && r.department.toLowerCase().includes(query))
+      );
+
+      document.getElementById('registration-summary-badge').innerText = `Showing ${filtered.length} of ${registrationsData.length} registrations`;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">No registrations found for this event.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(r => {
+        const attBadge = r.attendance_status === 'present' ? '<span class="badge badge-success">Present</span>' :
+                         r.attendance_status === 'absent' ? '<span class="badge badge-danger">Absent</span>' :
+                         '<span class="badge">Unmarked</span>';
+
+        const customKeys = Object.keys(r.custom_fields || {});
+        const hasCustom = customKeys.length > 0 || !!r.team_name;
+
+        return `
+          <tr>
+            <td><strong style="font-family: monospace;">${r.registration_code}</strong></td>
+            <td style="font-weight: 600;">
+              ${r.full_name}
+              ${r.team_name ? `<br><span class="badge badge-primary" style="font-size: 0.72rem; font-weight: normal; margin-top: 0.25rem;">👥 ${r.team_name}</span>` : ''}
+            </td>
+            <td>${r.register_number}</td>
+            <td>${r.department}<br><span style="font-size: 0.75rem; color: var(--text-muted);">${r.semester}</span></td>
+            <td style="font-size: 0.8rem;">
+              <div>✉️ ${r.email}</div>
+              <div>📞 ${r.phone}</div>
+            </td>
+            <td>${attBadge}</td>
+            <td>
+              ${hasCustom 
+                ? `<button class="btn btn-outline btn-sm" onclick="viewCustomData(${r.id})">View (${customKeys.length + (r.team_name ? 1 : 0)})</button>`
+                : `<span style="font-size: 0.75rem; color: var(--text-muted);">Default Only</span>`}
+            </td>
+            <td>
+              <button class="btn btn-sm btn-danger" onclick="deleteReg(${r.id}, '${r.full_name.replace(/'/g, "\\'")}')">Remove</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function viewCustomData(regId) {
+      const reg = registrationsData.find(r => r.id === regId);
+      if (!reg) return;
+
+      document.getElementById('custom-modal-title').innerText = `${reg.full_name} (${reg.registration_code})`;
+      const body = document.getElementById('custom-modal-body');
+
+      let teamHtml = '';
+      if (reg.team_name) {
+        let membersFormatted = 'None';
+        if (reg.team_members) {
+          try {
+            const parsed = JSON.parse(reg.team_members);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              membersFormatted = parsed.map((m, idx) => `• #${idx + 2}: ${typeof m === 'string' ? m : `${m.name || 'Member'} (${m.identifier || ''})`}`).join('<br>');
+            }
+          } catch {
+            membersFormatted = reg.team_members;
+          }
+        }
+
+        teamHtml = `
+          <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; background: rgba(59, 130, 246, 0.05); padding: 0.75rem; border-radius: var(--radius-sm);">
+            <div style="font-size: 0.8rem; font-weight: 600; color: #3b82f6; text-transform: uppercase;">
+              👥 Team Details
+            </div>
+            <div style="font-size: 0.95rem; color: var(--text-primary); margin-top: 0.25rem;">
+              <strong>Team Name:</strong> ${reg.team_name}
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.35rem;">
+              <strong>Additional Members:</strong><br>${membersFormatted}
+            </div>
+          </div>
+        `;
+      }
+
+      const entries = Object.entries(reg.custom_fields || {});
+      const customHtml = entries.map(([key, item]) => `
+        <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+          <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">
+            ${item.label || key}
+          </div>
+          <div style="font-size: 1rem; color: var(--text-primary); margin-top: 0.2rem;">
+            ${item.value || 'None'}
+          </div>
+        </div>
+      `).join('');
+
+      body.innerHTML = teamHtml + customHtml;
+
+      document.getElementById('custom-details-modal').classList.add('open');
+    }
+
+    function closeCustomModal() {
+      document.getElementById('custom-details-modal').classList.remove('open');
+    }
+
+    async function deleteReg(id, name) {
+      if (!confirm(`Are you sure you want to remove participant "${name}"?`)) return;
+      try {
+        const res = await fetchJson(`/api/registrations/${id}`, { method: 'DELETE' });
+        if (res.success) {
+          showToast('Registration deleted', 'success');
+          loadRegistrations();
+        }
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initPage();
+      document.getElementById('participant-search').addEventListener('input', renderRegistrationsTable);
+      document.getElementById('export-csv-btn').addEventListener('click', () => {
+        if (currentEventId) {
+          window.location.href = `/api/events/${currentEventId}/registrations/export`;
+        }
+      });
+    });
+  </script>
+</body>
+</html>

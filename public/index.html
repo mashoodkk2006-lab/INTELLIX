@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>INTELLIX | Events & Achievements</title>
+  <meta name="description"
+    content="Official college department association portal for events, registrations, achievements, and digital verified certificates.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  <link rel="stylesheet" href="/css/welcome-loader.css">
+  <script>
+    (function () {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (sessionStorage.getItem('intellix_welcome_shown') && urlParams.get('welcome') !== 'true') {
+        document.documentElement.classList.add('welcome-bypassed');
+      }
+    })();
+  </script>
+  <script src="/js/welcome-loader.js" defer></script>
+</head>
+
+<body>
+  <!-- Animated Welcome / Loading Screen -->
+  <div id="welcome-loader" aria-hidden="true">
+    <div class="welcome-loader-backdrop">
+      <div class="welcome-bg-glow"></div>
+      <div class="welcome-bg-orb welcome-bg-orb-1"></div>
+      <div class="welcome-bg-orb welcome-bg-orb-2"></div>
+    </div>
+    <div class="welcome-stage" id="welcome-stage">
+      <div class="welcome-brand" id="welcome-brand">
+        <div class="welcome-logo-wrap" id="welcome-logo-wrap">
+          <img src="/assets/logo.png" alt="INTELLIX Logo" class="welcome-logo-img" id="welcome-logo-img">
+        </div>
+        <div class="welcome-text-wrap" id="welcome-text-wrap">
+          <div class="welcome-title" id="welcome-title">INTELLIX</div>
+          <div class="welcome-subtitle" id="welcome-subtitle">AL-AZHAR College of Engg & Tech</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <canvas id="bg-canvas"></canvas>
+
+  <!-- Top Navigation Bar -->
+  <header class="navbar">
+    <div class="container navbar-inner">
+      <a href="/" class="nav-brand" id="nav-brand-link">
+        <div class="nav-brand-logo" id="target-brand-logo"><img src="/assets/logo.png" alt="Intellix Logo"></div>
+        <div id="target-brand-text">
+          <div id="target-brand-title">INTELLIX</div>
+          <div id="target-brand-subtitle" style="font-size: 0.68rem; font-weight: 500; color: var(--text-muted); line-height: 1;">AL-AZHAR College of
+            Engg & Tech</div>
+        </div>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="/" class="nav-link active">Home</a></li>
+        <li><a href="#about-section" class="nav-link">About Us</a></li>
+        <li><a href="/events.html" class="nav-link">Events</a></li>
+        <li><a href="/achievements.html" class="nav-link">Achievements</a></li>
+        <li><a href="/gallery.html" class="nav-link">Gallery</a></li>
+        <li><a href="/members.html" class="nav-link">Members</a></li>
+        <li><a href="/verify.html" class="nav-link">Verify Certificate</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <button class="theme-toggle-btn" aria-label="Toggle theme" id="theme-btn">
+          <!-- Injected by theme.js -->
+        </button>
+        <button class="hamburger-btn" aria-label="Open mobile menu" id="hamburger-btn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Drawer -->
+  <nav class="mobile-nav" id="mobile-drawer">
+    <a href="/" class="mobile-nav-link">Home</a>
+    <a href="#about-section" class="mobile-nav-link">About Us</a>
+    <a href="/events.html" class="mobile-nav-link">Events</a>
+    <a href="/achievements.html" class="mobile-nav-link">Achievements</a>
+    <a href="/gallery.html" class="mobile-nav-link">Gallery</a>
+    <a href="/members.html" class="mobile-nav-link">Association Members</a>
+    <a href="/verify.html" class="mobile-nav-link">Verify Certificate</a>
+  </nav>
+
+  <!-- Hero Section -->
+  <main>
+    <section class="section hero-section" style="padding-top: 5rem; padding-bottom: 4rem;">
+      <div class="container text-center" style="max-width: 860px; text-align: center;">
+        <div class="badge badge-pill fade-in-up delay-1" style="margin-bottom: 1.25rem;">DEPARTMENT OF ARTIFICIAL
+          INTELLIGENCE & MACHINE LEARNING</div>
+        <h1 class="fade-in-up delay-2 glass-gloss-title" style="margin-bottom: 1.5rem;">Igniting Ideas, Inspiring Innovation, Building Intelligence</h1>
+        <p class="fade-in-up delay-3"
+          style="font-size: 1.15rem; margin-bottom: 2.25rem; max-width: 680px; margin-left: auto; margin-right: auto;">
+          The official student association portal for technical hackathons, coding symposiums, academic milestones, and
+          verifiable digital certificates.
+        </p>
+        <div class="fade-in-up delay-4" style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+          <a href="/events.html" class="btn btn-primary btn-lg" id="hero-explore-btn">Explore Events &rarr;</a>
+          <a href="/verify.html" class="btn btn-outline btn-lg" id="hero-verify-btn">Verify Certificate</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Real-Time Dynamic Statistics Counter -->
+    <section class="section"
+      style="padding: 2.5rem 0; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); background-color: var(--bg-secondary);">
+      <div class="container">
+        <div class="stat-grid" style="margin-bottom: 0;" id="stats-counter-grid">
+          <div class="stat-card text-center fade-in-up delay-1" style="align-items: center;">
+            <div class="stat-card-title">Events Conducted</div>
+            <div class="stat-card-value" id="stat-events">--</div>
+            <p style="font-size: 0.8rem;">Technical & Non-Technical</p>
+          </div>
+          <div class="stat-card text-center fade-in-up delay-2" style="align-items: center;">
+            <div class="stat-card-title">Participants Registered</div>
+            <div class="stat-card-value" id="stat-participants">--</div>
+            <p style="font-size: 0.8rem;">Across all university tracks</p>
+          </div>
+          <div class="stat-card text-center fade-in-up delay-3" style="align-items: center;">
+            <div class="stat-card-title">Certificates Issued</div>
+            <div class="stat-card-value" id="stat-certificates">--</div>
+            <p style="font-size: 0.8rem;">Cryptographically verified</p>
+          </div>
+          <div class="stat-card text-center fade-in-up delay-4" style="align-items: center;">
+            <div class="stat-card-title">Key Achievements</div>
+            <div class="stat-card-value" id="stat-achievements">--</div>
+            <p style="font-size: 0.8rem;">State & National Honours</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Official INTELLIX Association "About Us" Section (Dynamic & Coordinator Editable) -->
+    <section class="section about-section" id="about-section" style="scroll-margin-top: 5rem; border-bottom: 1px solid var(--border-color);">
+      <div class="container">
+        <!-- Section Header -->
+        <div style="margin-bottom: 2.5rem;">
+          <div class="badge fade-in-up" id="about-badge">ABOUT OUR ASSOCIATION</div>
+          <h2 class="fade-in-up delay-1" id="about-title" style="font-size: clamp(1.85rem, 4vw, 2.5rem); font-weight: 800; margin-top: 0.6rem; margin-bottom: 0.4rem; letter-spacing: -0.02em;">
+            INTELLIX Association
+          </h2>
+          <p class="fade-in-up delay-2" id="about-subtitle" style="font-size: 1rem; color: var(--text-muted); font-weight: 500; max-width: 800px; line-height: 1.5;">
+            Department of Artificial Intelligence &amp; Machine Learning • AL-AZHAR College of Engineering &amp; Technology
+          </p>
+        </div>
+
+        <!-- 2-Column Responsive Bento Layout -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.75rem; align-items: stretch;">
+          <!-- Left Column: Comprehensive Introduction & Association Identity -->
+          <div class="card card-hover fade-in-up delay-1" style="display: flex; flex-direction: column; justify-content: space-between; border-color: var(--border-color); background: linear-gradient(180deg, var(--bg-card), var(--bg-secondary));">
+            <div class="card-body" style="padding: 2rem;">
+              <div style="display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1.5rem;">
+                <div style="width: 44px; height: 44px; border-radius: var(--radius-md); background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color);">
+                  <img src="/assets/logo.png" alt="INTELLIX Crest" style="width: 28px; height: 28px; object-fit: contain;">
+                </div>
+                <div>
+                  <h3 style="font-size: 1.15rem; font-weight: 700; margin: 0; line-height: 1.2;">Official Department Body</h3>
+                  <span style="font-size: 0.75rem; color: var(--text-muted);">Autonomous Student Technical Association</span>
+                </div>
+              </div>
+
+              <!-- Main Association Narrative -->
+              <p id="about-description" style="font-size: 1rem; line-height: 1.75; color: var(--text-secondary); margin-bottom: 1.75rem;">
+                Loading official association introduction...
+              </p>
+
+              <!-- Motto Callout Banner -->
+              <div style="padding: 1.15rem 1.35rem; background: var(--bg-tertiary); border-left: 3px solid var(--border-focus); border-radius: 0 var(--radius-md) var(--radius-md) 0; margin-bottom: 1.5rem;">
+                <span style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Association Motto</span>
+                <p id="about-quote" style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary); margin: 0; font-style: italic; line-height: 1.4;">
+                  "Igniting Ideas, Inspiring Innovation, Building Intelligence."
+                </p>
+              </div>
+            </div>
+
+            <div class="card-footer" style="padding: 1.25rem 2rem; background: var(--bg-card); display: flex; gap: 0.85rem; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+              <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                <a href="/members.html" class="btn btn-primary btn-sm">Association Board &rarr;</a>
+                <a href="/events.html" class="btn btn-outline btn-sm">Explore All Events</a>
+              </div>
+              <span style="font-size: 0.75rem; color: var(--text-muted);" id="about-author-meta">Managed by Student Coordinator</span>
+            </div>
+          </div>
+
+          <!-- Right Column: 4 Strategic Association Pillars -->
+          <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+            <!-- Pillar 1: Purpose -->
+            <div class="card card-hover fade-in-up delay-2" style="border-color: var(--border-color);">
+              <div class="card-body" style="padding: 1.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.6rem;">
+                  <span style="font-size: 1.2rem;">🎯</span>
+                  <h4 style="font-size: 1.05rem; font-weight: 700; margin: 0;">Our Purpose &amp; Mission</h4>
+                </div>
+                <p id="about-purpose" style="font-size: 0.9rem; line-height: 1.6; color: var(--text-secondary); margin: 0;">
+                  Loading purpose details...
+                </p>
+              </div>
+            </div>
+
+            <!-- Pillar 2: Vision -->
+            <div class="card card-hover fade-in-up delay-3" style="border-color: var(--border-color);">
+              <div class="card-body" style="padding: 1.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.6rem;">
+                  <span style="font-size: 1.2rem;">🔭</span>
+                  <h4 style="font-size: 1.05rem; font-weight: 700; margin: 0;">Vision for AI &amp; Innovation</h4>
+                </div>
+                <p id="about-vision" style="font-size: 0.9rem; line-height: 1.6; color: var(--text-secondary); margin: 0;">
+                  Loading vision details...
+                </p>
+              </div>
+            </div>
+
+            <!-- Pillar 3: Activities & Technical Initiatives -->
+            <div class="card card-hover fade-in-up delay-4" style="border-color: var(--border-color);">
+              <div class="card-body" style="padding: 1.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.6rem;">
+                  <span style="font-size: 1.2rem;">⚡</span>
+                  <h4 style="font-size: 1.05rem; font-weight: 700; margin: 0;">Technical Activities &amp; Events</h4>
+                </div>
+                <p id="about-activities" style="font-size: 0.9rem; line-height: 1.6; color: var(--text-secondary); margin: 0;">
+                  Loading activities details...
+                </p>
+              </div>
+            </div>
+
+            <!-- Pillar 4: Student Engagement & Community -->
+            <div class="card card-hover fade-in-up delay-4" style="border-color: var(--border-color);">
+              <div class="card-body" style="padding: 1.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.6rem;">
+                  <span style="font-size: 1.2rem;">🤝</span>
+                  <h4 style="font-size: 1.05rem; font-weight: 700; margin: 0;">Student Engagement &amp; Community</h4>
+                </div>
+                <p id="about-engagement" style="font-size: 0.9rem; line-height: 1.6; color: var(--text-secondary); margin: 0;">
+                  Loading community initiatives...
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Upcoming Events Section -->
+    <section class="section">
+      <div class="container">
+        <div
+          style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2.5rem; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <div class="badge" style="margin-bottom: 0.5rem;">HAPPENING SOON</div>
+            <h2>Upcoming Association Events</h2>
+          </div>
+          <a href="/events.html" class="btn btn-outline btn-sm">View All Events &rarr;</a>
+        </div>
+
+        <div id="upcoming-events-grid"
+          style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;">
+          <div style="grid-column: 1/-1; text-align: center; padding: 2rem;">
+            <span class="spinner"></span>
+            <p style="margin-top: 0.5rem;">Loading active events...</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Recent Achievements Preview -->
+    <section class="section" style="background-color: var(--bg-secondary); border-top: 1px solid var(--border-color);">
+      <div class="container">
+        <div
+          style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2.5rem; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <div class="badge" style="margin-bottom: 0.5rem;">HALL OF FAME</div>
+            <h2>Recent Department Achievements</h2>
+          </div>
+          <a href="/achievements.html" class="btn btn-outline btn-sm">See All Honours &rarr;</a>
+        </div>
+
+        <div id="home-achievements-grid"
+          style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Association Call to Action -->
+    <section class="section" style="border-top: 1px solid var(--border-color); text-align: center;">
+      <div class="container" style="max-width: 680px;">
+        <h2 style="margin-bottom: 1rem;">Verify Your Event Certificate</h2>
+        <p style="margin-bottom: 2rem;">
+          Participated in an INTELLIX workshop or competition? Enter your unique Certificate ID or scan the
+          QR code to instantly verify authenticity.
+        </p>
+        <a href="/verify.html" class="btn btn-primary btn-lg">Open Verification Portal &rarr;</a>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <div class="nav-brand" style="margin-bottom: 1rem;">
+            <div class="nav-brand-logo"><img src="/assets/logo.png" alt="Intellix Logo"></div>
+            <div>INTELLIX</div>
+          </div>
+          <p style="font-size: 0.875rem; margin-bottom: 1rem;">
+            Empowering students with hands-on artificial intelligence, machine learning competitions, and
+            industry-oriented innovation labs.
+          </p>
+          <p style="font-size: 0.8rem; color: var(--text-muted);">
+            AL-AZHAR College of Engineering and Technology
+          </p>
+        </div>
+
+        <div class="footer-col">
+          <h4>Navigation</h4>
+          <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="#about-section">About Us</a></li>
+            <li><a href="/events.html">Events Schedule</a></li>
+            <li><a href="/achievements.html">Hall of Fame</a></li>
+            <li><a href="/gallery.html">Photo Gallery</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Portal</h4>
+          <ul>
+            <li><a href="/verify.html">Certificate Verification</a></li>
+            <li><a href="/members.html">Association Board</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Contact Desk</h4>
+          <ul>
+            <li><a href="mailto:aacetintellix@gmail.com"
+                style="color: var(--text-secondary); font-size: 0.85rem;">aacetintellix@gmail.com</a>
+            </li>
+            <li><span style="color: var(--text-secondary); font-size: 0.85rem;">Third Floor</span></li>
+            <li><span style="color: var(--text-secondary); font-size: 0.85rem;">Department of Artificial Intelligence and Machine Learning</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>&copy; 2026 INTELLIX. All rights reserved.</div>
+        <div>Engineered for high performance & Render cloud deployment.</div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/theme.js"></script>
+  <script src="/js/background.js"></script>
+  <script src="/js/api.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      // 1. Fetch Real Database Statistics
+      try {
+        const statsRes = await fetchJson('/api/stats');
+        if (statsRes.success) {
+          document.getElementById('stat-events').innerText = statsRes.stats.events_conducted;
+          document.getElementById('stat-participants').innerText = statsRes.stats.total_registrations;
+          document.getElementById('stat-certificates').innerText = statsRes.stats.certificates_issued;
+          document.getElementById('stat-achievements').innerText = statsRes.stats.total_achievements;
+        }
+      } catch (err) {
+        console.warn('Could not load stats:', err);
+      }
+
+      // 2. Fetch Dynamic About Us Section (Coordinator Managed)
+      try {
+        const aboutRes = await fetchJson('/api/about');
+        if (aboutRes.success && aboutRes.about) {
+          const abt = aboutRes.about;
+          const setElemText = (id, val) => {
+            const el = document.getElementById(id);
+            if (el && val !== undefined && val !== null) el.innerText = val;
+          };
+          setElemText('about-badge', abt.badge_text);
+          setElemText('about-title', abt.title);
+          setElemText('about-subtitle', abt.subtitle);
+          setElemText('about-description', abt.description);
+          setElemText('about-purpose', abt.purpose);
+          setElemText('about-vision', abt.vision);
+          setElemText('about-activities', abt.activities);
+          setElemText('about-engagement', abt.student_engagement);
+          if (abt.quote_text !== undefined && abt.quote_text !== null) {
+            setElemText('about-quote', abt.quote_text ? `"${abt.quote_text}"` : '');
+          }
+          if (abt.updated_by) {
+            setElemText('about-author-meta', `Official Association Portal • ${abt.updated_by}`);
+          }
+        }
+      } catch (err) {
+        console.warn('Could not load About Us details:', err);
+      }
+
+      // 3. Fetch Upcoming Events
+      try {
+        const eventsRes = await fetchJson('/api/events');
+        const grid = document.getElementById('upcoming-events-grid');
+        if (eventsRes.success) {
+          const upcoming = eventsRes.events.filter(e => e.timing_state === 'upcoming' || e.timing_state === 'ongoing');
+          if (upcoming.length === 0) {
+            grid.innerHTML = `
+              <div class="empty-state" style="grid-column: 1/-1;">
+                <p>No upcoming events announced at this time. Check back soon!</p>
+              </div>
+            `;
+          } else {
+            grid.innerHTML = upcoming.slice(0, 3).map(evt => {
+              const dateStr = formatDate(evt.start_datetime, true);
+              const statusBadge = evt.can_register
+                ? `<span class="badge badge-success">Registration Open</span>`
+                : `<span class="badge badge-danger">Registration Closed</span>`;
+
+              return `
+                <div class="card card-hover fade-in-up">
+                  <div style="height: 140px; background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-card)); display: flex; align-items: center; justify-content: center; border-bottom: 1px solid var(--border-color); padding: 1rem; position: relative;">
+                    ${evt.poster_url ? `<img src="${evt.poster_url}" alt="${evt.title}" style="width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;">` : `<span style="font-weight: 700; font-size: 1.25rem; letter-spacing: 0.05em; color: var(--text-muted);">${evt.code}</span>`}
+                    <div style="position: absolute; top: 0.75rem; right: 0.75rem; z-index: 2;">${statusBadge}</div>
+                  </div>
+                  <div class="card-body">
+                    <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">${evt.event_type}</span>
+                    <h3 style="font-size: 1.2rem;"><a href="/events/${evt.slug}">${evt.title}</a></h3>
+                    <p style="font-size: 0.875rem; color: var(--text-secondary); line-clamp: 2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                      ${evt.description}
+                    </p>
+                    <div style="display: flex; flex-direction: column; gap: 0.35rem; margin-top: auto; font-size: 0.8rem; color: var(--text-muted);">
+                      <div>📅 ${dateStr}</div>
+                      <div>📍 ${evt.venue}</div>
+                    </div>
+                  </div>
+                  <div class="card-footer">
+                    <span style="font-size: 0.8rem; font-weight: 600;">${evt.seats_available} seats remaining</span>
+                    <a href="/events/${evt.slug}" class="btn btn-sm btn-primary">Details & Register &rarr;</a>
+                  </div>
+                </div>
+              `;
+            }).join('');
+          }
+        }
+      } catch (err) {
+        console.warn('Could not load upcoming events:', err);
+      }
+
+      // 3. Fetch Achievements
+      try {
+        const achRes = await fetchJson('/api/achievements');
+        const achGrid = document.getElementById('home-achievements-grid');
+        if (achRes.success && achRes.achievements.length > 0) {
+          achGrid.innerHTML = achRes.achievements.slice(0, 3).map(ach => `
+            <div class="card card-hover fade-in-up">
+              <div class="card-body">
+                <span class="badge badge-warning" style="align-self: flex-start;">${ach.position}</span>
+                <h3 style="font-size: 1.15rem; margin-top: 0.4rem;">${ach.title}</h3>
+                <p style="font-weight: 600; font-size: 0.875rem; color: var(--text-primary);">${ach.student_team_name}</p>
+                <p style="font-size: 0.85rem;">${ach.description || ''}</p>
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: auto;">Date: ${formatDate(ach.event_date)}</div>
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        console.warn('Could not load achievements:', err);
+      }
+
+      initScrollReveals();
+    });
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Digital Certificates | Association Admin Portal</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+  <div class="dashboard-layout">
+    <div id="dashboard-sidebar-container"></div>
+
+    <main class="dashboard-main">
+      <header class="dashboard-topbar">
+        <div>
+          <h3 style="font-size: 1.15rem;">Digital Certificate Issuance</h3>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <button class="btn btn-primary btn-sm" id="bulk-generate-btn">
+            ⚡ Bulk Generate for All Present Participants
+          </button>
+        </div>
+      </header>
+
+      <div class="dashboard-content">
+        <!-- Event Selection -->
+        <div class="card" style="margin-bottom: 1.5rem;">
+          <div class="card-body" style="padding: 1.25rem;">
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+              <div class="form-group" style="margin-bottom: 0; width: 320px;">
+                <label class="form-label">Select Event for Certification</label>
+                <select id="event-select" class="form-select"></select>
+              </div>
+              <div style="font-size: 0.85rem; color: var(--text-muted);">
+                Participants marked as <strong>Present</strong> are eligible for certificate issuance.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Attendees & Issued Certificates -->
+        <div class="card">
+          <div class="card-body" style="padding: 1.5rem;">
+            <div class="table-container">
+              <table class="table" id="cert-table">
+                <thead>
+                  <tr>
+                    <th>Participant</th>
+                    <th>Register Number</th>
+                    <th>Attendance</th>
+                    <th>Certificate Status</th>
+                    <th>Certificate ID</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td colspan="6" style="text-align: center; padding: 2.5rem;"><span class="spinner"></span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/theme.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/dashboard/js/dashboard-common.js"></script>
+  <script>
+    let currentEventId = null;
+    let eventParticipants = [];
+
+    async function initPage() {
+      try {
+        const res = await fetchJson('/api/events');
+        if (res.success && res.events.length > 0) {
+          const select = document.getElementById('event-select');
+          select.innerHTML = res.events.map(e => `<option value="${e.id}">${e.code}: ${e.title}</option>`).join('');
+
+          const urlParams = new URLSearchParams(window.location.search);
+          const initial = urlParams.get('eventId');
+          if (initial) select.value = initial;
+
+          currentEventId = select.value;
+          select.addEventListener('change', () => {
+            currentEventId = select.value;
+            loadData();
+          });
+
+          loadData();
+        }
+      } catch (e) {}
+    }
+
+    async function loadData() {
+      if (!currentEventId) return;
+      const tbody = document.querySelector('#cert-table tbody');
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 2.5rem;"><span class="spinner"></span></td></tr>`;
+
+      try {
+        const res = await fetchJson(`/api/events/${currentEventId}/registrations`);
+        if (res.success) {
+          eventParticipants = res.registrations;
+          renderTable();
+        }
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #ef4444;">Failed to load records: ${err.message}</td></tr>`;
+      }
+    }
+
+    function renderTable() {
+      const tbody = document.querySelector('#cert-table tbody');
+      if (eventParticipants.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">No participants registered for this event.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = eventParticipants.map(p => {
+        const hasCert = !!p.certificate_code;
+        const isPresent = p.attendance_status === 'present';
+
+        return `
+          <tr>
+            <td style="font-weight: 700;">${p.full_name}</td>
+            <td>${p.register_number}</td>
+            <td>
+              <span class="badge ${isPresent ? 'badge-success' : 'badge-danger'}">${p.attendance_status || 'unmarked'}</span>
+            </td>
+            <td>
+              ${hasCert ? '<span class="badge badge-success">✓ Issued</span>' : '<span class="badge">Not Generated</span>'}
+            </td>
+            <td>
+              ${hasCert ? `<code style="font-weight:700;">${p.certificate_code}</code>` : '<span style="color:var(--text-muted);">-</span>'}
+            </td>
+            <td>
+              ${hasCert ? `
+                <a href="/api/certificates/download/${p.certificate_code}" target="_blank" class="btn btn-sm btn-outline">
+                  📥 Download PDF
+                </a>
+              ` : `
+                <button class="btn btn-sm btn-primary" onclick="generateSingle(${p.id})">
+                  Generate Certificate
+                </button>
+              `}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function generateSingle(regId) {
+      try {
+        const res = await fetchJson('/api/certificates/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ registration_id: regId, certificate_type: 'participation' })
+        });
+        if (res.success) {
+          showToast(`Certificate generated: ${res.certificate.certificate_code}`, 'success');
+          loadData();
+        }
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function bulkGenerate() {
+      if (!currentEventId) return;
+      const btn = document.getElementById('bulk-generate-btn');
+      btn.disabled = true;
+      btn.innerText = 'Generating Certificates...';
+
+      try {
+        const res = await fetchJson(`/api/events/${currentEventId}/certificates/bulk-generate`, {
+          method: 'POST'
+        });
+
+        if (res.success) {
+          showToast(res.message, 'success');
+          loadData();
+        }
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerText = '⚡ Bulk Generate for All Present Participants';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initPage();
+      document.getElementById('bulk-generate-btn').addEventListener('click', bulkGenerate);
+    });
+  </script>
+</body>
+</html>

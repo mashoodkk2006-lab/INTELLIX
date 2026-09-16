@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Achievements | Association Admin Portal</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+  <div class="dashboard-layout">
+    <div id="dashboard-sidebar-container"></div>
+
+    <main class="dashboard-main">
+      <header class="dashboard-topbar">
+        <div>
+          <h3 style="font-size: 1.15rem;">Achievements & Hall of Fame</h3>
+        </div>
+        <div>
+          <button class="btn btn-primary btn-sm" onclick="openAddModal()">+ Add New Achievement</button>
+        </div>
+      </header>
+
+      <div class="dashboard-content">
+        <div class="card">
+          <div class="card-body" style="padding: 1.5rem;">
+            <div class="table-container">
+              <table class="table" id="ach-table">
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Winner / Team</th>
+                    <th>Position</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td colspan="5" style="text-align: center; padding: 2.5rem;"><span class="spinner"></span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add Achievement Modal -->
+  <div class="modal-backdrop" id="ach-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>Add Department Achievement</h3>
+        <button class="modal-close-btn" onclick="closeAddModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="ach-form">
+          <div class="form-group">
+            <label class="form-label">Achievement Title <span class="required-star">*</span></label>
+            <input type="text" name="title" class="form-control" placeholder="e.g. 1st Place - Smart India Hackathon" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Student or Team Name <span class="required-star">*</span></label>
+            <input type="text" name="student_team_name" class="form-control" placeholder="e.g. Team Synapse (Lead: Mashood)" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Position / Rank <span class="required-star">*</span></label>
+              <input type="text" name="position" class="form-control" placeholder="e.g. 1st Prize & Gold Trophy" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Event Date <span class="required-star">*</span></label>
+              <input type="date" name="event_date" class="form-control" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Summary / Description</label>
+            <textarea name="description" class="form-control" placeholder="Details of the prize, project, or competition..."></textarea>
+          </div>
+
+          <div class="modal-footer" style="padding-left:0; padding-right:0;">
+            <button type="button" class="btn btn-secondary" onclick="closeAddModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="save-ach-btn">Save Achievement</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/theme.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/dashboard/js/dashboard-common.js"></script>
+  <script>
+    let achievements = [];
+
+    async function loadAchievements() {
+      try {
+        const res = await fetchJson('/api/achievements');
+        if (res.success) {
+          achievements = res.achievements;
+          renderTable();
+        }
+      } catch (e) {}
+    }
+
+    function renderTable() {
+      const tbody = document.querySelector('#ach-table tbody');
+      if (achievements.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">No achievements recorded yet.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = achievements.map(a => `
+        <tr>
+          <td style="font-weight: 700;">${a.title}</td>
+          <td>${a.student_team_name}</td>
+          <td><span class="badge badge-warning">${a.position}</span></td>
+          <td>${formatDate(a.event_date)}</td>
+          <td>
+            <button class="btn btn-sm btn-danger" onclick="deleteAch(${a.id})">Delete</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function openAddModal() {
+      document.getElementById('ach-modal').classList.add('open');
+    }
+    function closeAddModal() {
+      document.getElementById('ach-modal').classList.remove('open');
+    }
+
+    async function deleteAch(id) {
+      if (!confirm('Are you sure you want to delete this achievement?')) return;
+      try {
+        const res = await fetchJson(`/api/achievements/${id}`, { method: 'DELETE' });
+        if (res.success) {
+          showToast('Achievement removed', 'success');
+          loadAchievements();
+        }
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadAchievements();
+
+      document.getElementById('ach-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const payload = {
+          title: form.title.value,
+          student_team_name: form.student_team_name.value,
+          position: form.position.value,
+          event_date: form.event_date.value,
+          description: form.description.value
+        };
+
+        try {
+          const res = await fetchJson('/api/achievements', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (res.success) {
+            showToast('Achievement added successfully', 'success');
+            closeAddModal();
+            form.reset();
+            loadAchievements();
+          }
+        } catch (err) {
+          showToast(err.message, 'error');
+        }
+      });
+    });
+  </script>
+</body>
+</html>
