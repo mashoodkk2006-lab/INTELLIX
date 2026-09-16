@@ -84,6 +84,10 @@
             <label class="form-label">Summary / Description</label>
             <textarea name="description" class="form-control" placeholder=""></textarea>
           </div>
+          <div class="form-group">
+            <label class="form-label">Photo / Trophy Image (Optional)</label>
+            <input type="file" name="image" class="form-control" accept="image/*">
+          </div>
 
           <div class="modal-footer" style="padding-left:0; padding-right:0;">
             <button type="button" class="btn btn-secondary" onclick="closeAddModal()">Cancel</button>
@@ -119,7 +123,15 @@
 
       tbody.innerHTML = achievements.map(a => `
         <tr>
-          <td style="font-weight: 700;">${a.title}</td>
+          <td style="font-weight: 700;">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              ${a.image_url ? `<img src="${a.image_url}" alt="${a.title}" style="width: 42px; height: 42px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border-color); flex-shrink: 0;">` : `<div style="width: 42px; height: 42px; border-radius: 6px; background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0; border: 1px solid var(--border-color);">🏆</div>`}
+              <div>
+                <div>${a.title}</div>
+                ${a.event_title ? `<small style="color: var(--text-muted);">${a.event_title}</small>` : ''}
+              </div>
+            </div>
+          </td>
           <td>${a.student_team_name}</td>
           <td><span class="badge badge-warning">${a.position}</span></td>
           <td>${formatDate(a.event_date)}</td>
@@ -156,19 +168,21 @@
       document.getElementById('ach-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const form = e.target;
-        const payload = {
-          title: form.title.value,
-          student_team_name: form.student_team_name.value,
-          position: form.position.value,
-          event_date: form.event_date.value,
-          description: form.description.value
-        };
+        const btn = document.getElementById('save-ach-btn');
+        const origText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner" style="width: 14px; height: 14px; border-width: 2px; display: inline-block; vertical-align: middle; margin-right: 6px;"></span> Saving...';
+
+        const formData = new FormData(form);
+        const imageInput = form.querySelector('input[name="image"]');
+        if (imageInput && (!imageInput.files || imageInput.files.length === 0)) {
+          formData.delete('image');
+        }
 
         try {
           const res = await fetchJson('/api/achievements', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: formData
           });
           if (res.success) {
             showToast('Achievement added successfully', 'success');
@@ -177,7 +191,10 @@
             loadAchievements();
           }
         } catch (err) {
-          showToast(err.message, 'error');
+          showToast(err.message || 'Failed to create achievement', 'error');
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = origText;
         }
       });
     });

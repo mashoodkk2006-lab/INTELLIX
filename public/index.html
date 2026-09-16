@@ -469,6 +469,11 @@
         if (achRes.success && achRes.achievements.length > 0) {
           achGrid.innerHTML = achRes.achievements.slice(0, 3).map(ach => `
             <div class="card card-hover fade-in-up">
+              ${ach.image_url ? `
+                <div style="width: 100%; height: 160px; overflow: hidden; border-top-left-radius: var(--border-radius); border-top-right-radius: var(--border-radius); background: var(--bg-tertiary);">
+                  <img src="${ach.image_url}" alt="${ach.title}" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+              ` : ''}
               <div class="card-body">
                 <span class="badge badge-warning" style="align-self: flex-start;">${ach.position}</span>
                 <h3 style="font-size: 1.15rem; margin-top: 0.4rem;">${ach.title}</h3>

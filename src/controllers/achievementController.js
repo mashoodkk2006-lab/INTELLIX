@@ -15,6 +15,12 @@ async function getAllAchievements(req, res) {
   }
 }
 
+async function ensureAchievementColumns() {
+  try {
+    await query('ALTER TABLE achievements MODIFY COLUMN image_url LONGTEXT');
+  } catch (e) {}
+}
+
 async function createAchievement(req, res) {
   try {
     const { title, student_team_name, event_id, position, event_date, description } = req.body;
@@ -27,11 +33,29 @@ async function createAchievement(req, res) {
       imageUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
     }
 
-    const [result] = await query(
-      `INSERT INTO achievements (title, student_team_name, event_id, position, event_date, description, image_url)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [title, student_team_name, event_id || null, position, event_date, description || null, imageUrl]
-    );
+    let result;
+    try {
+      const [resInsert] = await query(
+        `INSERT INTO achievements (title, student_team_name, event_id, position, event_date, description, image_url)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [title.trim(), student_team_name.trim(), event_id || null, position.trim(), event_date, description || null, imageUrl]
+      );
+      result = resInsert;
+    } catch (insertErr) {
+      const errMsg = (insertErr.message || '').toLowerCase();
+      if (insertErr.code === 'ER_DATA_TOO_LONG' || errMsg.includes('data too long') || errMsg.includes('column too long')) {
+        console.warn('[CreateAchievement] image_url column length exceeded, attempting schema auto-migration...');
+        await ensureAchievementColumns();
+        const [retryRes] = await query(
+          `INSERT INTO achievements (title, student_team_name, event_id, position, event_date, description, image_url)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [title.trim(), student_team_name.trim(), event_id || null, position.trim(), event_date, description || null, imageUrl]
+        );
+        result = retryRes;
+      } else {
+        throw insertErr;
+      }
+    }
 
     return res.status(201).json({
       success: true,
@@ -40,7 +64,7 @@ async function createAchievement(req, res) {
     });
   } catch (err) {
     console.error('[CreateAchievement Error]', err);
-    return res.status(500).json({ success: false, message: 'Failed to create achievement' });
+    return res.status(500).json({ success: false, message: err.message || 'Failed to create achievement' });
   }
 }
 
