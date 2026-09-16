@@ -171,7 +171,16 @@
       document.getElementById('member-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const form = e.target;
+        const btn = document.getElementById('save-member-btn');
+        const origText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner" style="width: 14px; height: 14px; border-width: 2px; display: inline-block; vertical-align: middle; margin-right: 6px;"></span> Saving...';
+
         const formData = new FormData(form);
+        const photoInput = form.querySelector('input[name="photo"]');
+        if (photoInput && (!photoInput.files || photoInput.files.length === 0)) {
+          formData.delete('photo');
+        }
 
         try {
           const res = await fetchJson('/api/members', {
@@ -185,7 +194,10 @@
             loadMembers();
           }
         } catch (err) {
-          showToast(err.message, 'error');
+          showToast(err.message || 'Failed to create member', 'error');
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = origText;
         }
       });
     });

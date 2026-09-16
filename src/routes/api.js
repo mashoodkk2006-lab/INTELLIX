@@ -173,7 +173,7 @@ router.delete(
 router.post(
   '/achievements',
   requireAuth,
-  requireRole(['coordinator']),
+  requireRole(['coordinator', 'hod']),
   upload.single('image'),
   achievementController.createAchievement
 );
@@ -181,7 +181,7 @@ router.post(
 router.put(
   '/achievements/:id',
   requireAuth,
-  requireRole(['coordinator']),
+  requireRole(['coordinator', 'hod']),
   upload.single('image'),
   achievementController.updateAchievement
 );
@@ -189,7 +189,7 @@ router.put(
 router.delete(
   '/achievements/:id',
   requireAuth,
-  requireRole(['coordinator']),
+  requireRole(['coordinator', 'hod']),
   achievementController.deleteAchievement
 );
 
@@ -197,7 +197,7 @@ router.delete(
 router.post(
   '/gallery',
   requireAuth,
-  requireRole(['coordinator']),
+  requireRole(['coordinator', 'hod']),
   upload.single('photo'),
   galleryController.uploadGalleryPhoto
 );
@@ -205,7 +205,7 @@ router.post(
 router.delete(
   '/gallery/:id',
   requireAuth,
-  requireRole(['coordinator']),
+  requireRole(['coordinator', 'hod']),
   galleryController.deleteGalleryPhoto
 );
 
@@ -213,7 +213,7 @@ router.delete(
 router.post(
   '/members',
   requireAuth,
-  requireRole(['coordinator']),
+  requireRole(['coordinator', 'hod']),
   upload.single('photo'),
   memberController.createMember
 );
@@ -221,7 +221,7 @@ router.post(
 router.put(
   '/members/:id',
   requireAuth,
-  requireRole(['coordinator']),
+  requireRole(['coordinator', 'hod']),
   upload.single('photo'),
   memberController.updateMember
 );
@@ -229,7 +229,7 @@ router.put(
 router.delete(
   '/members/:id',
   requireAuth,
-  requireRole(['coordinator']),
+  requireRole(['coordinator', 'hod']),
   memberController.deleteMember
 );
 

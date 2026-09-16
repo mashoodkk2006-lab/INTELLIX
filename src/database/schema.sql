@@ -162,7 +162,7 @@ CREATE TABLE IF NOT EXISTS association_members (
     name VARCHAR(120) NOT NULL,
     role VARCHAR(80) NOT NULL,
     department VARCHAR(80) NOT NULL,
-    short_bio VARCHAR(255),
+    short_bio TEXT,
     photo_url LONGTEXT,
     display_order INT NOT NULL DEFAULT 0,
     is_active TINYINT(1) NOT NULL DEFAULT 1,

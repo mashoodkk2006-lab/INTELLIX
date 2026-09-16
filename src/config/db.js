@@ -175,7 +175,8 @@ async function initMySQLSchema(pool) {
     'ALTER TABLE events MODIFY COLUMN poster_url LONGTEXT',
     'ALTER TABLE achievements MODIFY COLUMN image_url LONGTEXT',
     'ALTER TABLE event_gallery MODIFY COLUMN image_url LONGTEXT',
-    'ALTER TABLE association_members MODIFY COLUMN photo_url LONGTEXT'
+    'ALTER TABLE association_members MODIFY COLUMN photo_url LONGTEXT',
+    'ALTER TABLE association_members MODIFY COLUMN short_bio TEXT'
   ];
   for (const altSql of alters) {
     try { await pool.query(altSql); } catch (e) {}
