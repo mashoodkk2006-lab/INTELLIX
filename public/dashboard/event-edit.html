@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Event | Admin Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <style>
+    .custom-field-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .payment-toggle-group { display:flex; border:1px solid var(--border-color); border-radius:var(--radius-sm); overflow:hidden; width:fit-content; }
+    .payment-toggle-group input[type="radio"] { display:none; }
+    .payment-toggle-group label { padding:0.55rem 1.5rem; font-size:0.88rem; font-weight:600; cursor:pointer; background:var(--bg-secondary); color:var(--text-muted); transition:background .2s,color .2s; user-select:none; }
+    .payment-toggle-group input[type="radio"]:checked + label { background:var(--btn-primary-bg); color:var(--btn-primary-text); }
+    .qr-preview-card { display:flex; align-items:center; gap:1.25rem; padding:1rem 1.25rem; border:1px solid var(--border-color); border-radius:var(--radius-md); background:var(--bg-secondary); margin-top:0.75rem; }
+    .qr-preview-card img { width:90px; height:90px; object-fit:contain; border-radius:var(--radius-sm); border:2px solid var(--border-color); background:#fff; padding:4px; }
+    .qr-preview-info { flex:1; }
+    .qr-filename { font-weight:700; font-size:0.9rem; margin-bottom:0.25rem; word-break:break-all; }
+    .qr-meta { font-size:0.78rem; color:var(--text-muted); }
+    .existing-thumb { display:flex; align-items:center; gap:1rem; padding:0.75rem 1rem; background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:var(--radius-sm); margin-bottom:0.75rem; }
+    .existing-thumb img { width:70px; height:70px; object-fit:cover; border-radius:4px; border:1px solid var(--border-color); }
+    @keyframes fadeInUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  </style>
+</head>
+<body>
+  <div class="dashboard-layout">
+    <div id="dashboard-sidebar-container"></div>
+    <main class="dashboard-main">
+      <header class="dashboard-topbar">
+        <div><h3 style="font-size:1.15rem;" id="topbar-title">Edit Event</h3></div>
+        <div><a href="/dashboard/events.html" class="btn btn-outline btn-sm">&larr; Back to Events</a></div>
+      </header>
+
+      <div class="dashboard-content">
+
+        <!-- Loading -->
+        <div id="page-loading" style="text-align:center;padding:4rem;color:var(--text-muted);">
+          <span class="spinner"></span>
+          <p style="margin-top:1rem;">Loading event data&hellip;</p>
+        </div>
+
+        <!-- Error -->
+        <div id="page-error" style="display:none;" class="card">
+          <div class="card-body" style="padding:2rem;text-align:center;color:#ef4444;">
+            <div style="font-size:2rem;margin-bottom:0.5rem;">&#9888;&#65039;</div>
+            <h3 id="page-error-msg">Event not found.</h3>
+            <a href="/dashboard/events.html" class="btn btn-primary" style="margin-top:1rem;">Back to Events</a>
+          </div>
+        </div>
+
+        <!-- Edit Form -->
+        <form id="edit-event-form" enctype="multipart/form-data" style="display:none;">
+
+          <!-- STEP 1 -->
+          <div class="card" style="margin-bottom:2rem;">
+            <div class="card-body" style="padding:2rem;">
+              <div class="badge" style="margin-bottom:0.5rem;">STEP 1</div>
+              <h3 style="margin-bottom:1.5rem;">Basic Event Information</h3>
+              <div class="form-row">
+                <div class="form-group" style="grid-column:span 2;">
+                  <label class="form-label">Event Title <span class="required-star">*</span></label>
+                  <input type="text" name="title" id="f-title" class="form-control" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Event Code <span class="required-star">*</span></label>
+                  <input type="text" name="code" id="f-code" class="form-control" maxlength="8" required>
+                  <span class="form-hint">Used in Registration IDs (e.g. INTELLIX-CH26-2026-0001)</span>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Category / Event Type <span class="required-star">*</span></label>
+                  <select name="event_type" id="f-event_type" class="form-select" required>
+                    <option value="Technical Competition">Technical Competition</option>
+                    <option value="Hackathon">Hackathon</option>
+                    <option value="Workshop &amp; Bootcamp">Workshop &amp; Bootcamp</option>
+                    <option value="Symposium &amp; Paper Presentation">Symposium &amp; Paper Presentation</option>
+                    <option value="Non-Technical / Esports">Non-Technical / Esports</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Start Date &amp; Time <span class="required-star">*</span></label>
+                  <input type="datetime-local" name="start_datetime" id="f-start_datetime" class="form-control" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">End Date &amp; Time <span class="required-star">*</span></label>
+                  <input type="datetime-local" name="end_datetime" id="f-end_datetime" class="form-control" required>
+                </div>
+                <div class="form-group" style="grid-column:span 2;">
+                  <label class="form-label">Venue / Hall Location <span class="required-star">*</span></label>
+                  <input type="text" name="venue" id="f-venue" class="form-control" required>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Event Description <span class="required-star">*</span></label>
+                <textarea name="description" id="f-description" class="form-control" style="min-height:100px;" required></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Rules &amp; Eligibility Guidelines</label>
+                <textarea name="rules" id="f-rules" class="form-control" style="min-height:100px;"></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Event Poster Image</label>
+                <div id="existing-poster-wrap" style="display:none;" class="existing-thumb">
+                  <img id="existing-poster-img" src="" alt="Current Poster">
+                  <div>
+                    <div style="font-weight:600;font-size:0.88rem;">Current Poster</div>
+                    <div style="font-size:0.78rem;color:var(--text-muted);">Upload a new image below to replace it.</div>
+                  </div>
+                </div>
+                <input type="file" name="poster" class="form-control" accept="image/*">
+                <span class="form-hint">Leave empty to keep the existing poster. JPG, PNG, WebP (Max 5MB)</span>
+              </div>
+              <div class="form-group" style="margin-top:0.5rem;">
+                <label class="form-label">Event Status</label>
+                <select name="status" id="f-status" class="form-select">
+                  <option value="published">Published (Visible to public)</option>
+                  <option value="draft">Draft (Hidden from public)</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 2 -->
+          <div class="card" style="margin-bottom:2rem;">
+            <div class="card-body" style="padding:2rem;">
+              <div class="badge" style="margin-bottom:0.5rem;">STEP 2</div>
+              <h3 style="margin-bottom:1.5rem;">Registration Parameters</h3>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Registration Status</label>
+                  <label class="form-check" style="margin-top:0.5rem;">
+                    <input type="checkbox" name="registration_open" id="f-registration_open" value="1">
+                    <span>Enable Public Registrations</span>
+                  </label>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Maximum Participant Capacity <span class="required-star">*</span></label>
+                  <input type="number" name="max_participants" id="f-max_participants" class="form-control" value="100" min="1" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Registration Deadline <span class="required-star">*</span></label>
+                  <input type="datetime-local" name="registration_deadline" id="f-registration_deadline" class="form-control" required>
+                </div>
+              </div>
+
+              <div class="form-row" style="margin-top:1rem;">
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label">Participation Type <span class="required-star">*</span></label>
+                  <select name="participation_type" id="participation-type-select" class="form-select" required>
+                    <option value="individual">Individual</option>
+                    <option value="team">Team</option>
+                  </select>
+                  <span class="form-hint">Select whether students participate individually or as a team.</span>
+                </div>
+              </div>
+
+              <!-- Spot Registration -->
+              <div class="form-row" style="margin-top:1rem;">
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label">Admission / Registration Mode</label>
+                  <select name="spot_registration" id="spot-registration-select" class="form-select">
+                    <option value="0">Online Registration (Website Portal)</option>
+                    <option value="1">Spot Admission / Spot Registration (Venue Only)</option>
+                  </select>
+                  <span class="form-hint" id="spot-reg-hint">Students register online through the website portal.</span>
+                </div>
+              </div>
+              <div id="spot-admission-info-box" style="display:none;background:rgba(245,158,11,0.08);border:1.5px dashed rgba(245,158,11,0.35);border-radius:var(--radius-md);padding:1.15rem;margin-top:1.15rem;margin-bottom:0.75rem;">
+                <div style="font-weight:700;font-size:0.92rem;color:#f59e0b;margin-bottom:0.35rem;">&#128205; Spot Admission Mode Active</div>
+                <p style="font-size:0.83rem;color:var(--text-secondary);margin:0;line-height:1.5;">
+                  Online web registration will be disabled. The event page will display a <strong>Spot Admission Notice</strong> directing attendees to register at the venue desk.
+                </p>
+              </div>
+
+              <!-- Team Size -->
+              <div id="team-size-config-section" style="display:none;background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.2);border-radius:var(--radius-md);padding:1.25rem;margin-top:1.25rem;margin-bottom:0.75rem;">
+                <div style="font-weight:700;font-size:0.92rem;color:#3b82f6;margin-bottom:0.35rem;">&#128101; Allowed Team Size</div>
+                <p style="font-size:0.83rem;color:var(--text-secondary);margin-bottom:1rem;">Define the minimum and maximum members per team (including team leader).</p>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Minimum Team Members <span class="required-star">*</span></label>
+                    <input type="number" name="min_team_members" id="min-team-members-input" class="form-control" value="2" min="1" max="50">
+                    <span class="form-hint">Minimum members required to register.</span>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Maximum Team Members <span class="required-star">*</span></label>
+                    <input type="number" name="max_team_members" id="max-team-members-input" class="form-control" value="4" min="2" max="50">
+                    <span class="form-hint">Maximum team capacity limit.</span>
+                  </div>
+                </div>
+                <div style="font-size:0.82rem;color:var(--text-secondary);margin-top:0.25rem;">
+                  Active rule: <strong id="team-size-summary" style="color:var(--text-primary);">2&ndash;4 members</strong>. Students need at least <strong id="team-size-min-preview">2</strong> members.
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-top:1rem;">
+                <label class="form-label">Custom Confirmation Message</label>
+                <input type="text" name="confirmation_message" id="f-confirmation_message" class="form-control">
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 3: Payment -->
+          <div class="card" style="margin-bottom:2rem; border-color:rgba(37,99,235,0.3);">
+            <div class="card-body" style="padding:2rem;">
+              <div class="badge" style="margin-bottom:0.5rem;background:rgba(37,99,235,0.12);color:#60a5fa;border:1px solid rgba(37,99,235,0.3);">STEP 3 &bull; PAYMENT</div>
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem;">
+                <div>
+                  <h3 style="margin-bottom:0.25rem;">Payment &amp; Fee Settings</h3>
+                  <p style="font-size:0.875rem;color:var(--text-secondary);">Configure registration fee and UPI QR Code for paid events.</p>
+                </div>
+                <div>
+                  <div style="font-size:0.78rem;font-weight:600;color:var(--text-muted);margin-bottom:0.5rem;text-transform:uppercase;letter-spacing:0.05em;">Payment Required?</div>
+                  <div class="payment-toggle-group">
+                    <input type="radio" name="payment_required" id="pay-no" value="0" checked>
+                    <label for="pay-no">No (Free)</label>
+                    <input type="radio" name="payment_required" id="pay-yes" value="1">
+                    <label for="pay-yes">Yes (Paid)</label>
+                  </div>
+                </div>
+              </div>
+
+              <div id="payment-fields-section" style="display:none;">
+                <div style="height:1px;background:var(--border-color);margin-bottom:1.5rem;"></div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Registration Fee (&#8377;) <span class="required-star">*</span></label>
+                    <div style="position:relative;">
+                      <span style="position:absolute;left:0.85rem;top:50%;transform:translateY(-50%);font-weight:700;color:var(--text-secondary);">&#8377;</span>
+                      <input type="number" name="registration_fee" id="registration-fee-input" class="form-control" style="padding-left:2rem;" min="1" step="0.01">
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">UPI ID <span style="color:var(--text-muted);font-weight:400;">(Optional)</span></label>
+                    <input type="text" name="upi_id" id="f-upi_id" class="form-control" placeholder="e.g. dept.treasurer@sbi">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Upload Payment QR Code <span style="color:var(--text-muted);font-weight:400;">(Leave empty to keep existing)</span></label>
+                  <div id="existing-qr-wrap" style="display:none;" class="existing-thumb">
+                    <img id="existing-qr-img" src="" alt="Current QR">
+                    <div>
+                      <div style="font-weight:600;font-size:0.88rem;">Current Payment QR</div>
+                      <div style="font-size:0.78rem;color:var(--text-muted);">Upload a new QR image to replace it.</div>
+                    </div>
+                  </div>
+                  <input type="file" name="payment_qr" id="payment-qr-input" class="form-control" accept="image/png,image/jpeg,image/jpg,image/webp">
+                  <span class="form-hint">PNG or JPG, Max 5MB.</span>
+                  <div id="qr-preview-container" style="display:none;">
+                    <div class="qr-preview-card">
+                      <img id="qr-preview-img" src="" alt="QR Preview">
+                      <div class="qr-preview-info">
+                        <div class="qr-filename" id="qr-preview-name">&#8212;</div>
+                        <div class="qr-meta" id="qr-preview-meta">&#8212;</div>
+                        <button type="button" id="qr-remove-btn" class="btn btn-sm btn-secondary" style="margin-top:0.6rem;font-size:0.78rem;padding:0.3rem 0.7rem;">&times; Remove</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Payment Instructions <span style="color:var(--text-muted);font-weight:400;">(Optional)</span></label>
+                  <textarea name="payment_instructions" id="f-payment_instructions" class="form-control" style="min-height:80px;"></textarea>
+                </div>
+              </div>
+
+              <div id="payment-free-notice" style="display:flex;align-items:center;gap:0.75rem;padding:0.9rem 1.1rem;background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.2);border-radius:var(--radius-sm);">
+                <span style="font-size:1.1rem;">&#10003;</span>
+                <div>
+                  <div style="font-weight:600;font-size:0.88rem;color:#22c55e;">Free Event &mdash; No Payment Required</div>
+                  <div style="font-size:0.8rem;color:var(--text-muted);">Registration is open to all eligible participants at no cost.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 4: Form Builder -->
+          <div class="card" style="margin-bottom:2rem;border-color:var(--text-primary);">
+            <div class="card-body" style="padding:2rem;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:1rem;">
+                <div>
+                  <div class="badge badge-success" style="margin-bottom:0.5rem;">STEP 4 &bull; CORE FEATURE</div>
+                  <h3>Dynamic Registration Form Builder</h3>
+                  <p style="font-size:0.9rem;color:var(--text-secondary);margin-top:0.25rem;">Configure event-specific form questions. Default fields are always included.</p>
+                </div>
+                <button type="button" class="btn btn-primary btn-sm" id="add-field-btn">+ Add Custom Field</button>
+              </div>
+              <div class="card" style="background:var(--bg-secondary);border-style:dashed;padding:1.25rem;margin-bottom:1.5rem;">
+                <h4 style="font-size:0.85rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:0.5rem;">Default Mandatory Fields (Always Present):</h4>
+                <div style="display:flex;gap:0.6rem;flex-wrap:wrap;">
+                  <span class="badge">Full Name</span><span class="badge">Register Number</span><span class="badge">Department</span>
+                  <span class="badge">Semester</span><span class="badge">Email Address</span><span class="badge">Phone Number</span>
+                </div>
+              </div>
+              <div id="custom-fields-list"></div>
+            </div>
+          </div>
+
+          <!-- STEP 5: Certificates -->
+          <div class="card" style="margin-bottom:2.5rem;">
+            <div class="card-body" style="padding:2rem;">
+              <div class="badge" style="margin-bottom:0.5rem;">STEP 5</div>
+              <h3 style="margin-bottom:1.5rem;">Digital Certificate Settings</h3>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-check" style="margin-top:0.5rem;">
+                    <input type="checkbox" name="cert_enabled" id="f-cert_enabled" value="1">
+                    <span>Enable Participation Certificates</span>
+                  </label>
+                </div>
+                <div class="form-group">
+                  <label class="form-check" style="margin-top:0.5rem;">
+                    <input type="checkbox" name="cert_winner_enabled" id="f-cert_winner_enabled" value="1">
+                    <span>Enable Winner / Runner-Up Certificates</span>
+                  </label>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Certificate Title</label>
+                  <input type="text" name="cert_title" id="f-cert_title" class="form-control">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Authorized Signatory Name</label>
+                  <input type="text" name="cert_signatory_name" id="f-cert_signatory_name" class="form-control">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Authorized Signatory Designation</label>
+                  <input type="text" name="cert_signatory_designation" id="f-cert_signatory_designation" class="form-control">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Certificate Citation / Description</label>
+                <input type="text" name="cert_description" id="f-cert_description" class="form-control">
+              </div>
+            </div>
+          </div>
+
+          <div id="edit-error-msg" style="color:#ef4444;font-size:0.95rem;margin-bottom:1rem;display:none;"></div>
+          <div style="display:flex;gap:1rem;justify-content:flex-end;margin-bottom:2rem;">
+            <a href="/dashboard/events.html" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary btn-lg" id="submit-event-btn">Save Changes &rarr;</button>
+          </div>
+
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/theme.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/dashboard/js/dashboard-common.js"></script>
+  <script>
+    let currentEventId = null;
+    let customFields = [];
+
+    function toLocalDT(dtStr) {
+      if (!dtStr) return '';
+      const d = new Date(dtStr);
+      if (isNaN(d.getTime())) return '';
+      const p = n => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+    }
+
+    function setSelect(id, val) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      [...el.options].forEach(o => { o.selected = o.value === String(val); });
+    }
+
+    function populateForm(evt) {
+      document.getElementById('f-title').value               = evt.title || '';
+      document.getElementById('f-code').value                = evt.code  || '';
+      document.getElementById('f-venue').value               = evt.venue || '';
+      document.getElementById('f-description').value         = evt.description || '';
+      document.getElementById('f-rules').value               = evt.rules || '';
+      document.getElementById('f-max_participants').value    = evt.max_participants || 100;
+      document.getElementById('f-confirmation_message').value = evt.confirmation_message || '';
+      document.getElementById('f-start_datetime').value      = toLocalDT(evt.start_datetime);
+      document.getElementById('f-end_datetime').value        = toLocalDT(evt.end_datetime);
+      document.getElementById('f-registration_deadline').value = toLocalDT(evt.registration_deadline);
+      document.getElementById('f-registration_open').checked = evt.registration_open === 1 || evt.registration_open === true;
+
+      setSelect('f-event_type', evt.event_type || '');
+      setSelect('f-status', evt.status || 'published');
+
+      // Existing poster
+      if (evt.poster_url) {
+        document.getElementById('existing-poster-img').src = evt.poster_url;
+        document.getElementById('existing-poster-wrap').style.display = 'flex';
+      }
+
+      // Participation type & team
+      setSelect('participation-type-select', evt.participation_type || 'individual');
+      document.getElementById('min-team-members-input').value = evt.min_team_members || 2;
+      document.getElementById('max-team-members-input').value = evt.max_team_members || 4;
+
+      // Spot
+      const isSpot = evt.spot_registration === 1 || evt.spot_registration === true;
+      setSelect('spot-registration-select', isSpot ? '1' : '0');
+
+      // Payment
+      const isPaid = evt.payment_required === 1 || evt.payment_required === true;
+      document.getElementById(isPaid ? 'pay-yes' : 'pay-no').checked = true;
+      if (isPaid) {
+        document.getElementById('registration-fee-input').value = evt.registration_fee || '';
+        document.getElementById('f-upi_id').value              = evt.upi_id || '';
+        document.getElementById('f-payment_instructions').value = evt.payment_instructions || '';
+        if (evt.payment_qr_url) {
+          document.getElementById('existing-qr-img').src = evt.payment_qr_url;
+          document.getElementById('existing-qr-wrap').style.display = 'flex';
+        }
+      }
+
+      // Certs
+      document.getElementById('f-cert_enabled').checked        = evt.cert_enabled === 1 || evt.cert_enabled === true;
+      document.getElementById('f-cert_winner_enabled').checked = evt.cert_winner_enabled === 1 || evt.cert_winner_enabled === true;
+      document.getElementById('f-cert_title').value            = evt.cert_title || '';
+      document.getElementById('f-cert_signatory_name').value   = evt.cert_signatory_name || '';
+      document.getElementById('f-cert_signatory_designation').value = evt.cert_signatory_designation || '';
+      document.getElementById('f-cert_description').value      = evt.cert_description || '';
+
+      // Custom fields
+      if (Array.isArray(evt.custom_fields) && evt.custom_fields.length > 0) {
+        customFields = evt.custom_fields.map((f, i) => ({
+          id: 'f_' + (f.id || i),
+          label: f.field_label || f.label || '',
+          name:  f.field_name  || f.name  || '',
+          type:  f.field_type  || f.type  || 'text',
+          required: !!(f.is_required || f.required),
+          options: Array.isArray(f.options) ? f.options.join(', ') : (f.options || '')
+        }));
+      }
+
+      renderCustomFields();
+      updatePartFields();
+      updateSpotRegUI();
+      updatePaymentUI();
+      updateTeamSummary();
+    }
+
+    // ── Custom field builder ──────────────────────────────────
+    function renderCustomFields() {
+      const container = document.getElementById('custom-fields-list');
+      if (customFields.length === 0) {
+        container.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted);border:1px dashed var(--border-color);border-radius:var(--radius-sm);">No custom fields. Click <strong>+ Add Custom Field</strong> above.</div>`;
+        return;
+      }
+      container.innerHTML = customFields.map((f, i) => {
+        const needsOpts = f.type === 'dropdown' || f.type === 'radio';
+        return `<div class="custom-field-item" data-id="${f.id}">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-weight:700;font-size:0.9rem;">Field #${i+1}</span>
+            <button type="button" class="btn btn-danger btn-sm" onclick="removeField('${f.id}')">Remove</button>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Field Label</label>
+              <input type="text" class="form-control" value="${f.label}" onchange="updateField('${f.id}','label',this.value)" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Field Type</label>
+              <select class="form-select" onchange="updateField('${f.id}','type',this.value)">
+                <option value="text"     ${f.type==='text'?'selected':''}>Text</option>
+                <option value="number"   ${f.type==='number'?'selected':''}>Number</option>
+                <option value="email"    ${f.type==='email'?'selected':''}>Email</option>
+                <option value="phone"    ${f.type==='phone'?'selected':''}>Phone</option>
+                <option value="dropdown" ${f.type==='dropdown'?'selected':''}>Dropdown</option>
+                <option value="radio"    ${f.type==='radio'?'selected':''}>Radio Buttons</option>
+                <option value="checkbox" ${f.type==='checkbox'?'selected':''}>Checkbox</option>
+                <option value="textarea" ${f.type==='textarea'?'selected':''}>Textarea</option>
+              </select>
+            </div>
+            <div class="form-group" style="justify-content:center;">
+              <label class="form-check" style="margin-top:1.5rem;">
+                <input type="checkbox" ${f.required?'checked':''} onchange="updateField('${f.id}','required',this.checked)">
+                <span>Mandatory</span>
+              </label>
+            </div>
+          </div>
+          ${needsOpts ? `<div class="form-group"><label class="form-label">Options (Comma separated)</label><input type="text" class="form-control" value="${f.options||''}" onchange="updateField('${f.id}','options',this.value)"></div>` : ''}
+        </div>`;
+      }).join('');
+    }
+
+    function addField() {
+      customFields.push({ id: 'f_'+Date.now(), label: 'Custom Question', name: 'field_'+customFields.length, type: 'text', required: false, options: '' });
+      renderCustomFields();
+    }
+    function updateField(id, key, val) {
+      const f = customFields.find(x => x.id === id);
+      if (f) { f[key] = val; if (key === 'type') renderCustomFields(); }
+    }
+    function removeField(id) {
+      customFields = customFields.filter(f => f.id !== id);
+      renderCustomFields();
+    }
+
+    // ── Conditional UI ────────────────────────────────────────
+    function updateTeamSummary() {
+      const min = parseInt(document.getElementById('min-team-members-input').value,10)||2;
+      const max = parseInt(document.getElementById('max-team-members-input').value,10)||4;
+      document.getElementById('max-team-members-input').min = Math.max(1, min);
+      document.getElementById('team-size-summary').textContent = `${min}\u2013${max} members`;
+      document.getElementById('team-size-min-preview').textContent = min;
+    }
+    function updatePartFields() {
+      const isTeam = document.getElementById('participation-type-select').value === 'team';
+      document.getElementById('team-size-config-section').style.display = isTeam ? 'block' : 'none';
+      document.getElementById('min-team-members-input').required = isTeam;
+      document.getElementById('max-team-members-input').required = isTeam;
+      if (isTeam) updateTeamSummary();
+    }
+    function updateSpotRegUI() {
+      const isSpot = document.getElementById('spot-registration-select').value === '1';
+      document.getElementById('spot-admission-info-box').style.display = isSpot ? 'block' : 'none';
+      document.getElementById('spot-reg-hint').textContent = isSpot
+        ? 'Students do not register on the web. Registration is done at the venue desk.'
+        : 'Students register online through the website portal.';
+    }
+    function updatePaymentUI() {
+      const paid = document.getElementById('pay-yes').checked;
+      document.getElementById('payment-fields-section').style.display = paid ? 'block' : 'none';
+      document.getElementById('payment-free-notice').style.display    = paid ? 'none'  : 'flex';
+      document.getElementById('registration-fee-input').required = paid;
+    }
+
+    // ── Bootstrap ─────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', async () => {
+      const params = new URLSearchParams(window.location.search);
+      currentEventId = params.get('id');
+
+      if (!currentEventId) {
+        document.getElementById('page-loading').style.display = 'none';
+        document.getElementById('page-error').style.display = 'block';
+        document.getElementById('page-error-msg').textContent = 'No event ID specified in the URL.';
+        return;
+      }
+
+      try {
+        const res = await fetchJson(`/api/events/${currentEventId}`);
+        if (!res.success || !res.event) throw new Error(res.message || 'Event not found');
+        const evt = res.event;
+        currentEventId = evt.id;
+        document.title = `Edit: ${evt.title} | Admin Portal`;
+        document.getElementById('topbar-title').textContent = `Edit: ${evt.title}`;
+        populateForm(evt);
+        document.getElementById('page-loading').style.display = 'none';
+        document.getElementById('edit-event-form').style.display = 'block';
+      } catch (err) {
+        document.getElementById('page-loading').style.display = 'none';
+        document.getElementById('page-error').style.display = 'block';
+        document.getElementById('page-error-msg').textContent = err.message || 'Failed to load event.';
+      }
+
+      // Wire events
+      document.getElementById('participation-type-select').addEventListener('change', updatePartFields);
+      document.getElementById('min-team-members-input').addEventListener('input', updateTeamSummary);
+      document.getElementById('max-team-members-input').addEventListener('input', updateTeamSummary);
+      document.getElementById('spot-registration-select').addEventListener('change', updateSpotRegUI);
+      document.getElementById('pay-yes').addEventListener('change', updatePaymentUI);
+      document.getElementById('pay-no').addEventListener('change',  updatePaymentUI);
+      document.getElementById('add-field-btn').addEventListener('click', addField);
+
+      // New QR preview
+      const qrInput = document.getElementById('payment-qr-input');
+      qrInput.addEventListener('change', () => {
+        const file = qrInput.files[0];
+        if (!file) { document.getElementById('qr-preview-container').style.display = 'none'; return; }
+        const reader = new FileReader();
+        reader.onload = e => {
+          document.getElementById('qr-preview-img').src = e.target.result;
+          document.getElementById('qr-preview-name').textContent = file.name;
+          document.getElementById('qr-preview-meta').textContent = file.type + ' \u00b7 ' + (file.size/1024).toFixed(1) + ' KB';
+          document.getElementById('qr-preview-container').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      });
+      document.getElementById('qr-remove-btn').addEventListener('click', () => {
+        qrInput.value = '';
+        document.getElementById('qr-preview-container').style.display = 'none';
+      });
+
+      // Form submit → PUT
+      document.getElementById('edit-event-form').addEventListener('submit', async e => {
+        e.preventDefault();
+        const submitBtn = document.getElementById('submit-event-btn');
+        const errDiv    = document.getElementById('edit-error-msg');
+        errDiv.style.display = 'none';
+
+        if (document.getElementById('participation-type-select').value === 'team') {
+          const minV = parseInt(document.getElementById('min-team-members-input').value,10)||2;
+          const maxV = parseInt(document.getElementById('max-team-members-input').value,10)||4;
+          if (minV > maxV) {
+            errDiv.textContent = 'Minimum Team Members cannot exceed Maximum Team Members.';
+            errDiv.style.display = 'block';
+            document.getElementById('min-team-members-input').focus();
+            return;
+          }
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving\u2026';
+
+        const formData = new FormData(e.target);
+        formData.append('custom_fields', JSON.stringify(customFields));
+
+        try {
+          const res  = await fetch(`/api/events/${currentEventId}`, { method: 'PUT', body: formData });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.message || 'Failed to update event');
+          showToast('Event updated successfully!', 'success');
+          setTimeout(() => { window.location.href = '/dashboard/events.html'; }, 800);
+        } catch (err) {
+          errDiv.textContent = err.message;
+          errDiv.style.display = 'block';
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Save Changes \u2192';
+        }
+      });
+    });
+  </script>
+</body>
+</html>
