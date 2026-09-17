@@ -178,6 +178,7 @@ async function initMySQLSchema(pool) {
     'ALTER TABLE association_members MODIFY COLUMN photo_url LONGTEXT',
     'ALTER TABLE association_members MODIFY COLUMN short_bio TEXT',
     'ALTER TABLE events ADD COLUMN payment_required TINYINT(1) NOT NULL DEFAULT 0',
+    'ALTER TABLE events ADD COLUMN min_team_members INT DEFAULT 2',
     'ALTER TABLE events ADD COLUMN registration_fee DECIMAL(10,2) DEFAULT 0',
     'ALTER TABLE events ADD COLUMN payment_qr_url LONGTEXT DEFAULT NULL',
     'ALTER TABLE events ADD COLUMN payment_instructions TEXT DEFAULT NULL',
@@ -234,6 +235,7 @@ async function initSQLiteSchema(client) {
       registration_deadline DATETIME NOT NULL,
       max_participants INTEGER NOT NULL DEFAULT 100,
       participation_type TEXT NOT NULL DEFAULT 'individual',
+      min_team_members INTEGER DEFAULT 2,
       max_team_members INTEGER DEFAULT NULL,
       payment_required INTEGER NOT NULL DEFAULT 0,
       registration_fee REAL DEFAULT 0,
@@ -380,6 +382,7 @@ async function initSQLiteSchema(client) {
   // Run migrations for existing databases (adds new columns if not present)
   const migrations = [
     `ALTER TABLE events ADD COLUMN participation_type TEXT NOT NULL DEFAULT 'individual'`,
+    `ALTER TABLE events ADD COLUMN min_team_members INTEGER DEFAULT 2`,
     `ALTER TABLE events ADD COLUMN max_team_members INTEGER DEFAULT NULL`,
     `ALTER TABLE event_registrations ADD COLUMN team_name TEXT DEFAULT NULL`,
     `ALTER TABLE event_registrations ADD COLUMN team_members TEXT DEFAULT NULL`,

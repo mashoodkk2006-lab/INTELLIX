@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS events (
     registration_deadline DATETIME NOT NULL,
     max_participants INT NOT NULL DEFAULT 100,
     participation_type ENUM('individual', 'team') NOT NULL DEFAULT 'individual',
+    min_team_members INT DEFAULT 2,
     max_team_members INT DEFAULT NULL,
     confirmation_message TEXT,
     cert_enabled TINYINT(1) NOT NULL DEFAULT 1,

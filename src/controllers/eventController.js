@@ -175,6 +175,7 @@ async function createEvent(req, res) {
       cert_signatory_designation,
       cert_winner_enabled,
       participation_type,
+      min_team_members,
       max_team_members,
       payment_required,
       registration_fee,
@@ -212,15 +213,29 @@ async function createEvent(req, res) {
 
     const createdBy = req.session && req.session.admin ? req.session.admin.id : null;
 
+    let minTeam = null;
+    let maxTeam = null;
+    if (participation_type === 'team') {
+      minTeam = min_team_members !== undefined && min_team_members !== '' ? parseInt(min_team_members, 10) : 2;
+      maxTeam = max_team_members !== undefined && max_team_members !== '' ? parseInt(max_team_members, 10) : 4;
+
+      if (isNaN(minTeam) || minTeam < 1) minTeam = 2;
+      if (isNaN(maxTeam)) maxTeam = 4;
+
+      if (minTeam > maxTeam) {
+        return res.status(400).json({ success: false, message: 'Minimum team members cannot exceed maximum team members' });
+      }
+    }
+
     const [result] = await query(
       `INSERT INTO events (
         code, title, slug, event_type, start_datetime, end_datetime, venue, description, rules, poster_url,
         status, registration_open, registration_start, registration_deadline, max_participants,
-        participation_type, max_team_members,
+        participation_type, min_team_members, max_team_members,
         payment_required, registration_fee, payment_qr_url, payment_instructions, upi_id,
         confirmation_message, cert_enabled, cert_title, cert_description,
         cert_signatory_name, cert_signatory_designation, cert_winner_enabled, created_by
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         eventCode,
         title,
@@ -238,7 +253,8 @@ async function createEvent(req, res) {
         registration_deadline,
         parseInt(max_participants || 100, 10),
         participation_type === 'team' ? 'team' : 'individual',
-        participation_type === 'team' ? (parseInt(max_team_members, 10) || null) : null,
+        participation_type === 'team' ? minTeam : null,
+        participation_type === 'team' ? maxTeam : null,
         isPaymentRequired,
         isPaymentRequired ? (parseFloat(registration_fee) || 0) : 0,
         isPaymentRequired ? paymentQrUrl : null,
@@ -334,6 +350,7 @@ async function updateEvent(req, res) {
       cert_signatory_designation,
       cert_winner_enabled,
       participation_type,
+      min_team_members,
       max_team_members,
       payment_required,
       registration_fee,
@@ -363,12 +380,25 @@ async function updateEvent(req, res) {
       ? (payment_required === 'true' || payment_required === true || payment_required === '1' || payment_required === 1 ? 1 : 0)
       : existing[0].payment_required;
 
+    const finalPartType = participation_type !== undefined ? (participation_type === 'team' ? 'team' : 'individual') : existing[0].participation_type;
+    let finalMinTeam = null;
+    let finalMaxTeam = null;
+    if (finalPartType === 'team') {
+      const parsedMin = min_team_members !== undefined && min_team_members !== '' ? parseInt(min_team_members, 10) : parseInt(existing[0].min_team_members, 10);
+      finalMinTeam = isNaN(parsedMin) || parsedMin < 1 ? 2 : parsedMin;
+      const parsedMax = max_team_members !== undefined && max_team_members !== '' ? parseInt(max_team_members, 10) : parseInt(existing[0].max_team_members, 10);
+      finalMaxTeam = isNaN(parsedMax) ? 4 : parsedMax;
+      if (finalMinTeam > finalMaxTeam) {
+        return res.status(400).json({ success: false, message: 'Minimum team members cannot exceed maximum team members' });
+      }
+    }
+
     await query(
       `UPDATE events SET 
         title = ?, code = ?, event_type = ?, start_datetime = ?, end_datetime = ?, venue = ?,
         description = ?, rules = ?, poster_url = ?, status = ?, registration_open = ?,
         registration_start = ?, registration_deadline = ?, max_participants = ?, confirmation_message = ?,
-        participation_type = ?, max_team_members = ?,
+        participation_type = ?, min_team_members = ?, max_team_members = ?,
         payment_required = ?, registration_fee = ?, payment_qr_url = ?, payment_instructions = ?, upi_id = ?,
         cert_enabled = ?, cert_title = ?, cert_description = ?, cert_signatory_name = ?,
         cert_signatory_designation = ?, cert_winner_enabled = ?
@@ -389,8 +419,9 @@ async function updateEvent(req, res) {
         registration_deadline || existing[0].registration_deadline,
         max_participants ? parseInt(max_participants, 10) : existing[0].max_participants,
         confirmation_message || existing[0].confirmation_message,
-        participation_type !== undefined ? (participation_type === 'team' ? 'team' : 'individual') : existing[0].participation_type,
-        participation_type === 'team' ? (parseInt(max_team_members, 10) || existing[0].max_team_members) : null,
+        finalPartType,
+        finalMinTeam,
+        finalMaxTeam,
         isPaymentRequired,
         isPaymentRequired ? (parseFloat(registration_fee) || existing[0].registration_fee || 0) : 0,
         isPaymentRequired ? (paymentQrUrl || existing[0].payment_qr_url) : null,

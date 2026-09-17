@@ -77,8 +77,16 @@ async function register(req, res) {
         }
       }
 
+      const minAllowed = parseInt(event.min_team_members, 10) || 2;
       const maxAllowed = parseInt(event.max_team_members, 10) || 4;
       const totalTeamCount = 1 + parsedMembersList.length; // Team leader + members
+
+      if (totalTeamCount < minAllowed) {
+        return res.status(400).json({
+          success: false,
+          message: `This event requires at least ${minAllowed} team members (including team leader). You provided ${totalTeamCount} members.`
+        });
+      }
 
       if (totalTeamCount > maxAllowed) {
         return res.status(400).json({

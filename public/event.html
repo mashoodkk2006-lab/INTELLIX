@@ -384,25 +384,53 @@
 
           <!-- Team Registration Section -->
           <div id="team-registration-section" style="display:none;border-top:1px solid var(--border-color);padding-top:1.25rem;margin-top:1rem;">
-            <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:var(--radius-md);padding:1rem;margin-bottom:1.25rem;">
-              <div style="font-weight:600;color:#3b82f6;display:flex;align-items:center;gap:0.5rem;margin-bottom:0.25rem;">
-                <span>&#128101; Team Event Registration</span>
-              </div>
-              <p style="font-size:0.85rem;color:var(--text-secondary);margin:0;" id="team-info-banner">
-                This is a team event. You are registering as the Team Leader. Maximum team size: <strong id="team-max-size-display">4</strong> members.
-              </p>
-            </div>
-            <div class="form-group">
+            <div class="form-group" style="margin-bottom:1.25rem;">
               <label class="form-label" for="reg-team-name">Team Name <span class="required-star">*</span></label>
-              <input type="text" id="reg-team-name" name="team_name" class="form-control">
+              <input type="text" id="reg-team-name" name="team_name" class="form-control" placeholder="Enter your team's official name">
             </div>
-            <div class="form-group">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
-                <label class="form-label" style="margin-bottom:0;">Additional Team Members (<span id="team-member-count-label">0</span> / <span id="team-member-max-label">3</span>)</label>
-                <button type="button" class="btn btn-sm btn-secondary" id="add-team-member-btn" style="padding:0.25rem 0.6rem;font-size:0.8rem;">+ Add Member</button>
+
+            <!-- Team Members Container -->
+            <div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius-md);padding:1rem;margin-bottom:0.75rem;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem;">
+                <div style="display:flex;align-items:center;gap:0.5rem;">
+                  <span style="font-weight:700;font-size:0.95rem;color:var(--text-primary);">Team Members</span>
+                  <span id="team-size-range-badge" class="badge" style="background:rgba(59,130,246,0.12);color:#3b82f6;border:1px solid rgba(59,130,246,0.3);font-size:0.75rem;padding:0.2rem 0.55rem;font-weight:700;">2–4 Members</span>
+                </div>
+                <div style="font-size:0.8rem;color:var(--text-muted);font-weight:600;">
+                  Total: <strong id="team-total-count" style="color:var(--text-primary);">1</strong> / <span id="team-max-count">4</span>
+                </div>
               </div>
-              <div id="team-members-container" style="display:flex;flex-direction:column;gap:0.5rem;"></div>
-              <span class="form-hint" style="font-size:0.8rem;color:var(--text-muted);display:block;margin-top:0.4rem;">Enter name and register number/email for additional team members (excluding leader).</span>
+
+              <!-- Clear Dynamic Guidance Message -->
+              <div id="team-requirement-alert" style="border-radius:var(--radius-sm);padding:0.65rem 0.8rem;font-size:0.83rem;margin-bottom:0.85rem;display:flex;align-items:flex-start;gap:0.5rem;line-height:1.4;transition:all 0.2s ease;">
+                <span id="team-alert-icon" style="font-size:1rem;line-height:1.2;">⚠️</span>
+                <span id="team-alert-text">Team size: 2–4 members. Add at least 2 members to continue.</span>
+              </div>
+
+              <!-- List of Members (Leader + dynamically added members) -->
+              <div id="team-members-list" style="display:flex;flex-direction:column;gap:0.5rem;">
+                <!-- Member 1: Leader (Fixed) -->
+                <div class="team-member-card" style="background:var(--bg-primary);border:1px solid var(--border-color);border-radius:var(--radius-sm);padding:0.6rem 0.75rem;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.4rem;">
+                    <div style="display:flex;align-items:center;gap:0.45rem;min-width:0;">
+                      <span style="font-weight:700;font-size:0.82rem;color:var(--text-primary);white-space:nowrap;">Member 1</span>
+                      <span class="badge badge-primary" style="font-size:0.68rem;padding:0.15rem 0.45rem;font-weight:600;">Leader (You)</span>
+                      <span id="leader-name-display" style="font-size:0.8rem;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+                    </div>
+                    <span style="font-size:0.75rem;color:#10b981;font-weight:600;">✓ Primary</span>
+                  </div>
+                </div>
+
+                <!-- Dynamically generated additional members -->
+                <div id="dynamic-members-container" style="display:flex;flex-direction:column;gap:0.5rem;"></div>
+              </div>
+
+              <!-- + Add Member Button -->
+              <div id="add-member-wrapper" style="margin-top:0.65rem;">
+                <button type="button" class="btn btn-secondary btn-sm" id="add-team-member-btn" style="width:100%;padding:0.55rem;font-size:0.85rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:0.4rem;border:1px dashed var(--border-color);background:rgba(255,255,255,0.02);cursor:pointer;">
+                  <span>+ Add Member</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -609,7 +637,7 @@
               <div class="event-meta-pill">&#128197; ${startDateStr} - ${endDateStr}</div>
               <div class="event-meta-pill">&#128205; ${evt.venue}</div>
               <div class="event-meta-pill">&#128278; Code: ${evt.code}</div>
-              <div class="event-meta-pill">${evt.participation_type === 'team' ? `&#128101; Team (${evt.max_team_members || 4} Members Max)` : '&#128100; Individual'}</div>
+              <div class="event-meta-pill">${evt.participation_type === 'team' ? `&#128101; Team (${evt.min_team_members || 2}–${evt.max_team_members || 4} Members)` : '&#128100; Individual'}</div>
             </div>
           </div>
         </div>
@@ -663,7 +691,7 @@
                 <div style="display:flex;flex-direction:column;gap:0.75rem;font-size:0.875rem;color:var(--text-secondary);margin-bottom:1.75rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border-color);">
                   <div>&#9203; <strong>Deadline:</strong> ${deadlineStr}</div>
                   <div>&#128101; <strong>Seats Remaining:</strong> ${evt.seats_available}</div>
-                  <div>&#127919; <strong>Participation:</strong> ${evt.participation_type === 'team' ? `Team (Max ${evt.max_team_members || 4} Members)` : 'Individual'}</div>
+                  <div>&#127919; <strong>Participation:</strong> ${evt.participation_type === 'team' ? `Team (${evt.min_team_members || 2}–${evt.max_team_members || 4} Members)` : 'Individual'}</div>
                   <div>&#127903; <strong>Fee:</strong> ${feeDisplay}</div>
                 </div>
                 ${evt.can_register ? `
@@ -721,36 +749,135 @@
         window.getSelection().removeAllRanges();
         window.getSelection().addRange(range);
       });
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
     }
 
-    // Team members
+    // Team members logic
     let currentTeamMembers = [];
 
     function updateTeamMembersUI() {
-      const container = document.getElementById('team-members-container');
-      const countLabel = document.getElementById('team-member-count-label');
-      const maxLabel   = document.getElementById('team-member-max-label');
+      const submitBtn = document.getElementById('modal-submit-btn');
+
+      if (!currentEvent || currentEvent.participation_type !== 'team') {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.title = '';
+        }
+        return;
+      }
+
+      const minTeam = parseInt(currentEvent.min_team_members, 10) || 2;
+      const maxTeam = parseInt(currentEvent.max_team_members, 10) || 4;
+      const totalCount = 1 + currentTeamMembers.length; // Leader (1) + added members
+
+      // Update badge and counts
+      const badge = document.getElementById('team-size-range-badge');
+      if (badge) badge.textContent = `${minTeam}–${maxTeam} Members`;
+
+      const totalCountElem = document.getElementById('team-total-count');
+      if (totalCountElem) totalCountElem.textContent = totalCount;
+
+      const maxCountElem = document.getElementById('team-max-count');
+      if (maxCountElem) maxCountElem.textContent = maxTeam;
+
+      // Update Leader Name Display from form input
+      const leaderNameInput = document.getElementById('reg-full-name');
+      const leaderDisplay = document.getElementById('leader-name-display');
+      if (leaderDisplay) {
+        leaderDisplay.textContent = leaderNameInput && leaderNameInput.value.trim() ? `• ${leaderNameInput.value.trim()}` : '';
+      }
+
+      // Update Guidance / Status Alert
+      const alertBox  = document.getElementById('team-requirement-alert');
+      const alertIcon = document.getElementById('team-alert-icon');
+      const alertText = document.getElementById('team-alert-text');
+
+      if (alertBox && alertIcon && alertText) {
+        if (totalCount < minTeam) {
+          // Rule 6 & 8: Not enough members
+          alertBox.style.background = 'rgba(239, 68, 68, 0.08)';
+          alertBox.style.border = '1px solid rgba(239, 68, 68, 0.25)';
+          alertBox.style.color = '#ef4444';
+          alertIcon.textContent = '⚠️';
+          alertText.textContent = `Team size: ${minTeam}–${maxTeam} members. Add at least ${minTeam} members to continue.`;
+          
+          if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.title = `Add at least ${minTeam} members to continue`;
+          }
+        } else {
+          // Rule 3 & 4: At least minTeam reached, can register!
+          alertBox.style.background = 'rgba(16, 185, 129, 0.08)';
+          alertBox.style.border = '1px solid rgba(16, 185, 129, 0.25)';
+          alertBox.style.color = '#10b981';
+          alertIcon.textContent = '✓';
+          if (totalCount >= maxTeam) {
+            alertText.textContent = `Maximum team capacity reached (${totalCount}/${maxTeam} members). Ready to register!`;
+          } else {
+            alertText.textContent = `Team size requirement met (${totalCount}/${maxTeam} members). You can register now or add up to ${maxTeam} members.`;
+          }
+
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.title = '';
+          }
+        }
+      }
+
+      // Rule 7: Prevent adding members beyond max (hide & disable)
+      const addWrapper = document.getElementById('add-member-wrapper');
       const addBtn     = document.getElementById('add-team-member-btn');
-      const maxTeam = parseInt(currentEvent && currentEvent.max_team_members, 10) || 4;
-      const maxAdditional = Math.max(1, maxTeam - 1);
-      if (countLabel) countLabel.innerText = currentTeamMembers.length;
-      if (maxLabel)   maxLabel.innerText   = maxAdditional;
-      if (addBtn) { addBtn.disabled = currentTeamMembers.length >= maxAdditional; }
+      const atMax = totalCount >= maxTeam;
+      if (addWrapper) {
+        addWrapper.style.display = atMax ? 'none' : 'block';
+      }
+      if (addBtn) {
+        addBtn.disabled = atMax;
+      }
+
+      // Render Dynamic Members list
+      const container = document.getElementById('dynamic-members-container');
       if (!container) return;
+
       container.innerHTML = currentTeamMembers.map((m, idx) => `
-        <div style="display:flex;gap:0.5rem;align-items:center;background:var(--bg-secondary);padding:0.5rem;border-radius:var(--radius-sm);border:1px solid var(--border-color);">
-          <span style="font-size:0.8rem;font-weight:600;color:var(--text-muted);min-width:65px;">#${idx + 2} Member:</span>
-          <input type="text" class="form-control form-control-sm team-member-name" data-idx="${idx}" value="${m.name || ''}" style="flex:1;padding:0.35rem 0.5rem;font-size:0.85rem;" required>
-          <input type="text" class="form-control form-control-sm team-member-reg" data-idx="${idx}" value="${m.identifier || ''}" style="flex:1;padding:0.35rem 0.5rem;font-size:0.85rem;" required>
-          <button type="button" class="btn btn-sm btn-secondary" onclick="removeTeamMemberRow(${idx})" style="padding:0.25rem 0.5rem;color:#ef4444;" title="Remove">&times;</button>
-        </div>`).join('');
-      container.querySelectorAll('.team-member-name').forEach(inp => inp.addEventListener('input', e => { const i=parseInt(e.target.dataset.idx,10); if(currentTeamMembers[i]) currentTeamMembers[i].name=e.target.value; }));
-      container.querySelectorAll('.team-member-reg').forEach(inp  => inp.addEventListener('input', e => { const i=parseInt(e.target.dataset.idx,10); if(currentTeamMembers[i]) currentTeamMembers[i].identifier=e.target.value; }));
+        <div class="team-member-card" style="background:var(--bg-primary);border:1px solid var(--border-color);border-radius:var(--radius-sm);padding:0.6rem 0.75rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.35rem;">
+            <span style="font-weight:700;font-size:0.82rem;color:var(--text-primary);">Member ${idx + 2}</span>
+            <button type="button" class="btn btn-sm btn-secondary" onclick="removeTeamMemberRow(${idx})" style="padding:0.15rem 0.45rem;font-size:0.75rem;color:#ef4444;line-height:1;border-color:transparent;" title="Remove Member">&times; Remove</button>
+          </div>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            <input type="text" class="form-control form-control-sm team-member-name" data-idx="${idx}" placeholder="Full Name *" value="${escapeHtml(m.name || '')}" style="flex:1;min-width:130px;padding:0.35rem 0.55rem;font-size:0.82rem;" required>
+            <input type="text" class="form-control form-control-sm team-member-reg" data-idx="${idx}" placeholder="Reg No / Roll No *" value="${escapeHtml(m.identifier || '')}" style="flex:1;min-width:130px;padding:0.35rem 0.55rem;font-size:0.82rem;" required>
+          </div>
+        </div>
+      `).join('');
+
+      container.querySelectorAll('.team-member-name').forEach(inp => {
+        inp.addEventListener('input', e => {
+          const i = parseInt(e.target.dataset.idx, 10);
+          if (currentTeamMembers[i]) currentTeamMembers[i].name = e.target.value;
+        });
+      });
+
+      container.querySelectorAll('.team-member-reg').forEach(inp => {
+        inp.addEventListener('input', e => {
+          const i = parseInt(e.target.dataset.idx, 10);
+          if (currentTeamMembers[i]) currentTeamMembers[i].identifier = e.target.value;
+        });
+      });
     }
 
     function addTeamMemberRow() {
-      const maxTeam = parseInt(currentEvent && currentEvent.max_team_members, 10) || 4;
-      if (currentTeamMembers.length >= Math.max(1, maxTeam - 1)) return;
+      if (!currentEvent || currentEvent.participation_type !== 'team') return;
+      const maxTeam = parseInt(currentEvent.max_team_members, 10) || 4;
+      if (1 + currentTeamMembers.length >= maxTeam) return;
       currentTeamMembers.push({ name: '', identifier: '' });
       updateTeamMembersUI();
     }
@@ -773,13 +900,16 @@
       if (isTeam) {
         teamSec.style.display = 'block';
         teamNameInp.required = true;
-        const maxTeam = parseInt(currentEvent.max_team_members, 10) || 4;
-        document.getElementById('team-max-size-display').innerText = maxTeam;
         updateTeamMembersUI();
       } else {
         teamSec.style.display = 'none';
         teamNameInp.required = false;
         teamNameInp.value = '';
+        const submitBtn = document.getElementById('modal-submit-btn');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.title = '';
+        }
       }
 
       // Payment section in modal
@@ -849,6 +979,16 @@
       const addMemberBtn = document.getElementById('add-team-member-btn');
       if (addMemberBtn) addMemberBtn.addEventListener('click', addTeamMemberRow);
 
+      const regFullNameInp = document.getElementById('reg-full-name');
+      if (regFullNameInp) {
+        regFullNameInp.addEventListener('input', () => {
+          const leaderDisplay = document.getElementById('leader-name-display');
+          if (leaderDisplay) {
+            leaderDisplay.textContent = regFullNameInp.value.trim() ? `• ${regFullNameInp.value.trim()}` : '';
+          }
+        });
+      }
+
       // Payment screenshot preview
       const screenshotInput = document.getElementById('modal-screenshot');
       screenshotInput.addEventListener('change', () => {
@@ -886,8 +1026,49 @@
         };
 
         if (currentEvent && currentEvent.participation_type === 'team') {
-          payload.team_name    = formData.get('team_name');
-          payload.team_members = currentTeamMembers.filter(m => m.name && m.name.trim());
+          payload.team_name = formData.get('team_name');
+          const minTeam = parseInt(currentEvent.min_team_members, 10) || 2;
+          const maxTeam = parseInt(currentEvent.max_team_members, 10) || 4;
+
+          // Check required member fields
+          for (let i = 0; i < currentTeamMembers.length; i++) {
+            const m = currentTeamMembers[i];
+            if (!m.name || !m.name.trim()) {
+              errorDiv.textContent = `Please enter the Full Name for Member ${i + 2}.`;
+              errorDiv.style.display = 'block';
+              submitBtn.disabled = false;
+              submitBtn.innerText = 'Complete Registration \u2192';
+              return;
+            }
+            if (!m.identifier || !m.identifier.trim()) {
+              errorDiv.textContent = `Please enter Register Number / Roll No for Member ${i + 2}.`;
+              errorDiv.style.display = 'block';
+              submitBtn.disabled = false;
+              submitBtn.innerText = 'Complete Registration \u2192';
+              return;
+            }
+          }
+
+          const validMembers = currentTeamMembers.filter(m => m.name && m.name.trim());
+          const totalMembers = 1 + validMembers.length;
+
+          if (totalMembers < minTeam) {
+            errorDiv.textContent = `Team size: ${minTeam}–${maxTeam} members. Add at least ${minTeam} members to continue.`;
+            errorDiv.style.display = 'block';
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Complete Registration \u2192';
+            return;
+          }
+
+          if (totalMembers > maxTeam) {
+            errorDiv.textContent = `Maximum allowed team size is ${maxTeam} members.`;
+            errorDiv.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Complete Registration \u2192';
+            return;
+          }
+
+          payload.team_members = validMembers;
         }
 
         if (isPayment) {
