@@ -5,13 +5,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Event Details | INTELLIX</title>
-  <meta name="description"
-    content="View event rules, schedule, venue and register directly for department association competitions.">
+  <meta name="description" content="View event rules, schedule, venue and register directly for department association competitions.">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
-    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="/css/main.css">
   <link rel="stylesheet" href="/css/components.css">
@@ -27,59 +25,235 @@
   </script>
   <script src="/js/welcome-loader.js" defer></script>
   <style>
-    .event-details-hero {
-      padding: 3rem 0 2rem;
-      border-bottom: 1px solid var(--border-color);
-      background-color: var(--bg-secondary);
-    }
+    .event-details-hero { padding: 3rem 0 2rem; border-bottom: 1px solid var(--border-color); background-color: var(--bg-secondary); }
+    .event-meta-pill { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0.85rem; background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 500; }
+    .detail-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 2.5rem; margin-top: 2.5rem; }
+    @media (max-width: 860px) { .detail-grid { grid-template-columns: 1fr; } }
+    .rules-card { background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.75rem; white-space: pre-line; line-height: 1.7; }
+    .reg-sidebar-card { background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.75rem; position: sticky; top: 5.5rem; }
 
-    .event-meta-pill {
-      display: inline-flex;
+    /* ===== PAYMENT SECTION ===== */
+    .payment-section {
+      margin-bottom: 2.5rem;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      border: 1px solid rgba(37,99,235,0.25);
+      background: linear-gradient(135deg, #0b1e36 0%, #0f2d52 100%);
+      box-shadow: 0 4px 24px rgba(11,30,54,0.5);
+      animation: fadeInUp 0.5s ease both;
+    }
+    [data-theme="light"] .payment-section {
+      background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
+      border-color: rgba(37,99,235,0.3);
+    }
+    .payment-header {
+      padding: 1.25rem 1.75rem;
+      background: rgba(37,99,235,0.18);
+      border-bottom: 1px solid rgba(37,99,235,0.2);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .payment-header-icon { font-size: 1.4rem; }
+    .payment-header-title { font-size: 1rem; font-weight: 700; color: #93c5fd; letter-spacing: 0.01em; }
+    [data-theme="light"] .payment-header-title { color: #1d4ed8; }
+    .payment-header-sub { font-size: 0.78rem; color: #60a5fa; opacity: 0.8; margin-top: 0.1rem; }
+    [data-theme="light"] .payment-header-sub { color: #2563eb; }
+    .payment-body { padding: 1.75rem; }
+
+    /* QR Layout: 2-col on desktop, stacked on mobile */
+    .payment-layout { display: grid; grid-template-columns: auto 1fr; gap: 2rem; align-items: start; }
+    @media (max-width: 680px) { .payment-layout { grid-template-columns: 1fr; } }
+
+    /* QR Box */
+    .payment-qr-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+    .qr-frame {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.3), 0 8px 32px rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 220px;
+      height: 220px;
+      position: relative;
+    }
+    @media (max-width: 680px) { .qr-frame { width: 240px; height: 240px; margin: 0 auto; } }
+    .qr-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      image-rendering: crisp-edges;
+      display: block;
+    }
+    .qr-scan-badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #60a5fa;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(37,99,235,0.15);
+      border: 1px solid rgba(37,99,235,0.25);
+      padding: 0.35rem 0.9rem;
+      border-radius: 99px;
+    }
+    [data-theme="light"] .qr-scan-badge { color: #1d4ed8; background: rgba(219,234,254,0.8); border-color: rgba(37,99,235,0.3); }
+    .qr-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: center; }
+    .btn-qr-action {
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 0.45rem 1rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      border: 1px solid rgba(37,99,235,0.4);
+      background: rgba(37,99,235,0.12);
+      color: #93c5fd;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    [data-theme="light"] .btn-qr-action { color: #1e40af; background: rgba(219,234,254,0.7); border-color: rgba(37,99,235,0.35); }
+    .btn-qr-action:hover { background: rgba(37,99,235,0.25); color: #bfdbfe; }
+    [data-theme="light"] .btn-qr-action:hover { background: rgba(37,99,235,0.15); color: #1e3a8a; }
+
+    /* Right column */
+    .payment-details { display: flex; flex-direction: column; gap: 1.1rem; }
+    .payment-fee-display {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+      padding: 1rem 1.25rem;
+      background: rgba(37,99,235,0.12);
+      border: 1px solid rgba(37,99,235,0.22);
+      border-radius: var(--radius-md);
+    }
+    [data-theme="light"] .payment-fee-display { background: rgba(219,234,254,0.7); }
+    .payment-fee-currency { font-size: 1.3rem; font-weight: 700; color: #93c5fd; line-height: 1; }
+    [data-theme="light"] .payment-fee-currency { color: #1d4ed8; }
+    .payment-fee-amount { font-size: 2.4rem; font-weight: 800; color: #dbeafe; line-height: 1; }
+    [data-theme="light"] .payment-fee-amount { color: #1e3a8a; }
+    .payment-fee-label { font-size: 0.78rem; color: #93c5fd; font-weight: 600; }
+    [data-theme="light"] .payment-fee-label { color: #2563eb; }
+
+    .payment-detail-row { display: flex; flex-direction: column; gap: 0.2rem; }
+    .payment-detail-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; color: #60a5fa; opacity: 0.8; }
+    [data-theme="light"] .payment-detail-label { color: #2563eb; }
+    .payment-detail-value { font-size: 0.92rem; color: #e2e8f0; font-weight: 500; }
+    [data-theme="light"] .payment-detail-value { color: #1e293b; }
+
+    .upi-copy-row {
+      display: flex;
       align-items: center;
       gap: 0.5rem;
-      padding: 0.35rem 0.85rem;
-      background-color: var(--bg-card);
-      border: 1px solid var(--border-color);
+    }
+    .upi-id-text {
+      font-family: monospace;
+      font-size: 0.95rem;
+      color: #93c5fd;
+      font-weight: 600;
+      flex: 1;
+      word-break: break-all;
+    }
+    [data-theme="light"] .upi-id-text { color: #1d4ed8; }
+    .btn-copy-upi {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.3rem 0.7rem;
       border-radius: var(--radius-sm);
-      font-size: 0.85rem;
-      font-weight: 500;
+      border: 1px solid rgba(37,99,235,0.4);
+      background: rgba(37,99,235,0.15);
+      color: #93c5fd;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    [data-theme="light"] .btn-copy-upi { color: #1d4ed8; background: rgba(219,234,254,0.7); border-color: rgba(37,99,235,0.35); }
+    .btn-copy-upi:hover { background: rgba(37,99,235,0.3); }
+    .btn-copy-upi.copied { background: rgba(34,197,94,0.2); border-color: rgba(34,197,94,0.4); color: #86efac; }
+
+    .payment-steps-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.45rem; }
+    .payment-steps-list li {
+      display: flex;
+      gap: 0.6rem;
+      font-size: 0.84rem;
+      color: #cbd5e1;
+      align-items: flex-start;
+    }
+    [data-theme="light"] .payment-steps-list li { color: #334155; }
+    .payment-steps-list li .step-num {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(37,99,235,0.3);
+      border: 1px solid rgba(37,99,235,0.5);
+      color: #93c5fd;
+      font-size: 0.68rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    [data-theme="light"] .payment-steps-list li .step-num { color: #1d4ed8; background: rgba(219,234,254,0.7); }
+
+    /* Fullscreen QR Modal */
+    .qr-fullscreen-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(0,0,0,0.92);
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .qr-fullscreen-modal.open { display: flex; }
+    .qr-fullscreen-inner {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 20px;
+      max-width: 380px;
+      width: 100%;
+      position: relative;
+      text-align: center;
+    }
+    .qr-fullscreen-inner img { width: 100%; height: auto; display: block; image-rendering: crisp-edges; }
+    .qr-fullscreen-title { font-size: 0.85rem; font-weight: 700; color: #1e3a8a; margin-top: 0.75rem; }
+    .qr-fullscreen-sub { font-size: 0.72rem; color: #64748b; margin-top: 0.25rem; }
+    .qr-fullscreen-close {
+      position: absolute;
+      top: -14px;
+      right: -14px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #0f172a;
+      color: #fff;
+      font-size: 1.1rem;
+      border: 2px solid rgba(255,255,255,0.2);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    .detail-grid {
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: 2.5rem;
-      margin-top: 2.5rem;
-    }
-
-    @media (max-width: 860px) {
-      .detail-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .rules-card {
-      background-color: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-md);
-      padding: 1.75rem;
-      white-space: pre-line;
-      line-height: 1.7;
-    }
-
-    .reg-sidebar-card {
-      background-color: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-md);
-      padding: 1.75rem;
-      position: sticky;
-      top: 5.5rem;
-    }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
   </style>
 </head>
 
 <body>
-  <!-- Animated Welcome / Loading Screen -->
+  <!-- Welcome Loader -->
   <div id="welcome-loader" aria-hidden="true">
     <div class="welcome-loader-backdrop">
       <div class="welcome-bg-glow"></div>
@@ -93,7 +267,7 @@
         </div>
         <div class="welcome-text-wrap" id="welcome-text-wrap">
           <div class="welcome-title" id="welcome-title">INTELLIX</div>
-          <div class="welcome-subtitle" id="welcome-subtitle">AL-AZHAR College of Engg & Tech</div>
+          <div class="welcome-subtitle" id="welcome-subtitle">AL-AZHAR College of Engg &amp; Tech</div>
         </div>
       </div>
     </div>
@@ -107,11 +281,9 @@
         <div class="nav-brand-logo" id="target-brand-logo"><img src="/assets/logo.png" alt="Intellix Logo"></div>
         <div id="target-brand-text">
           <div id="target-brand-title">INTELLIX</div>
-          <div id="target-brand-subtitle" style="font-size: 0.68rem; font-weight: 500; color: var(--text-muted); line-height: 1;">AL-AZHAR College of
-            Engg & Tech</div>
+          <div id="target-brand-subtitle" style="font-size:0.68rem;font-weight:500;color:var(--text-muted);line-height:1;">AL-AZHAR College of Engg &amp; Tech</div>
         </div>
       </a>
-
       <ul class="nav-links">
         <li><a href="/" class="nav-link">Home</a></li>
         <li><a href="/events.html" class="nav-link active">Events</a></li>
@@ -120,7 +292,6 @@
         <li><a href="/members.html" class="nav-link">Members</a></li>
         <li><a href="/verify.html" class="nav-link">Verify Certificate</a></li>
       </ul>
-
       <div class="nav-actions">
         <button class="theme-toggle-btn" aria-label="Toggle theme"></button>
         <button class="hamburger-btn" aria-label="Open mobile menu">
@@ -135,20 +306,19 @@
   </header>
 
   <main id="event-main-content">
-    <div style="text-align: center; padding: 5rem 1rem;">
+    <div style="text-align:center;padding:5rem 1rem;">
       <span class="spinner"></span>
-      <p style="margin-top: 1rem;">Loading event details...</p>
+      <p style="margin-top:1rem;">Loading event details...</p>
     </div>
   </main>
 
-  <!-- Dynamic Event Registration Modal -->
+  <!-- Registration Modal -->
   <div class="modal-backdrop" id="registration-modal">
     <div class="modal-dialog modal-dialog-lg">
       <div class="modal-header">
         <div>
           <h3 id="modal-event-title">Event Registration</h3>
-          <p style="font-size: 0.825rem; color: var(--text-muted);">Fill in your details to register directly for this
-            event</p>
+          <p style="font-size:0.825rem;color:var(--text-muted);">Fill in your details to register directly for this event</p>
         </div>
         <button class="modal-close-btn" id="modal-close-btn">&times;</button>
       </div>
@@ -156,20 +326,16 @@
         <form id="event-reg-form">
           <input type="hidden" id="form-event-id" name="event_id">
 
-          <h4
-            style="font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.75rem;">
-            Default Participant Information</h4>
+          <h4 style="font-size:0.95rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:0.75rem;">Default Participant Information</h4>
 
           <div class="form-row">
             <div class="form-group">
               <label class="form-label" for="reg-fullname">Full Name <span class="required-star">*</span></label>
-              <input type="text" id="reg-fullname" name="full_name" class="form-control" placeholder=""
-                required>
+              <input type="text" id="reg-fullname" name="full_name" class="form-control" required>
             </div>
             <div class="form-group">
               <label class="form-label" for="reg-regno">Register Number <span class="required-star">*</span></label>
-              <input type="text" id="reg-regno" name="register_number" class="form-control"
-                placeholder="" required>
+              <input type="text" id="reg-regno" name="register_number" class="form-control" required>
             </div>
           </div>
 
@@ -208,60 +374,84 @@
           <div class="form-row">
             <div class="form-group">
               <label class="form-label" for="reg-email">Email Address <span class="required-star">*</span></label>
-              <input type="email" id="reg-email" name="email" class="form-control" placeholder=""
-                required>
+              <input type="email" id="reg-email" name="email" class="form-control" required>
             </div>
             <div class="form-group">
               <label class="form-label" for="reg-phone">Phone Number <span class="required-star">*</span></label>
-              <input type="tel" id="reg-phone" name="phone" class="form-control" placeholder="" required>
+              <input type="tel" id="reg-phone" name="phone" class="form-control" required>
             </div>
           </div>
 
-          <!-- Team Registration Details (Only for Team Events) -->
-          <div id="team-registration-section" style="display: none; border-top: 1px solid var(--border-color); padding-top: 1.25rem; margin-top: 1rem;">
-            <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.25rem;">
-              <div style="font-weight: 600; color: #3b82f6; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
-                <span>👥 Team Event Registration</span>
+          <!-- Team Registration Section -->
+          <div id="team-registration-section" style="display:none;border-top:1px solid var(--border-color);padding-top:1.25rem;margin-top:1rem;">
+            <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:var(--radius-md);padding:1rem;margin-bottom:1.25rem;">
+              <div style="font-weight:600;color:#3b82f6;display:flex;align-items:center;gap:0.5rem;margin-bottom:0.25rem;">
+                <span>&#128101; Team Event Registration</span>
               </div>
-              <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0;" id="team-info-banner">
+              <p style="font-size:0.85rem;color:var(--text-secondary);margin:0;" id="team-info-banner">
                 This is a team event. You are registering as the Team Leader. Maximum team size: <strong id="team-max-size-display">4</strong> members.
               </p>
             </div>
-
             <div class="form-group">
               <label class="form-label" for="reg-team-name">Team Name <span class="required-star">*</span></label>
-              <input type="text" id="reg-team-name" name="team_name" class="form-control" placeholder="">
+              <input type="text" id="reg-team-name" name="team_name" class="form-control">
             </div>
-
             <div class="form-group">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                <label class="form-label" style="margin-bottom: 0;">Additional Team Members (<span id="team-member-count-label">0</span> / <span id="team-member-max-label">3</span>)</label>
-                <button type="button" class="btn btn-sm btn-secondary" id="add-team-member-btn" style="padding: 0.25rem 0.6rem; font-size: 0.8rem;">+ Add Member</button>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+                <label class="form-label" style="margin-bottom:0;">Additional Team Members (<span id="team-member-count-label">0</span> / <span id="team-member-max-label">3</span>)</label>
+                <button type="button" class="btn btn-sm btn-secondary" id="add-team-member-btn" style="padding:0.25rem 0.6rem;font-size:0.8rem;">+ Add Member</button>
               </div>
-              <div id="team-members-container" style="display: flex; flex-direction: column; gap: 0.5rem;">
-                <!-- Dynamically added team members -->
-              </div>
-              <span class="form-hint" style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-top: 0.4rem;">
-                Enter name and register number/email for additional team members (excluding leader).
-              </span>
+              <div id="team-members-container" style="display:flex;flex-direction:column;gap:0.5rem;"></div>
+              <span class="form-hint" style="font-size:0.8rem;color:var(--text-muted);display:block;margin-top:0.4rem;">Enter name and register number/email for additional team members (excluding leader).</span>
             </div>
           </div>
 
-          <!-- Dynamic Custom Fields Container -->
-          <div id="dynamic-form-fields-container"
-            style="border-top: 1px solid var(--border-color); padding-top: 1.25rem; margin-top: 0.5rem;">
-            <!-- Dynamically generated fields injected here -->
+          <!-- Dynamic Custom Fields -->
+          <div id="dynamic-form-fields-container" style="border-top:1px solid var(--border-color);padding-top:1.25rem;margin-top:0.5rem;"></div>
+
+          <!-- Payment Details in Modal -->
+          <div id="modal-payment-section" style="display:none;margin-top:1rem;border-top:1px solid rgba(37,99,235,0.3);padding-top:1.25rem;">
+            <div style="background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.2);border-radius:var(--radius-md);padding:1rem;margin-bottom:1.25rem;">
+              <div style="font-weight:700;color:#60a5fa;margin-bottom:0.35rem;font-size:0.9rem;">&#128178; Payment Required</div>
+              <p style="font-size:0.83rem;color:var(--text-secondary);margin:0;" id="modal-payment-note">
+                Pay <strong id="modal-pay-amount"></strong> before completing registration. Save your screenshot and Transaction ID.
+              </p>
+            </div>
+            <div class="form-row">
+              <div class="form-group" style="grid-column:span 2;">
+                <label class="form-label" for="modal-transaction-id">Transaction ID / UTR Number <span class="required-star">*</span></label>
+                <input type="text" id="modal-transaction-id" class="form-control" placeholder="e.g. T2609XXXXXXXX or UTR1234567890">
+                <span class="form-hint">Enter the 12-digit Transaction ID / UTR from your UPI app after payment.</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="modal-screenshot">Upload Payment Screenshot <span style="color:var(--text-muted);font-weight:400;">(Optional but recommended)</span></label>
+              <input type="file" id="modal-screenshot" class="form-control" accept="image/*">
+              <span class="form-hint">Take a screenshot of your successful payment and upload it here for faster verification.</span>
+              <div id="modal-screenshot-preview" style="display:none;margin-top:0.6rem;">
+                <img id="modal-screenshot-img" src="" alt="Payment Screenshot" style="max-height:120px;border-radius:var(--radius-sm);border:1px solid var(--border-color);">
+              </div>
+            </div>
           </div>
 
-          <div id="reg-error-msg" style="color: #ef4444; font-size: 0.875rem; display: none; margin-top: 0.5rem;"></div>
+          <div id="reg-error-msg" style="color:#ef4444;font-size:0.875rem;display:none;margin-top:0.5rem;"></div>
 
-          <div class="modal-footer"
-            style="padding-left: 0; padding-right: 0; margin-top: 1.5rem; background: transparent;">
+          <div class="modal-footer" style="padding-left:0;padding-right:0;margin-top:1.5rem;background:transparent;">
             <button type="button" class="btn btn-secondary" id="modal-cancel-btn">Cancel</button>
             <button type="submit" class="btn btn-primary" id="modal-submit-btn">Complete Registration &rarr;</button>
           </div>
         </form>
       </div>
+    </div>
+  </div>
+
+  <!-- QR Fullscreen Modal -->
+  <div class="qr-fullscreen-modal" id="qr-fullscreen-modal">
+    <div class="qr-fullscreen-inner">
+      <button class="qr-fullscreen-close" id="qr-fullscreen-close" aria-label="Close">&times;</button>
+      <img id="qr-fullscreen-img" src="" alt="Payment QR Code">
+      <div class="qr-fullscreen-title" id="qr-fullscreen-title">Scan to Pay</div>
+      <div class="qr-fullscreen-sub" id="qr-fullscreen-sub">Use any UPI app &mdash; Google Pay, PhonePe, Paytm</div>
     </div>
   </div>
 
@@ -281,11 +471,8 @@
     let currentEvent = null;
 
     function getEventIdentifier() {
-      // Check URL pathname (e.g. /events/code-hunt-2026) or query string ?id=... or ?slug=...
       const pathParts = window.location.pathname.split('/').filter(Boolean);
-      if (pathParts[0] === 'events' && pathParts[1]) {
-        return pathParts[1];
-      }
+      if (pathParts[0] === 'events' && pathParts[1]) return pathParts[1];
       const params = new URLSearchParams(window.location.search);
       return params.get('id') || params.get('slug') || 'code-hunt-2026';
     }
@@ -300,29 +487,23 @@
               <div class="empty-state">
                 <h2>Event Not Found</h2>
                 <p>The requested event could not be found or has been removed.</p>
-                <a href="/events.html" class="btn btn-primary" style="margin-top: 1rem;">Back to Events</a>
+                <a href="/events.html" class="btn btn-primary" style="margin-top:1rem;">Back to Events</a>
               </div>
-            </div>
-          `;
+            </div>`;
           return;
         }
-
         currentEvent = res.event;
         renderEventPage(currentEvent);
-
-        if (window.location.hash === '#register' && currentEvent.can_register) {
-          openRegistrationModal();
-        }
+        if (window.location.hash === '#register' && currentEvent.can_register) openRegistrationModal();
       } catch (err) {
         document.getElementById('event-main-content').innerHTML = `
           <div class="container section">
             <div class="empty-state">
               <h2>Error Loading Event</h2>
               <p>${err.message}</p>
-              <a href="/events.html" class="btn btn-primary" style="margin-top: 1rem;">Browse Other Events</a>
+              <a href="/events.html" class="btn btn-primary" style="margin-top:1rem;">Browse Other Events</a>
             </div>
-          </div>
-        `;
+          </div>`;
       }
     }
 
@@ -330,172 +511,246 @@
       document.title = `${evt.title} | INTELLIX`;
 
       const startDateStr = formatDate(evt.start_datetime, true);
-      const endDateStr = formatDate(evt.end_datetime, true);
-      const deadlineStr = formatDate(evt.registration_deadline, true);
+      const endDateStr   = formatDate(evt.end_datetime, true);
+      const deadlineStr  = formatDate(evt.registration_deadline, true);
 
       let statusBadge = '';
-      if (evt.timing_state === 'past') {
-        statusBadge = `<span class="badge">Event Completed</span>`;
-      } else if (evt.can_register) {
-        statusBadge = `<span class="badge badge-success">Registration Open</span>`;
-      } else if (evt.is_full) {
-        statusBadge = `<span class="badge badge-danger">Capacity Reached (Full)</span>`;
-      } else {
-        statusBadge = `<span class="badge badge-danger">Registration Closed</span>`;
-      }
+      if (evt.timing_state === 'past')       statusBadge = `<span class="badge">Event Completed</span>`;
+      else if (evt.can_register)             statusBadge = `<span class="badge badge-success">Registration Open</span>`;
+      else if (evt.is_full)                  statusBadge = `<span class="badge badge-danger">Capacity Reached (Full)</span>`;
+      else                                   statusBadge = `<span class="badge badge-danger">Registration Closed</span>`;
 
       const registered = parseInt(evt.registered_count || 0, 10);
       const max = parseInt(evt.max_participants || 100, 10);
       const percent = Math.min(100, Math.round((registered / max) * 100));
 
+      const isPaymentRequired = evt.payment_required === 1 || evt.payment_required === true;
+      const fee = parseFloat(evt.registration_fee || 0);
+      const feeDisplay = isPaymentRequired && fee > 0 ? `&#8377;${fee.toFixed(2)}` : 'Free (Department Sponsored)';
+
+      // Payment Section HTML
+      let paymentSectionHtml = '';
+      if (isPaymentRequired && evt.payment_qr_url) {
+        const upiRow = evt.upi_id ? `
+          <div class="payment-detail-row">
+            <div class="payment-detail-label">UPI ID</div>
+            <div class="upi-copy-row">
+              <span class="upi-id-text" id="upi-id-text">${evt.upi_id}</span>
+              <button class="btn-copy-upi" id="copy-upi-btn" onclick="copyUPI()">&#128203; Copy</button>
+            </div>
+          </div>` : '';
+
+        const instructionsRow = evt.payment_instructions ? `
+          <div class="payment-detail-row">
+            <div class="payment-detail-label">Payment Instructions</div>
+            <div class="payment-detail-value" style="white-space:pre-line;font-size:0.84rem;">${evt.payment_instructions}</div>
+          </div>` : '';
+
+        const defaultSteps = `
+          <div class="payment-detail-row">
+            <div class="payment-detail-label">How to Pay</div>
+            <ul class="payment-steps-list">
+              <li><span class="step-num">1</span><span>Open any UPI app &mdash; Google Pay, PhonePe, or Paytm</span></li>
+              <li><span class="step-num">2</span><span>Scan the QR code or pay to the UPI ID shown</span></li>
+              <li><span class="step-num">3</span><span>Enter the exact amount: <strong>&#8377;${fee.toFixed(2)}</strong></span></li>
+              <li><span class="step-num">4</span><span>Take a screenshot of the success screen</span></li>
+              <li><span class="step-num">5</span><span>Note the 12-digit Transaction ID / UTR</span></li>
+              <li><span class="step-num">6</span><span>Register and enter the Transaction ID on the form</span></li>
+            </ul>
+          </div>`;
+
+        paymentSectionHtml = `
+          <div class="payment-section">
+            <div class="payment-header">
+              <span class="payment-header-icon">&#128178;</span>
+              <div>
+                <div class="payment-header-title">Official Payment Details &mdash; ${evt.code}</div>
+                <div class="payment-header-sub">Secure UPI Payment &bull; INTELLIX Association</div>
+              </div>
+            </div>
+            <div class="payment-body">
+              <div class="payment-layout">
+                <!-- QR Column -->
+                <div class="payment-qr-box">
+                  <div class="qr-frame">
+                    <img src="${evt.payment_qr_url}" alt="Payment QR Code for ${evt.title}" id="event-qr-img">
+                  </div>
+                  <div class="qr-scan-badge">
+                    <span>&#128247;</span> Scan to Pay
+                  </div>
+                  <div class="qr-actions">
+                    <button class="btn-qr-action" onclick="downloadQR('${evt.code}')">&#11015; Download QR</button>
+                    <button class="btn-qr-action" onclick="openQRFullscreen()">&#10066; Fullscreen</button>
+                  </div>
+                </div>
+                <!-- Details Column -->
+                <div class="payment-details">
+                  <div class="payment-fee-display">
+                    <span class="payment-fee-currency">&#8377;</span>
+                    <span class="payment-fee-amount">${fee % 1 === 0 ? fee.toFixed(0) : fee.toFixed(2)}</span>
+                    <span class="payment-fee-label">Per Participant</span>
+                  </div>
+                  ${upiRow}
+                  ${instructionsRow || defaultSteps}
+                </div>
+              </div>
+            </div>
+          </div>`;
+      }
+
       document.getElementById('event-main-content').innerHTML = `
         <div class="event-details-hero">
           <div class="container">
-            <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 1rem;">
-              <span class="badge">${evt.event_type}</span>
-              ${statusBadge}
+            <div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:1rem;">
+              <span class="badge">${evt.event_type}</span>${statusBadge}
             </div>
-            <h1 style="margin-bottom: 1.25rem;">${evt.title}</h1>
-            <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.5rem;">
-              <div class="event-meta-pill">📅 ${startDateStr} - ${endDateStr}</div>
-              <div class="event-meta-pill">📍 ${evt.venue}</div>
-              <div class="event-meta-pill">🔖 Code: ${evt.code}</div>
-              <div class="event-meta-pill">${evt.participation_type === 'team' ? `👥 Team (${evt.max_team_members || 4} Members Max)` : '👤 Individual'}</div>
+            <h1 style="margin-bottom:1.25rem;">${evt.title}</h1>
+            <div style="display:flex;flex-wrap:wrap;gap:0.75rem;margin-bottom:1.5rem;">
+              <div class="event-meta-pill">&#128197; ${startDateStr} - ${endDateStr}</div>
+              <div class="event-meta-pill">&#128205; ${evt.venue}</div>
+              <div class="event-meta-pill">&#128278; Code: ${evt.code}</div>
+              <div class="event-meta-pill">${evt.participation_type === 'team' ? `&#128101; Team (${evt.max_team_members || 4} Members Max)` : '&#128100; Individual'}</div>
             </div>
           </div>
         </div>
 
         <div class="container">
           <div class="detail-grid">
-            <!-- Left: Description & Rules -->
+            <!-- Left: Content -->
             <div>
               ${evt.poster_url ? `
-                <div style="margin-bottom: 2rem; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border-color); max-height: 420px;">
-                  <img src="${evt.poster_url}" alt="${evt.title}" style="width: 100%; height: 100%; object-fit: cover;">
-                </div>
-              ` : ''}
+                <div style="margin-bottom:2rem;border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--border-color);max-height:420px;">
+                  <img src="${evt.poster_url}" alt="${evt.title}" style="width:100%;height:100%;object-fit:cover;">
+                </div>` : ''}
 
-              <section style="margin-bottom: 2.5rem;">
-                <h3 style="margin-bottom: 1rem;">About This Event</h3>
-                <p style="font-size: 1.05rem; line-height: 1.8; color: var(--text-primary); white-space: pre-line;">
-                  ${evt.description}
-                </p>
+              <section style="margin-bottom:2.5rem;">
+                <h3 style="margin-bottom:1rem;">About This Event</h3>
+                <p style="font-size:1.05rem;line-height:1.8;color:var(--text-primary);white-space:pre-line;">${evt.description}</p>
               </section>
 
               ${evt.rules ? `
-                <section style="margin-bottom: 2.5rem;">
-                  <h3 style="margin-bottom: 1rem;">Guidelines & Competition Rules</h3>
-                  <div class="rules-card">
-                    ${evt.rules}
-                  </div>
-                </section>
-              ` : ''}
+                <section style="margin-bottom:2.5rem;">
+                  <h3 style="margin-bottom:1rem;">Guidelines &amp; Competition Rules</h3>
+                  <div class="rules-card">${evt.rules}</div>
+                </section>` : ''}
 
-              <section style="margin-bottom: 2.5rem;">
-                <h3 style="margin-bottom: 1rem;">Certification & Recognition</h3>
-                <div class="card" style="padding: 1.5rem;">
-                  <h4 style="font-size: 1.05rem; margin-bottom: 0.5rem;">📜 ${evt.cert_title || 'Certificate of Participation'}</h4>
-                  <p style="font-size: 0.9rem; margin-bottom: 1rem;">
+              ${paymentSectionHtml}
+
+              <section style="margin-bottom:2.5rem;">
+                <h3 style="margin-bottom:1rem;">Certification &amp; Recognition</h3>
+                <div class="card" style="padding:1.5rem;">
+                  <h4 style="font-size:1.05rem;margin-bottom:0.5rem;">&#128220; ${evt.cert_title || 'Certificate of Participation'}</h4>
+                  <p style="font-size:0.9rem;margin-bottom:1rem;">
                     All qualified participants who attend this event will receive an official verifiable digital certificate signed by <strong>${evt.cert_signatory_name || 'HOD'}</strong> (${evt.cert_signatory_designation || 'Faculty Patron'}).
                   </p>
-                  <p style="font-size: 0.8rem; color: var(--text-muted);">
-                    Certificates are cryptographically unique and instantly verifiable via QR code on our public verification portal.
-                  </p>
+                  <p style="font-size:0.8rem;color:var(--text-muted);">Certificates are cryptographically unique and instantly verifiable via QR code on our public verification portal.</p>
                 </div>
               </section>
             </div>
 
-            <!-- Right: Registration Action Card -->
+            <!-- Right: Registration Card -->
             <div>
               <div class="reg-sidebar-card">
-                <h3 style="margin-bottom: 1rem;">Registration Status</h3>
-
-                <div style="margin-bottom: 1.5rem;">
-                  <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem;">
-                    <span>Available Slots</span>
-                    <span>${registered} / ${max} Filled</span>
+                <h3 style="margin-bottom:1rem;">Registration Status</h3>
+                <div style="margin-bottom:1.5rem;">
+                  <div style="display:flex;justify-content:space-between;font-size:0.85rem;font-weight:600;margin-bottom:0.4rem;">
+                    <span>Available Slots</span><span>${registered} / ${max} Filled</span>
                   </div>
-                  <div style="width: 100%; height: 8px; background: var(--bg-tertiary); border-radius: var(--radius-full); overflow: hidden; border: 1px solid var(--border-color);">
-                    <div style="width: ${percent}%; height: 100%; background: var(--text-primary);"></div>
+                  <div style="width:100%;height:8px;background:var(--bg-tertiary);border-radius:var(--radius-full);overflow:hidden;border:1px solid var(--border-color);">
+                    <div style="width:${percent}%;height:100%;background:var(--text-primary);"></div>
                   </div>
                 </div>
-
-                <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1.75rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-color);">
-                  <div>⏳ <strong>Deadline:</strong> ${deadlineStr}</div>
-                  <div>👥 <strong>Seats Remaining:</strong> ${evt.seats_available}</div>
-                  <div>🎯 <strong>Participation:</strong> ${evt.participation_type === 'team' ? `Team (Max ${evt.max_team_members || 4} Members)` : 'Individual'}</div>
-                  <div>🎟️ <strong>Fee:</strong> Free (Department Sponsored)</div>
+                <div style="display:flex;flex-direction:column;gap:0.75rem;font-size:0.875rem;color:var(--text-secondary);margin-bottom:1.75rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border-color);">
+                  <div>&#9203; <strong>Deadline:</strong> ${deadlineStr}</div>
+                  <div>&#128101; <strong>Seats Remaining:</strong> ${evt.seats_available}</div>
+                  <div>&#127919; <strong>Participation:</strong> ${evt.participation_type === 'team' ? `Team (Max ${evt.max_team_members || 4} Members)` : 'Individual'}</div>
+                  <div>&#127903; <strong>Fee:</strong> ${feeDisplay}</div>
                 </div>
-
                 ${evt.can_register ? `
                   <button class="btn btn-primary btn-lg btn-block" id="sidebar-register-btn" onclick="openRegistrationModal()">
                     REGISTER NOW &rarr;
                   </button>
-                  <p style="font-size: 0.75rem; text-align: center; color: var(--text-muted); margin-top: 0.75rem;">
+                  <p style="font-size:0.75rem;text-align:center;color:var(--text-muted);margin-top:0.75rem;">
                     Direct departmental registration. Unique Registration ID generated instantly.
-                  </p>
-                ` : `
+                  </p>` : `
                   <button class="btn btn-secondary btn-lg btn-block" disabled>
                     ${evt.timing_state === 'past' ? 'Event Ended' : (evt.is_full ? 'Event Full' : 'Registration Closed')}
                   </button>
-                  <p style="font-size: 0.8rem; text-align: center; color: var(--text-muted); margin-top: 0.75rem;">
+                  <p style="font-size:0.8rem;text-align:center;color:var(--text-muted);margin-top:0.75rem;">
                     Registrations for this event are currently unavailable.
-                  </p>
-                `}
+                  </p>`}
               </div>
             </div>
           </div>
         </div>
       `;
+
+      // Wire QR fullscreen after render
+      if (isPaymentRequired && evt.payment_qr_url) {
+        document.getElementById('qr-fullscreen-img').src = evt.payment_qr_url;
+        document.getElementById('qr-fullscreen-title').textContent = `Scan to Pay \u2014 ${evt.title}`;
+        if (evt.upi_id) document.getElementById('qr-fullscreen-sub').textContent = `UPI ID: ${evt.upi_id}`;
+      }
     }
 
+    // QR actions
+    function downloadQR(code) {
+      const qrImg = document.getElementById('event-qr-img');
+      if (!qrImg) return;
+      const a = document.createElement('a');
+      a.href = qrImg.src;
+      a.download = `${code}-payment-qr.png`;
+      a.click();
+    }
+
+    function openQRFullscreen() {
+      document.getElementById('qr-fullscreen-modal').classList.add('open');
+    }
+
+    function copyUPI() {
+      const upiText = document.getElementById('upi-id-text');
+      const btn = document.getElementById('copy-upi-btn');
+      if (!upiText || !btn) return;
+      navigator.clipboard.writeText(upiText.textContent).then(() => {
+        btn.textContent = '\u2713 Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = '\uD83D\uDCCB Copy'; btn.classList.remove('copied'); }, 2000);
+      }).catch(() => {
+        const range = document.createRange();
+        range.selectNodeContents(upiText);
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(range);
+      });
+    }
+
+    // Team members
     let currentTeamMembers = [];
 
     function updateTeamMembersUI() {
       const container = document.getElementById('team-members-container');
       const countLabel = document.getElementById('team-member-count-label');
-      const maxLabel = document.getElementById('team-member-max-label');
-      const addBtn = document.getElementById('add-team-member-btn');
-
+      const maxLabel   = document.getElementById('team-member-max-label');
+      const addBtn     = document.getElementById('add-team-member-btn');
       const maxTeam = parseInt(currentEvent && currentEvent.max_team_members, 10) || 4;
       const maxAdditional = Math.max(1, maxTeam - 1);
-
       if (countLabel) countLabel.innerText = currentTeamMembers.length;
-      if (maxLabel) maxLabel.innerText = maxAdditional;
-
-      if (addBtn) {
-        addBtn.disabled = currentTeamMembers.length >= maxAdditional;
-        addBtn.title = currentTeamMembers.length >= maxAdditional ? 'Maximum team members reached' : 'Add member';
-      }
-
+      if (maxLabel)   maxLabel.innerText   = maxAdditional;
+      if (addBtn) { addBtn.disabled = currentTeamMembers.length >= maxAdditional; }
       if (!container) return;
       container.innerHTML = currentTeamMembers.map((m, idx) => `
-        <div style="display: flex; gap: 0.5rem; align-items: center; background: var(--bg-secondary); padding: 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
-          <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); min-width: 65px;">#${idx + 2} Member:</span>
-          <input type="text" class="form-control form-control-sm team-member-name" data-idx="${idx}" placeholder="" value="${m.name || ''}" style="flex: 1; padding: 0.35rem 0.5rem; font-size: 0.85rem;" required>
-          <input type="text" class="form-control form-control-sm team-member-reg" data-idx="${idx}" placeholder="" value="${m.identifier || ''}" style="flex: 1; padding: 0.35rem 0.5rem; font-size: 0.85rem;" required>
-          <button type="button" class="btn btn-sm btn-secondary" onclick="removeTeamMemberRow(${idx})" style="padding: 0.25rem 0.5rem; color: #ef4444;" title="Remove member">&times;</button>
-        </div>
-      `).join('');
-
-      container.querySelectorAll('.team-member-name').forEach(inp => {
-        inp.addEventListener('input', (e) => {
-          const idx = parseInt(e.target.dataset.idx, 10);
-          if (currentTeamMembers[idx]) currentTeamMembers[idx].name = e.target.value;
-        });
-      });
-      container.querySelectorAll('.team-member-reg').forEach(inp => {
-        inp.addEventListener('input', (e) => {
-          const idx = parseInt(e.target.dataset.idx, 10);
-          if (currentTeamMembers[idx]) currentTeamMembers[idx].identifier = e.target.value;
-        });
-      });
+        <div style="display:flex;gap:0.5rem;align-items:center;background:var(--bg-secondary);padding:0.5rem;border-radius:var(--radius-sm);border:1px solid var(--border-color);">
+          <span style="font-size:0.8rem;font-weight:600;color:var(--text-muted);min-width:65px;">#${idx + 2} Member:</span>
+          <input type="text" class="form-control form-control-sm team-member-name" data-idx="${idx}" value="${m.name || ''}" style="flex:1;padding:0.35rem 0.5rem;font-size:0.85rem;" required>
+          <input type="text" class="form-control form-control-sm team-member-reg" data-idx="${idx}" value="${m.identifier || ''}" style="flex:1;padding:0.35rem 0.5rem;font-size:0.85rem;" required>
+          <button type="button" class="btn btn-sm btn-secondary" onclick="removeTeamMemberRow(${idx})" style="padding:0.25rem 0.5rem;color:#ef4444;" title="Remove">&times;</button>
+        </div>`).join('');
+      container.querySelectorAll('.team-member-name').forEach(inp => inp.addEventListener('input', e => { const i=parseInt(e.target.dataset.idx,10); if(currentTeamMembers[i]) currentTeamMembers[i].name=e.target.value; }));
+      container.querySelectorAll('.team-member-reg').forEach(inp  => inp.addEventListener('input', e => { const i=parseInt(e.target.dataset.idx,10); if(currentTeamMembers[i]) currentTeamMembers[i].identifier=e.target.value; }));
     }
 
     function addTeamMemberRow() {
       const maxTeam = parseInt(currentEvent && currentEvent.max_team_members, 10) || 4;
-      const maxAdditional = Math.max(1, maxTeam - 1);
-      if (currentTeamMembers.length >= maxAdditional) return;
+      if (currentTeamMembers.length >= Math.max(1, maxTeam - 1)) return;
       currentTeamMembers.push({ name: '', identifier: '' });
       updateTeamMembersUI();
     }
@@ -510,80 +765,66 @@
       document.getElementById('form-event-id').value = currentEvent.id;
       document.getElementById('modal-event-title').innerText = `Register for: ${currentEvent.title}`;
 
-      // Handle Team Event vs Individual Event
-      const teamSec = document.getElementById('team-registration-section');
-      const teamNameInput = document.getElementById('reg-team-name');
-      const isTeamEvent = currentEvent.participation_type === 'team';
-
+      // Team toggle
+      const teamSec     = document.getElementById('team-registration-section');
+      const teamNameInp = document.getElementById('reg-team-name');
+      const isTeam      = currentEvent.participation_type === 'team';
       currentTeamMembers = [];
-      if (isTeamEvent) {
+      if (isTeam) {
         teamSec.style.display = 'block';
-        teamNameInput.required = true;
+        teamNameInp.required = true;
         const maxTeam = parseInt(currentEvent.max_team_members, 10) || 4;
         document.getElementById('team-max-size-display').innerText = maxTeam;
-        document.getElementById('team-member-max-label').innerText = Math.max(1, maxTeam - 1);
         updateTeamMembersUI();
       } else {
         teamSec.style.display = 'none';
-        teamNameInput.required = false;
-        teamNameInput.value = '';
-        updateTeamMembersUI();
+        teamNameInp.required = false;
+        teamNameInp.value = '';
       }
 
-      // Build custom fields
+      // Payment section in modal
+      const paySection = document.getElementById('modal-payment-section');
+      const isPayment = currentEvent.payment_required === 1 || currentEvent.payment_required === true;
+      if (isPayment) {
+        paySection.style.display = 'block';
+        const fee = parseFloat(currentEvent.registration_fee || 0);
+        const upiText = currentEvent.upi_id ? ` to UPI ${currentEvent.upi_id}` : '';
+        document.getElementById('modal-pay-amount').textContent = `\u20b9${fee % 1 === 0 ? fee.toFixed(0) : fee.toFixed(2)}${upiText}`;
+        document.getElementById('modal-transaction-id').required = true;
+      } else {
+        paySection.style.display = 'none';
+        document.getElementById('modal-transaction-id').required = false;
+      }
+
+      // Custom fields
       const container = document.getElementById('dynamic-form-fields-container');
       if (currentEvent.custom_fields && currentEvent.custom_fields.length > 0) {
         container.style.display = 'block';
         container.innerHTML = `
-          <h4 style="font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.75rem;">
+          <h4 style="font-size:0.95rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:0.75rem;">
             Event-Specific Requirements (${currentEvent.code})
           </h4>
           ${currentEvent.custom_fields.map(f => {
-          const reqStar = f.is_required ? `<span class="required-star">*</span>` : '';
-          const reqAttr = f.is_required ? 'required' : '';
-
-          if (f.field_type === 'dropdown' && f.options) {
-            return `
-                <div class="form-group">
-                  <label class="form-label">${f.field_label} ${reqStar}</label>
-                  <select name="custom_${f.field_name}" class="form-select" ${reqAttr}>
-                    <option value="">Select option</option>
-                    ${f.options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
-                  </select>
-                </div>
-              `;
-          } else if (f.field_type === 'radio' && f.options) {
-            return `
-                <div class="form-group">
-                  <label class="form-label">${f.field_label} ${reqStar}</label>
-                  <div style="display: flex; gap: 1.5rem; margin-top: 0.25rem;">
-                    ${f.options.map(opt => `
-                      <label class="form-check">
-                        <input type="radio" name="custom_${f.field_name}" value="${opt}" ${reqAttr}>
-                        <span>${opt}</span>
-                      </label>
-                    `).join('')}
-                  </div>
-                </div>
-              `;
-          } else if (f.field_type === 'textarea') {
-            return `
-                <div class="form-group">
-                  <label class="form-label">${f.field_label} ${reqStar}</label>
-                  <textarea name="custom_${f.field_name}" class="form-control" placeholder="" ${reqAttr}></textarea>
-                </div>
-              `;
-          } else {
-            return `
-                <div class="form-group">
-                  <label class="form-label">${f.field_label} ${reqStar}</label>
-                  <input type="${f.field_type === 'number' ? 'number' : (f.field_type === 'email' ? 'email' : 'text')}" 
-                         name="custom_${f.field_name}" class="form-control" placeholder="" ${reqAttr}>
-                </div>
-              `;
-          }
-        }).join('')}
-        `;
+            const reqStar = f.is_required ? `<span class="required-star">*</span>` : '';
+            const reqAttr = f.is_required ? 'required' : '';
+            if (f.field_type === 'dropdown' && f.options) {
+              return `<div class="form-group"><label class="form-label">${f.field_label} ${reqStar}</label>
+                <select name="custom_${f.field_name}" class="form-select" ${reqAttr}>
+                  <option value="">Select option</option>
+                  ${f.options.map(o => `<option value="${o}">${o}</option>`).join('')}
+                </select></div>`;
+            } else if (f.field_type === 'radio' && f.options) {
+              return `<div class="form-group"><label class="form-label">${f.field_label} ${reqStar}</label>
+                <div style="display:flex;gap:1.5rem;margin-top:0.25rem;">
+                  ${f.options.map(o => `<label class="form-check"><input type="radio" name="custom_${f.field_name}" value="${o}" ${reqAttr}><span>${o}</span></label>`).join('')}
+                </div></div>`;
+            } else if (f.field_type === 'textarea') {
+              return `<div class="form-group"><label class="form-label">${f.field_label} ${reqStar}</label><textarea name="custom_${f.field_name}" class="form-control" ${reqAttr}></textarea></div>`;
+            } else {
+              return `<div class="form-group"><label class="form-label">${f.field_label} ${reqStar}</label>
+                <input type="${f.field_type === 'number' ? 'number' : (f.field_type === 'email' ? 'email' : 'text')}" name="custom_${f.field_name}" class="form-control" ${reqAttr}></div>`;
+            }
+          }).join('')}`;
       } else {
         container.style.display = 'none';
         container.innerHTML = '';
@@ -602,43 +843,79 @@
 
       document.getElementById('modal-close-btn').addEventListener('click', closeRegistrationModal);
       document.getElementById('modal-cancel-btn').addEventListener('click', closeRegistrationModal);
+      document.getElementById('qr-fullscreen-close').addEventListener('click', () => document.getElementById('qr-fullscreen-modal').classList.remove('open'));
+      document.getElementById('qr-fullscreen-modal').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.classList.remove('open'); });
 
       const addMemberBtn = document.getElementById('add-team-member-btn');
-      if (addMemberBtn) {
-        addMemberBtn.addEventListener('click', addTeamMemberRow);
-      }
+      if (addMemberBtn) addMemberBtn.addEventListener('click', addTeamMemberRow);
 
-      // Registration Form Submission Handler
+      // Payment screenshot preview
+      const screenshotInput = document.getElementById('modal-screenshot');
+      screenshotInput.addEventListener('change', () => {
+        const file = screenshotInput.files[0];
+        const preview = document.getElementById('modal-screenshot-preview');
+        const img = document.getElementById('modal-screenshot-img');
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = e => { img.src = e.target.result; preview.style.display = 'block'; };
+          reader.readAsDataURL(file);
+        } else { preview.style.display = 'none'; }
+      });
+
+      // Form submission
       document.getElementById('event-reg-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const submitBtn = document.getElementById('modal-submit-btn');
-        const errorDiv = document.getElementById('reg-error-msg');
+        const errorDiv  = document.getElementById('reg-error-msg');
         errorDiv.style.display = 'none';
-
         submitBtn.disabled = true;
         submitBtn.innerText = 'Registering...';
 
         const formData = new FormData(e.target);
+        const isPayment = currentEvent && (currentEvent.payment_required === 1 || currentEvent.payment_required === true);
+
         const payload = {
-          event_id: formData.get('event_id'),
-          full_name: formData.get('full_name'),
+          event_id:        formData.get('event_id'),
+          full_name:       formData.get('full_name'),
           register_number: formData.get('register_number'),
-          department: formData.get('department'),
-          semester: formData.get('semester'),
-          email: formData.get('email'),
-          phone: formData.get('phone'),
-          custom_data: {}
+          department:      formData.get('department'),
+          semester:        formData.get('semester'),
+          email:           formData.get('email'),
+          phone:           formData.get('phone'),
+          custom_data:     {}
         };
 
         if (currentEvent && currentEvent.participation_type === 'team') {
-          payload.team_name = formData.get('team_name');
+          payload.team_name    = formData.get('team_name');
           payload.team_members = currentTeamMembers.filter(m => m.name && m.name.trim());
+        }
+
+        if (isPayment) {
+          const txId = document.getElementById('modal-transaction-id').value.trim();
+          if (!txId) {
+            errorDiv.textContent = 'Please enter your Transaction ID / UTR Number to complete payment verification.';
+            errorDiv.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Complete Registration \u2192';
+            return;
+          }
+          payload.transaction_id = txId;
+
+          // Encode screenshot if uploaded
+          const screenshotFile = document.getElementById('modal-screenshot').files[0];
+          if (screenshotFile) {
+            const screenshotDataUrl = await new Promise((resolve) => {
+              const r = new FileReader();
+              r.onload = ev => resolve(ev.target.result);
+              r.readAsDataURL(screenshotFile);
+            });
+            payload.payment_screenshot_url = screenshotDataUrl;
+          }
         }
 
         for (const [key, value] of formData.entries()) {
           if (key.startsWith('custom_')) {
-            const rawName = key.replace('custom_', '');
-            payload.custom_data[rawName] = value;
+            payload.custom_data[key.replace('custom_', '')] = value;
           }
         }
 
@@ -648,17 +925,15 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
           });
-
           if (res.success) {
-            // Store registration pass in sessionStorage for receipt printout
             sessionStorage.setItem('last_registration', JSON.stringify(res.registration));
             window.location.href = '/registration-success.html';
           }
         } catch (err) {
-          errorDiv.innerText = err.message;
+          errorDiv.textContent = err.message;
           errorDiv.style.display = 'block';
           submitBtn.disabled = false;
-          submitBtn.innerText = 'Complete Registration →';
+          submitBtn.innerText = 'Complete Registration \u2192';
         }
       });
     });

@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 3000;
 
 // Ensure upload folders exist
 const uploadsDir = process.env.UPLOADS_DIR || path.join(__dirname, 'uploads');
-const uploadDirs = ['posters', 'achievements', 'gallery', 'members', 'certificates', 'general'];
+const uploadDirs = ['posters', 'achievements', 'gallery', 'members', 'certificates', 'general', 'payment_qr'];
 uploadDirs.forEach(dir => {
   const p = path.join(uploadsDir, dir);
   if (!fs.existsSync(p)) {
@@ -28,8 +28,8 @@ app.use(cors({
   credentials: true
 }));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '15mb' }));
+app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
 // Session Configuration
 app.use(session({

@@ -14,6 +14,8 @@ async function register(req, res) {
       phone,
       team_name,
       team_members,
+      transaction_id,
+      payment_screenshot_url,
       custom_data
     } = req.body;
 
@@ -95,6 +97,17 @@ async function register(req, res) {
       return res.status(400).json({ success: false, message: 'This event has reached its maximum seat capacity.' });
     }
 
+    // 2b. Payment validation (if payment_required)
+    const isPaymentRequired = event.payment_required === 1 || event.payment_required === true;
+    if (isPaymentRequired) {
+      if (!transaction_id || !String(transaction_id).trim()) {
+        return res.status(400).json({
+          success: false,
+          message: 'Payment is required for this event. Please provide your Transaction ID / UTR Number.'
+        });
+      }
+    }
+
     // 3. Duplicate check (prevent duplicate register_number or email for this event)
     const [existing] = await query(
       'SELECT id, registration_code FROM event_registrations WHERE event_id = ? AND (register_number = ? OR email = ?)',
@@ -141,8 +154,8 @@ async function register(req, res) {
     // 7. Insert into event_registrations
     const [regResult] = await query(
       `INSERT INTO event_registrations 
-       (registration_code, event_id, full_name, register_number, department, semester, email, phone, team_name, team_members, qr_code_data)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (registration_code, event_id, full_name, register_number, department, semester, email, phone, team_name, team_members, transaction_id, payment_screenshot_url, payment_status, qr_code_data)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         registrationCode,
         event_id,
@@ -154,6 +167,9 @@ async function register(req, res) {
         phone.trim(),
         storedTeamName,
         storedTeamMembers,
+        isPaymentRequired ? (transaction_id ? String(transaction_id).trim() : null) : null,
+        isPaymentRequired ? (payment_screenshot_url || null) : null,
+        isPaymentRequired ? 'pending' : 'unpaid',
         qrDataText
       ]
     );
@@ -198,6 +214,9 @@ async function register(req, res) {
         phone: phone.trim(),
         team_name: storedTeamName,
         team_members: storedTeamMembers,
+        payment_required: isPaymentRequired ? 1 : 0,
+        payment_status: isPaymentRequired ? 'pending' : 'unpaid',
+        transaction_id: isPaymentRequired ? (transaction_id ? String(transaction_id).trim() : null) : null,
         qr_code: qrCodeDataUrl,
         registered_at: new Date().toISOString()
       }
@@ -217,6 +236,7 @@ async function getRegistrationsByEvent(req, res) {
       SELECT 
         er.id, er.registration_code, er.event_id, er.full_name, er.register_number,
         er.department, er.semester, er.email, er.phone, er.team_name, er.team_members, er.created_at,
+        er.transaction_id, er.payment_screenshot_url, er.payment_status,
         COALESCE(att.status, 'unmarked') as attendance_status,
         att.marked_at,
         cert.certificate_code,
@@ -298,6 +318,7 @@ async function exportRegistrationsCSV(req, res) {
       `SELECT 
         er.id, er.registration_code, er.full_name, er.register_number,
         er.department, er.semester, er.email, er.phone, er.team_name, er.team_members, er.created_at,
+        er.transaction_id, er.payment_status,
         COALESCE(att.status, 'unmarked') as attendance,
         cert.certificate_code
       FROM event_registrations er
@@ -339,6 +360,8 @@ async function exportRegistrationsCSV(req, res) {
       'Email',
       'Phone',
       ...fields.map(f => `"${f.field_label.replace(/"/g, '""')}"`),
+      'Payment Status',
+      'Transaction ID / UTR',
       'Attendance',
       'Certificate ID',
       'Registration Date'
@@ -362,6 +385,8 @@ async function exportRegistrationsCSV(req, res) {
         `"${reg.email}"`,
         `"${reg.phone}"`,
         ...customCols,
+        `"${(reg.payment_status || 'N/A').toUpperCase()}"`,
+        `"${reg.transaction_id || 'N/A'}"`,
         `"${reg.attendance.toUpperCase()}"`,
         `"${reg.certificate_code || 'N/A'}"`,
         `"${new Date(reg.created_at).toLocaleString()}"`
@@ -393,9 +418,27 @@ async function deleteRegistration(req, res) {
   }
 }
 
+async function updatePaymentStatus(req, res) {
+  const { id } = req.params;
+  const { payment_status } = req.body;
+  const validStatuses = ['pending', 'verified', 'rejected', 'unpaid'];
+  if (!validStatuses.includes(payment_status)) {
+    return res.status(400).json({ success: false, message: 'Invalid payment status' });
+  }
+
+  try {
+    await query('UPDATE event_registrations SET payment_status = ? WHERE id = ?', [payment_status, id]);
+    return res.json({ success: true, message: 'Payment status updated successfully' });
+  } catch (err) {
+    console.error('[UpdatePaymentStatus Error]', err);
+    return res.status(500).json({ success: false, message: 'Failed to update payment status' });
+  }
+}
+
 module.exports = {
   register,
   getRegistrationsByEvent,
   exportRegistrationsCSV,
-  deleteRegistration
+  deleteRegistration,
+  updatePaymentStatus
 };

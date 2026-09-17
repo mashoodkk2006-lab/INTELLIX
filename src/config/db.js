@@ -176,7 +176,15 @@ async function initMySQLSchema(pool) {
     'ALTER TABLE achievements MODIFY COLUMN image_url LONGTEXT',
     'ALTER TABLE event_gallery MODIFY COLUMN image_url LONGTEXT',
     'ALTER TABLE association_members MODIFY COLUMN photo_url LONGTEXT',
-    'ALTER TABLE association_members MODIFY COLUMN short_bio TEXT'
+    'ALTER TABLE association_members MODIFY COLUMN short_bio TEXT',
+    'ALTER TABLE events ADD COLUMN payment_required TINYINT(1) NOT NULL DEFAULT 0',
+    'ALTER TABLE events ADD COLUMN registration_fee DECIMAL(10,2) DEFAULT 0',
+    'ALTER TABLE events ADD COLUMN payment_qr_url LONGTEXT DEFAULT NULL',
+    'ALTER TABLE events ADD COLUMN payment_instructions TEXT DEFAULT NULL',
+    'ALTER TABLE events ADD COLUMN upi_id VARCHAR(120) DEFAULT NULL',
+    'ALTER TABLE event_registrations ADD COLUMN transaction_id VARCHAR(120) DEFAULT NULL',
+    'ALTER TABLE event_registrations ADD COLUMN payment_screenshot_url LONGTEXT DEFAULT NULL',
+    'ALTER TABLE event_registrations ADD COLUMN payment_status VARCHAR(30) DEFAULT \'pending\''
   ];
   for (const altSql of alters) {
     try { await pool.query(altSql); } catch (e) {}
@@ -227,6 +235,11 @@ async function initSQLiteSchema(client) {
       max_participants INTEGER NOT NULL DEFAULT 100,
       participation_type TEXT NOT NULL DEFAULT 'individual',
       max_team_members INTEGER DEFAULT NULL,
+      payment_required INTEGER NOT NULL DEFAULT 0,
+      registration_fee REAL DEFAULT 0,
+      payment_qr_url TEXT DEFAULT NULL,
+      payment_instructions TEXT DEFAULT NULL,
+      upi_id TEXT DEFAULT NULL,
       confirmation_message TEXT,
       cert_enabled INTEGER NOT NULL DEFAULT 1,
       cert_title TEXT DEFAULT 'Certificate of Participation',
@@ -271,6 +284,9 @@ async function initSQLiteSchema(client) {
       phone TEXT NOT NULL,
       team_name TEXT DEFAULT NULL,
       team_members TEXT DEFAULT NULL,
+      transaction_id TEXT DEFAULT NULL,
+      payment_screenshot_url TEXT DEFAULT NULL,
+      payment_status TEXT DEFAULT 'pending',
       qr_code_data TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       UNIQUE(event_id, register_number),
@@ -366,7 +382,15 @@ async function initSQLiteSchema(client) {
     `ALTER TABLE events ADD COLUMN participation_type TEXT NOT NULL DEFAULT 'individual'`,
     `ALTER TABLE events ADD COLUMN max_team_members INTEGER DEFAULT NULL`,
     `ALTER TABLE event_registrations ADD COLUMN team_name TEXT DEFAULT NULL`,
-    `ALTER TABLE event_registrations ADD COLUMN team_members TEXT DEFAULT NULL`
+    `ALTER TABLE event_registrations ADD COLUMN team_members TEXT DEFAULT NULL`,
+    `ALTER TABLE events ADD COLUMN payment_required INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE events ADD COLUMN registration_fee REAL DEFAULT 0`,
+    `ALTER TABLE events ADD COLUMN payment_qr_url TEXT DEFAULT NULL`,
+    `ALTER TABLE events ADD COLUMN payment_instructions TEXT DEFAULT NULL`,
+    `ALTER TABLE events ADD COLUMN upi_id TEXT DEFAULT NULL`,
+    `ALTER TABLE event_registrations ADD COLUMN transaction_id TEXT DEFAULT NULL`,
+    `ALTER TABLE event_registrations ADD COLUMN payment_screenshot_url TEXT DEFAULT NULL`,
+    `ALTER TABLE event_registrations ADD COLUMN payment_status TEXT DEFAULT 'pending'`
   ];
   for (const migration of migrations) {
     try {

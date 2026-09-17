@@ -3,22 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Create Event & Form Builder | Admin Portal</title>
-
+  <title>Create Event &amp; Form Builder | Admin Portal</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
   <link rel="stylesheet" href="/css/main.css">
   <link rel="stylesheet" href="/css/components.css">
   <link rel="stylesheet" href="/css/animations.css">
   <link rel="stylesheet" href="/css/dashboard.css">
   <style>
-    .section-divider {
-      border-top: 1px solid var(--border-color);
-      padding-top: 2rem;
-      margin-top: 2rem;
-    }
+    .section-divider { border-top: 1px solid var(--border-color); padding-top: 2rem; margin-top: 2rem; }
     .custom-field-item {
       background-color: var(--bg-card);
       border: 1px solid var(--border-color);
@@ -30,38 +24,72 @@
       gap: 0.75rem;
       position: relative;
     }
+    /* Payment Toggle */
+    .payment-toggle-group { display: flex; border: 1px solid var(--border-color); border-radius: var(--radius-sm); overflow: hidden; width: fit-content; }
+    .payment-toggle-group input[type="radio"] { display: none; }
+    .payment-toggle-group label {
+      padding: 0.55rem 1.5rem;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--bg-secondary);
+      color: var(--text-muted);
+      transition: background 0.2s, color 0.2s;
+      user-select: none;
+    }
+    .payment-toggle-group input[type="radio"]:checked + label { background: var(--btn-primary-bg); color: var(--btn-primary-text); }
+    /* QR Preview */
+    .qr-preview-card {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      padding: 1rem 1.25rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      background: var(--bg-secondary);
+      margin-top: 0.75rem;
+      animation: fadeInUp 0.3s ease;
+    }
+    .qr-preview-card img {
+      width: 90px;
+      height: 90px;
+      object-fit: contain;
+      border-radius: var(--radius-sm);
+      border: 2px solid var(--border-color);
+      background: #fff;
+      padding: 4px;
+    }
+    .qr-preview-info { flex: 1; }
+    .qr-filename { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.25rem; word-break: break-all; }
+    .qr-meta { font-size: 0.78rem; color: var(--text-muted); }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
   </style>
 </head>
 <body>
   <div class="dashboard-layout">
     <div id="dashboard-sidebar-container"></div>
-
     <main class="dashboard-main">
       <header class="dashboard-topbar">
-        <div>
-          <h3 style="font-size: 1.15rem;">Event Creator & Dynamic Form Builder</h3>
-        </div>
-        <div>
-          <a href="/dashboard/events.html" class="btn btn-outline btn-sm">&larr; Back to Events</a>
-        </div>
+        <div><h3 style="font-size:1.15rem;">Event Creator &amp; Dynamic Form Builder</h3></div>
+        <div><a href="/dashboard/events.html" class="btn btn-outline btn-sm">&larr; Back to Events</a></div>
       </header>
 
       <div class="dashboard-content">
         <form id="create-event-form" enctype="multipart/form-data">
-          <!-- 1. Basic Details -->
-          <div class="card" style="margin-bottom: 2rem;">
-            <div class="card-body" style="padding: 2rem;">
-              <div class="badge" style="margin-bottom: 0.5rem;">STEP 1</div>
-              <h3 style="margin-bottom: 1.5rem;">Basic Event Information</h3>
 
+          <!-- STEP 1: Basic Details -->
+          <div class="card" style="margin-bottom:2rem;">
+            <div class="card-body" style="padding:2rem;">
+              <div class="badge" style="margin-bottom:0.5rem;">STEP 1</div>
+              <h3 style="margin-bottom:1.5rem;">Basic Event Information</h3>
               <div class="form-row">
-                <div class="form-group" style="grid-column: span 2;">
+                <div class="form-group" style="grid-column:span 2;">
                   <label class="form-label">Event Title <span class="required-star">*</span></label>
-                  <input type="text" name="title" class="form-control" placeholder="" required>
+                  <input type="text" name="title" class="form-control" required>
                 </div>
                 <div class="form-group">
                   <label class="form-label">Event Code (Short ID) <span class="required-star">*</span></label>
-                  <input type="text" name="code" class="form-control" placeholder="" maxlength="8" required>
+                  <input type="text" name="code" class="form-control" maxlength="8" required>
                   <span class="form-hint">Used in Registration IDs (e.g. INTELLIX-CH26-2026-0001)</span>
                 </div>
                 <div class="form-group">
@@ -69,38 +97,34 @@
                   <select name="event_type" class="form-select" required>
                     <option value="Technical Competition">Technical Competition</option>
                     <option value="Hackathon">Hackathon</option>
-                    <option value="Workshop & Bootcamp">Workshop & Bootcamp</option>
-                    <option value="Symposium & Paper Presentation">Symposium & Paper Presentation</option>
+                    <option value="Workshop &amp; Bootcamp">Workshop &amp; Bootcamp</option>
+                    <option value="Symposium &amp; Paper Presentation">Symposium &amp; Paper Presentation</option>
                     <option value="Non-Technical / Esports">Non-Technical / Esports</option>
                   </select>
                 </div>
               </div>
-
               <div class="form-row">
                 <div class="form-group">
-                  <label class="form-label">Start Date & Time <span class="required-star">*</span></label>
+                  <label class="form-label">Start Date &amp; Time <span class="required-star">*</span></label>
                   <input type="datetime-local" name="start_datetime" class="form-control" required>
                 </div>
                 <div class="form-group">
-                  <label class="form-label">End Date & Time <span class="required-star">*</span></label>
+                  <label class="form-label">End Date &amp; Time <span class="required-star">*</span></label>
                   <input type="datetime-local" name="end_datetime" class="form-control" required>
                 </div>
-                <div class="form-group" style="grid-column: span 2;">
+                <div class="form-group" style="grid-column:span 2;">
                   <label class="form-label">Venue / Hall Location <span class="required-star">*</span></label>
-                  <input type="text" name="venue" class="form-control" placeholder="" required>
+                  <input type="text" name="venue" class="form-control" required>
                 </div>
               </div>
-
               <div class="form-group">
                 <label class="form-label">Event Description <span class="required-star">*</span></label>
-                <textarea name="description" class="form-control" style="min-height: 100px;" placeholder="" required></textarea>
+                <textarea name="description" class="form-control" style="min-height:100px;" required></textarea>
               </div>
-
               <div class="form-group">
-                <label class="form-label">Rules & Eligibility Guidelines</label>
-                <textarea name="rules" class="form-control" style="min-height: 100px;" placeholder=""></textarea>
+                <label class="form-label">Rules &amp; Eligibility Guidelines</label>
+                <textarea name="rules" class="form-control" style="min-height:100px;"></textarea>
               </div>
-
               <div class="form-group">
                 <label class="form-label">Event Poster Image (Optional)</label>
                 <input type="file" name="poster" class="form-control" accept="image/*">
@@ -109,33 +133,29 @@
             </div>
           </div>
 
-          <!-- 2. Registration Settings -->
-          <div class="card" style="margin-bottom: 2rem;">
-            <div class="card-body" style="padding: 2rem;">
-              <div class="badge" style="margin-bottom: 0.5rem;">STEP 2</div>
-              <h3 style="margin-bottom: 1.5rem;">Registration Parameters</h3>
-
+          <!-- STEP 2: Registration Settings -->
+          <div class="card" style="margin-bottom:2rem;">
+            <div class="card-body" style="padding:2rem;">
+              <div class="badge" style="margin-bottom:0.5rem;">STEP 2</div>
+              <h3 style="margin-bottom:1.5rem;">Registration Parameters</h3>
               <div class="form-row">
                 <div class="form-group">
                   <label class="form-label">Registration Status</label>
-                  <label class="form-check" style="margin-top: 0.5rem;">
+                  <label class="form-check" style="margin-top:0.5rem;">
                     <input type="checkbox" name="registration_open" value="1" checked>
                     <span>Enable Public Registrations</span>
                   </label>
                 </div>
-
                 <div class="form-group">
                   <label class="form-label">Maximum Participant Capacity <span class="required-star">*</span></label>
                   <input type="number" name="max_participants" class="form-control" value="100" min="1" required>
                 </div>
-
                 <div class="form-group">
                   <label class="form-label">Registration Deadline <span class="required-star">*</span></label>
                   <input type="datetime-local" name="registration_deadline" class="form-control" required>
                 </div>
               </div>
-
-              <div class="form-row" style="margin-top: 1rem;">
+              <div class="form-row" style="margin-top:1rem;">
                 <div class="form-group">
                   <label class="form-label">Participation Type <span class="required-star">*</span></label>
                   <select name="participation_type" id="participation-type-select" class="form-select" required>
@@ -144,14 +164,12 @@
                   </select>
                   <span class="form-hint">Select whether students participate individually or as a team.</span>
                 </div>
-
-                <div class="form-group" id="max-team-members-group" style="display: none;">
+                <div class="form-group" id="max-team-members-group" style="display:none;">
                   <label class="form-label">Maximum Team Members <span class="required-star">*</span></label>
-                  <input type="number" name="max_team_members" id="max-team-members-input" class="form-control" value="4" min="2" max="30" placeholder="">
+                  <input type="number" name="max_team_members" id="max-team-members-input" class="form-control" value="4" min="2" max="30">
                   <span class="form-hint">Maximum number of members allowed per team (including team lead).</span>
                 </div>
               </div>
-
               <div class="form-group">
                 <label class="form-label">Custom Confirmation Message</label>
                 <input type="text" name="confirmation_message" class="form-control" value="Congratulations! Your event registration is confirmed. Please bring your registration pass.">
@@ -159,63 +177,119 @@
             </div>
           </div>
 
-          <!-- 3. Dynamic Registration Form Builder -->
-          <div class="card" style="margin-bottom: 2rem; border-color: var(--text-primary);">
-            <div class="card-body" style="padding: 2rem;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+          <!-- STEP 3: Payment Details -->
+          <div class="card" style="margin-bottom:2rem; border-color:rgba(37,99,235,0.3);">
+            <div class="card-body" style="padding:2rem;">
+              <div class="badge" style="margin-bottom:0.5rem; background:rgba(37,99,235,0.12); color:#60a5fa; border:1px solid rgba(37,99,235,0.3);">STEP 3 &bull; PAYMENT</div>
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
                 <div>
-                  <div class="badge badge-success" style="margin-bottom: 0.5rem;">STEP 3 • CORE FEATURE</div>
-                  <h3>Dynamic Registration Form Builder</h3>
-                  <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.25rem;">
-                    Configure event-specific form questions. Default fields are automatically included.
-                  </p>
+                  <h3 style="margin-bottom:0.25rem;">Payment &amp; Fee Settings</h3>
+                  <p style="font-size:0.875rem; color:var(--text-secondary);">Configure registration fee and UPI QR Code for paid events.</p>
                 </div>
-                <button type="button" class="btn btn-primary btn-sm" id="add-field-btn">+ Add Custom Field</button>
-              </div>
-
-              <!-- Default Fields Notice -->
-              <div class="card" style="background-color: var(--bg-secondary); border-style: dashed; padding: 1.25rem; margin-bottom: 1.5rem;">
-                <h4 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.5rem;">
-                  Default Mandatory Fields (Always Present):
-                </h4>
-                <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
-                  <span class="badge">Full Name</span>
-                  <span class="badge">Register Number</span>
-                  <span class="badge">Department</span>
-                  <span class="badge">Semester</span>
-                  <span class="badge">Email Address</span>
-                  <span class="badge">Phone Number</span>
+                <div>
+                  <div style="font-size:0.78rem; font-weight:600; color:var(--text-muted); margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.05em;">Payment Required?</div>
+                  <div class="payment-toggle-group">
+                    <input type="radio" name="payment_required" id="pay-no" value="0" checked>
+                    <label for="pay-no">No (Free)</label>
+                    <input type="radio" name="payment_required" id="pay-yes" value="1">
+                    <label for="pay-yes">Yes (Paid)</label>
+                  </div>
                 </div>
               </div>
 
-              <!-- Custom Fields Container -->
-              <div id="custom-fields-list">
-                <!-- Injected via JavaScript -->
+              <!-- Payment Fields (conditional) -->
+              <div id="payment-fields-section" style="display:none;">
+                <div style="height:1px; background:var(--border-color); margin-bottom:1.5rem;"></div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Registration Fee (&#8377;) <span class="required-star">*</span></label>
+                    <div style="position:relative;">
+                      <span style="position:absolute; left:0.85rem; top:50%; transform:translateY(-50%); font-weight:700; color:var(--text-secondary);">&#8377;</span>
+                      <input type="number" name="registration_fee" id="registration-fee-input" class="form-control" style="padding-left:2rem;" min="1" step="0.01" placeholder="e.g. 150">
+                    </div>
+                    <span class="form-hint">Amount each participant must pay to register.</span>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">UPI ID <span style="color:var(--text-muted); font-weight:400;">(Optional)</span></label>
+                    <input type="text" name="upi_id" class="form-control" placeholder="e.g. dept.treasurer@sbi">
+                    <span class="form-hint">Students will see this for direct UPI payment.</span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Upload Payment QR Code <span class="required-star">*</span></label>
+                  <input type="file" name="payment_qr" id="payment-qr-input" class="form-control" accept="image/png,image/jpeg,image/jpg,image/webp">
+                  <span class="form-hint">Upload the official UPI/Payment QR Code. PNG or JPG, Max 5MB. Must be clear and scannable.</span>
+                  <!-- Live QR Preview -->
+                  <div id="qr-preview-container" style="display:none;">
+                    <div class="qr-preview-card">
+                      <img id="qr-preview-img" src="" alt="QR Preview">
+                      <div class="qr-preview-info">
+                        <div class="qr-filename" id="qr-preview-name">&#8212;</div>
+                        <div class="qr-meta" id="qr-preview-meta">&#8212;</div>
+                        <button type="button" id="qr-remove-btn" class="btn btn-sm btn-secondary" style="margin-top:0.6rem; font-size:0.78rem; padding:0.3rem 0.7rem;">&times; Remove QR</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Payment Instructions <span style="color:var(--text-muted); font-weight:400;">(Optional)</span></label>
+                  <textarea name="payment_instructions" class="form-control" style="min-height:80px;" placeholder="e.g. Scan QR or pay to UPI ID. Save the screenshot and Transaction ID / UTR for registration."></textarea>
+                  <span class="form-hint">These instructions will be shown to students on the event page.</span>
+                </div>
+              </div>
+
+              <!-- Free event notice -->
+              <div id="payment-free-notice" style="display:flex; align-items:center; gap:0.75rem; padding:0.9rem 1.1rem; background:rgba(34,197,94,0.07); border:1px solid rgba(34,197,94,0.2); border-radius:var(--radius-sm);">
+                <span style="font-size:1.1rem;">&#10003;</span>
+                <div>
+                  <div style="font-weight:600; font-size:0.88rem; color:#22c55e;">Free Event &mdash; No Payment Required</div>
+                  <div style="font-size:0.8rem; color:var(--text-muted);">Registration is open to all eligible participants at no cost.</div>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- 4. Certificate Settings -->
-          <div class="card" style="margin-bottom: 2.5rem;">
-            <div class="card-body" style="padding: 2rem;">
-              <div class="badge" style="margin-bottom: 0.5rem;">STEP 4</div>
-              <h3 style="margin-bottom: 1.5rem;">Digital Certificate Settings</h3>
+          <!-- STEP 4: Dynamic Form Builder -->
+          <div class="card" style="margin-bottom:2rem; border-color:var(--text-primary);">
+            <div class="card-body" style="padding:2rem;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:1rem;">
+                <div>
+                  <div class="badge badge-success" style="margin-bottom:0.5rem;">STEP 4 &bull; CORE FEATURE</div>
+                  <h3>Dynamic Registration Form Builder</h3>
+                  <p style="font-size:0.9rem; color:var(--text-secondary); margin-top:0.25rem;">Configure event-specific form questions. Default fields are automatically included.</p>
+                </div>
+                <button type="button" class="btn btn-primary btn-sm" id="add-field-btn">+ Add Custom Field</button>
+              </div>
+              <div class="card" style="background-color:var(--bg-secondary); border-style:dashed; padding:1.25rem; margin-bottom:1.5rem;">
+                <h4 style="font-size:0.85rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); margin-bottom:0.5rem;">Default Mandatory Fields (Always Present):</h4>
+                <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
+                  <span class="badge">Full Name</span><span class="badge">Register Number</span><span class="badge">Department</span>
+                  <span class="badge">Semester</span><span class="badge">Email Address</span><span class="badge">Phone Number</span>
+                </div>
+              </div>
+              <div id="custom-fields-list"></div>
+            </div>
+          </div>
 
+          <!-- STEP 5: Certificate Settings -->
+          <div class="card" style="margin-bottom:2.5rem;">
+            <div class="card-body" style="padding:2rem;">
+              <div class="badge" style="margin-bottom:0.5rem;">STEP 5</div>
+              <h3 style="margin-bottom:1.5rem;">Digital Certificate Settings</h3>
               <div class="form-row">
                 <div class="form-group">
-                  <label class="form-check" style="margin-top: 0.5rem;">
+                  <label class="form-check" style="margin-top:0.5rem;">
                     <input type="checkbox" name="cert_enabled" value="1" checked>
                     <span>Enable Participation Certificates</span>
                   </label>
                 </div>
                 <div class="form-group">
-                  <label class="form-check" style="margin-top: 0.5rem;">
+                  <label class="form-check" style="margin-top:0.5rem;">
                     <input type="checkbox" name="cert_winner_enabled" value="1" checked>
                     <span>Enable Winner / Runner-Up Certificates</span>
                   </label>
                 </div>
               </div>
-
               <div class="form-row">
                 <div class="form-group">
                   <label class="form-label">Certificate Title</label>
@@ -227,10 +301,9 @@
                 </div>
                 <div class="form-group">
                   <label class="form-label">Authorized Signatory Designation</label>
-                  <input type="text" name="cert_signatory_designation" class="form-control" value="Head of Department, AI & ML">
+                  <input type="text" name="cert_signatory_designation" class="form-control" value="Head of Department, AI &amp; ML">
                 </div>
               </div>
-
               <div class="form-group">
                 <label class="form-label">Certificate Citation / Description Text</label>
                 <input type="text" name="cert_description" class="form-control" value="for active and meritorious participation in the department event.">
@@ -238,12 +311,12 @@
             </div>
           </div>
 
-          <div id="create-error-msg" style="color: #ef4444; font-size: 0.95rem; margin-bottom: 1rem; display: none;"></div>
+          <div id="create-error-msg" style="color:#ef4444; font-size:0.95rem; margin-bottom:1rem; display:none;"></div>
 
-          <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+          <div style="display:flex; gap:1rem; justify-content:flex-end;">
             <a href="/dashboard/events.html" class="btn btn-secondary">Cancel</a>
             <button type="submit" class="btn btn-primary btn-lg" id="submit-event-btn">
-              Publish Event & Registration Form &rarr;
+              Publish Event &amp; Registration Form &rarr;
             </button>
           </div>
         </form>
@@ -256,107 +329,61 @@
   <script src="/dashboard/js/dashboard-common.js"></script>
   <script>
     let customFields = [
-      {
-        id: 'f1',
-        label: 'Preferred Programming Language',
-        name: 'preferred_language',
-        type: 'dropdown',
-        required: true,
-        options: 'Python 3.12, C++ 20, Java 21'
-      },
-      {
-        id: 'f2',
-        label: 'Participation Mode',
-        name: 'participation_mode',
-        type: 'radio',
-        required: true,
-        options: 'Individual, Team of 2'
-      }
+      { id: 'f1', label: 'Preferred Programming Language', name: 'preferred_language', type: 'dropdown', required: true, options: 'Python 3.12, C++ 20, Java 21' },
+      { id: 'f2', label: 'Participation Mode', name: 'participation_mode', type: 'radio', required: true, options: 'Individual, Team of 2' }
     ];
 
     function renderCustomFields() {
       const container = document.getElementById('custom-fields-list');
       if (customFields.length === 0) {
-        container.innerHTML = `
-          <div style="text-align: center; padding: 2rem; color: var(--text-muted); border: 1px dashed var(--border-color); border-radius: var(--radius-sm);">
-            No custom fields added yet. Click <strong>+ Add Custom Field</strong> above if this event requires team details, tracks, or URLs.
-          </div>
-        `;
+        container.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted);border:1px dashed var(--border-color);border-radius:var(--radius-sm);">No custom fields added yet. Click <strong>+ Add Custom Field</strong> above.</div>`;
         return;
       }
-
       container.innerHTML = customFields.map((f, index) => {
-        const isOptionsNeeded = f.type === 'dropdown' || f.type === 'radio';
-
-        return `
-          <div class="custom-field-item" data-id="${f.id}">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-weight: 700; font-size: 0.9rem;">Field #${index + 1}</span>
-              <button type="button" class="btn btn-danger btn-sm" onclick="removeField('${f.id}')">Remove</button>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Field Label (Question)</label>
-                <input type="text" class="form-control" value="${f.label}" onchange="updateField('${f.id}', 'label', this.value)" placeholder="" required>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Field Type</label>
-                <select class="form-select" onchange="updateField('${f.id}', 'type', this.value)">
-                  <option value="text" ${f.type === 'text' ? 'selected' : ''}>Text (Single line)</option>
-                  <option value="number" ${f.type === 'number' ? 'selected' : ''}>Number</option>
-                  <option value="email" ${f.type === 'email' ? 'selected' : ''}>Email</option>
-                  <option value="phone" ${f.type === 'phone' ? 'selected' : ''}>Phone</option>
-                  <option value="dropdown" ${f.type === 'dropdown' ? 'selected' : ''}>Dropdown Selection</option>
-                  <option value="radio" ${f.type === 'radio' ? 'selected' : ''}>Radio Buttons (Single choice)</option>
-                  <option value="checkbox" ${f.type === 'checkbox' ? 'selected' : ''}>Checkbox</option>
-                  <option value="textarea" ${f.type === 'textarea' ? 'selected' : ''}>Textarea (Multi line)</option>
-                </select>
-              </div>
-
-              <div class="form-group" style="justify-content: center;">
-                <label class="form-check" style="margin-top: 1.5rem;">
-                  <input type="checkbox" ${f.required ? 'checked' : ''} onchange="updateField('${f.id}', 'required', this.checked)">
-                  <span>Mandatory / Required</span>
-                </label>
-              </div>
-            </div>
-
-            ${isOptionsNeeded ? `
-              <div class="form-group">
-                <label class="form-label">Options (Comma separated)</label>
-                <input type="text" class="form-control" value="${f.options || ''}" onchange="updateField('${f.id}', 'options', this.value)" placeholder="">
-              </div>
-            ` : ''}
+        const needsOptions = f.type === 'dropdown' || f.type === 'radio';
+        return `<div class="custom-field-item" data-id="${f.id}">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-weight:700;font-size:0.9rem;">Field #${index + 1}</span>
+            <button type="button" class="btn btn-danger btn-sm" onclick="removeField('${f.id}')">Remove</button>
           </div>
-        `;
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Field Label (Question)</label>
+              <input type="text" class="form-control" value="${f.label}" onchange="updateField('${f.id}','label',this.value)" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Field Type</label>
+              <select class="form-select" onchange="updateField('${f.id}','type',this.value)">
+                <option value="text" ${f.type==='text'?'selected':''}>Text (Single line)</option>
+                <option value="number" ${f.type==='number'?'selected':''}>Number</option>
+                <option value="email" ${f.type==='email'?'selected':''}>Email</option>
+                <option value="phone" ${f.type==='phone'?'selected':''}>Phone</option>
+                <option value="dropdown" ${f.type==='dropdown'?'selected':''}>Dropdown Selection</option>
+                <option value="radio" ${f.type==='radio'?'selected':''}>Radio Buttons</option>
+                <option value="checkbox" ${f.type==='checkbox'?'selected':''}>Checkbox</option>
+                <option value="textarea" ${f.type==='textarea'?'selected':''}>Textarea</option>
+              </select>
+            </div>
+            <div class="form-group" style="justify-content:center;">
+              <label class="form-check" style="margin-top:1.5rem;">
+                <input type="checkbox" ${f.required?'checked':''} onchange="updateField('${f.id}','required',this.checked)">
+                <span>Mandatory / Required</span>
+              </label>
+            </div>
+          </div>
+          ${needsOptions ? `<div class="form-group"><label class="form-label">Options (Comma separated)</label><input type="text" class="form-control" value="${f.options||''}" onchange="updateField('${f.id}','options',this.value)"></div>` : ''}
+        </div>`;
       }).join('');
     }
 
     function addField() {
-      const newId = 'f_' + Date.now();
-      customFields.push({
-        id: newId,
-        label: 'Custom Question',
-        name: 'custom_field_' + customFields.length,
-        type: 'text',
-        required: false,
-        options: ''
-      });
+      customFields.push({ id: 'f_'+Date.now(), label: 'Custom Question', name: 'field_'+customFields.length, type: 'text', required: false, options: '' });
       renderCustomFields();
     }
-
     function updateField(id, key, val) {
-      const field = customFields.find(f => f.id === id);
-      if (field) {
-        field[key] = val;
-        if (key === 'type') {
-          renderCustomFields();
-        }
-      }
+      const f = customFields.find(x => x.id === id);
+      if (f) { f[key] = val; if (key === 'type') renderCustomFields(); }
     }
-
     function removeField(id) {
       customFields = customFields.filter(f => f.id !== id);
       renderCustomFields();
@@ -365,62 +392,101 @@
     document.addEventListener('DOMContentLoaded', () => {
       renderCustomFields();
 
-      // Participation Type dynamic toggle
+      // Participation type toggle
       const partTypeSelect = document.getElementById('participation-type-select');
-      const maxTeamGroup = document.getElementById('max-team-members-group');
-      const maxTeamInput = document.getElementById('max-team-members-input');
-
-      function updateParticipationFields() {
-        if (partTypeSelect.value === 'team') {
-          maxTeamGroup.style.display = 'block';
-          maxTeamInput.required = true;
-        } else {
-          maxTeamGroup.style.display = 'none';
-          maxTeamInput.required = false;
-        }
+      const maxTeamGroup   = document.getElementById('max-team-members-group');
+      const maxTeamInput   = document.getElementById('max-team-members-input');
+      function updatePartFields() {
+        const isTeam = partTypeSelect.value === 'team';
+        maxTeamGroup.style.display = isTeam ? 'block' : 'none';
+        maxTeamInput.required = isTeam;
       }
+      partTypeSelect.addEventListener('change', updatePartFields);
+      updatePartFields();
 
-      if (partTypeSelect) {
-        partTypeSelect.addEventListener('change', updateParticipationFields);
-        updateParticipationFields();
+      // Payment toggle
+      const payYes = document.getElementById('pay-yes');
+      const payNo  = document.getElementById('pay-no');
+      const paySection    = document.getElementById('payment-fields-section');
+      const freeNotice    = document.getElementById('payment-free-notice');
+      const feeInput      = document.getElementById('registration-fee-input');
+      const qrInput       = document.getElementById('payment-qr-input');
+
+      function updatePaymentUI() {
+        const paid = payYes.checked;
+        paySection.style.display   = paid ? 'block' : 'none';
+        freeNotice.style.display   = paid ? 'none'  : 'flex';
+        feeInput.required = paid;
+        qrInput.required  = paid;
       }
+      payYes.addEventListener('change', updatePaymentUI);
+      payNo.addEventListener('change',  updatePaymentUI);
+      updatePaymentUI();
+
+      // Live QR preview
+      const qrPreviewContainer = document.getElementById('qr-preview-container');
+      const qrPreviewImg  = document.getElementById('qr-preview-img');
+      const qrPreviewName = document.getElementById('qr-preview-name');
+      const qrPreviewMeta = document.getElementById('qr-preview-meta');
+      const qrRemoveBtn   = document.getElementById('qr-remove-btn');
+
+      qrInput.addEventListener('change', () => {
+        const file = qrInput.files[0];
+        if (!file) { qrPreviewContainer.style.display = 'none'; return; }
+        const reader = new FileReader();
+        reader.onload = e => {
+          qrPreviewImg.src = e.target.result;
+          qrPreviewName.textContent = file.name;
+          qrPreviewMeta.textContent = file.type + ' \u00b7 ' + (file.size/1024).toFixed(1) + ' KB';
+          qrPreviewContainer.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      });
+      qrRemoveBtn.addEventListener('click', () => {
+        qrInput.value = '';
+        qrPreviewContainer.style.display = 'none';
+        qrPreviewImg.src = '';
+      });
 
       document.getElementById('add-field-btn').addEventListener('click', addField);
 
-      // Form submission
-      document.getElementById('create-event-form').addEventListener('submit', async (e) => {
+      // Form submit
+      document.getElementById('create-event-form').addEventListener('submit', async e => {
         e.preventDefault();
         const submitBtn = document.getElementById('submit-event-btn');
-        const errDiv = document.getElementById('create-error-msg');
+        const errDiv    = document.getElementById('create-error-msg');
         errDiv.style.display = 'none';
 
+        if (payYes.checked) {
+          if (!feeInput.value || parseFloat(feeInput.value) < 1) {
+            errDiv.textContent = 'Please enter a valid Registration Fee (minimum \u20b91).';
+            errDiv.style.display = 'block';
+            feeInput.focus(); return;
+          }
+          if (!qrInput.files || !qrInput.files[0]) {
+            errDiv.textContent = 'Payment QR Code is required for paid events. Please upload a QR code image.';
+            errDiv.style.display = 'block';
+            qrInput.focus(); return;
+          }
+        }
+
         submitBtn.disabled = true;
-        submitBtn.innerText = 'Creating Event...';
+        submitBtn.textContent = 'Creating Event...';
 
         const formData = new FormData(e.target);
-        // Attach serialized custom fields from builder
         formData.append('custom_fields', JSON.stringify(customFields));
 
         try {
-          const res = await fetch('/api/events', {
-            method: 'POST',
-            body: formData
-          });
-
+          const res  = await fetch('/api/events', { method: 'POST', body: formData });
           const data = await res.json();
-          if (!res.ok) {
-            throw new Error(data.message || 'Failed to create event');
-          }
-
+          if (!res.ok) throw new Error(data.message || 'Failed to create event');
           showToast('Event and dynamic form created successfully!', 'success');
-          setTimeout(() => {
-            window.location.href = '/dashboard/events.html';
-          }, 800);
+          setTimeout(() => { window.location.href = '/dashboard/events.html'; }, 800);
         } catch (err) {
-          errDiv.innerText = err.message;
+          errDiv.textContent = err.message;
           errDiv.style.display = 'block';
           submitBtn.disabled = false;
-          submitBtn.innerText = 'Publish Event & Registration Form →';
+          submitBtn.textContent = 'Publish Event & Registration Form \u2192';
         }
       });
     });

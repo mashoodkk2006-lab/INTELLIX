@@ -48,7 +48,7 @@ router.post(
   '/events',
   requireAuth,
   requirePermission('can_create_events'),
-  upload.single('poster'),
+  upload.fields([{ name: 'poster', maxCount: 1 }, { name: 'payment_qr', maxCount: 1 }]),
   eventController.createEvent
 );
 
@@ -57,7 +57,7 @@ router.put(
   requireAuth,
   requirePermission('can_create_events'),
   requireEventAccess(),
-  upload.single('poster'),
+  upload.fields([{ name: 'poster', maxCount: 1 }, { name: 'payment_qr', maxCount: 1 }]),
   eventController.updateEvent
 );
 
@@ -98,6 +98,13 @@ router.delete(
   requireAuth,
   requirePermission('can_manage_registrations'),
   registrationController.deleteRegistration
+);
+
+router.patch(
+  '/registrations/:id/payment-status',
+  requireAuth,
+  requirePermission('can_manage_registrations'),
+  registrationController.updatePaymentStatus
 );
 
 // Attendance

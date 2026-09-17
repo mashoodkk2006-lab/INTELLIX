@@ -62,13 +62,14 @@
                     <th>Register Number</th>
                     <th>Department & Sem</th>
                     <th>Contact</th>
+                    <th>Payment</th>
                     <th>Attendance</th>
                     <th>Custom Fields</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr><td colspan="8" style="text-align: center; padding: 2.5rem;"><span class="spinner"></span></td></tr>
+                  <tr><td colspan="9" style="text-align: center; padding: 2.5rem;"><span class="spinner"></span></td></tr>
                 </tbody>
               </table>
             </div>
@@ -90,6 +91,27 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeCustomModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment Receipt Modal -->
+  <div class="modal-backdrop" id="receipt-modal">
+    <div class="modal-dialog" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 id="receipt-modal-title" style="font-size: 1.05rem;">Payment Receipt</h3>
+        <button class="modal-close-btn" onclick="closeReceiptModal()">&times;</button>
+      </div>
+      <div class="modal-body" style="text-align: center; padding: 1.25rem;">
+        <div style="font-size: 0.85rem; margin-bottom: 0.75rem; color: var(--text-secondary); text-align: left; background: var(--bg-subtle, #f1f5f9); padding: 0.6rem 0.8rem; border-radius: 6px;">
+          <strong>Transaction UTR / ID:</strong> <span id="receipt-utr" style="font-family: monospace; font-weight: bold; color: var(--text-primary, #0f172a);"></span>
+        </div>
+        <div style="background: #0f172a; padding: 0.5rem; border-radius: 8px; max-height: 60vh; overflow-y: auto;">
+          <img id="receipt-img" src="" alt="Payment Screenshot" style="max-width: 100%; height: auto; border-radius: 6px;" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeReceiptModal()">Close</button>
       </div>
     </div>
   </div>
@@ -131,7 +153,7 @@
     async function loadRegistrations() {
       if (!currentEventId) return;
       const tbody = document.querySelector('#participants-table tbody');
-      tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 2.5rem;"><span class="spinner"></span></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 2.5rem;"><span class="spinner"></span></td></tr>`;
 
       try {
         const res = await fetchJson(`/api/events/${currentEventId}/registrations`);
@@ -140,7 +162,7 @@
           renderRegistrationsTable();
         }
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #ef4444;">Failed to load: ${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: #ef4444;">Failed to load: ${err.message}</td></tr>`;
       }
     }
 
@@ -153,6 +175,7 @@
         r.full_name.toLowerCase().includes(query) ||
         r.register_number.toLowerCase().includes(query) ||
         r.registration_code.toLowerCase().includes(query) ||
+        (r.transaction_id && r.transaction_id.toLowerCase().includes(query)) ||
         r.email.toLowerCase().includes(query) ||
         (r.department && r.department.toLowerCase().includes(query))
       );
@@ -160,7 +183,7 @@
       document.getElementById('registration-summary-badge').innerText = `Showing ${filtered.length} of ${registrationsData.length} registrations`;
 
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">No registrations found for this event.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">No registrations found for this event.</td></tr>`;
         return;
       }
 
@@ -171,6 +194,36 @@
 
         const customKeys = Object.keys(r.custom_fields || {});
         const hasCustom = customKeys.length > 0 || !!r.team_name;
+
+        // Payment status badge & info
+        let paymentCell = '';
+        if (!r.transaction_id && (!r.payment_status || r.payment_status === 'unpaid')) {
+          paymentCell = '<span class="badge" style="background: #64748b; color: #fff; font-size: 0.72rem;">Free</span>';
+        } else {
+          const isVerified = r.payment_status === 'verified';
+          const isRejected = r.payment_status === 'rejected';
+          const isPending = !isVerified && !isRejected;
+
+          const pBadge = isVerified ? '<span class="badge badge-success" style="background:#16a34a; color:#fff; font-size: 0.72rem;">✓ Verified</span>' :
+                         isRejected ? '<span class="badge badge-danger" style="background:#dc2626; color:#fff; font-size: 0.72rem;">✕ Rejected</span>' :
+                         '<span class="badge badge-warning" style="background:#f59e0b; color:#000; font-size: 0.72rem; font-weight: 600;">⏳ Pending</span>';
+
+          paymentCell = `
+            <div style="font-size: 0.78rem;">
+              <div>${pBadge}</div>
+              ${r.transaction_id ? `<div style="font-family: monospace; font-size: 0.72rem; margin-top: 3px; color: var(--text-secondary); word-break: break-all;" title="Transaction ID / UTR">UTR: <strong>${r.transaction_id}</strong></div>` : ''}
+              <div style="display: flex; gap: 4px; align-items: center; margin-top: 4px; flex-wrap: wrap;">
+                ${r.payment_screenshot_url ? `<button class="btn btn-outline btn-sm" style="font-size: 0.7rem; padding: 2px 6px;" onclick="viewReceipt(${r.id})">📷 Receipt</button>` : ''}
+                ${isPending ? `
+                  <button class="btn btn-sm" style="background: #16a34a; color: #fff; font-size: 0.7rem; padding: 2px 6px;" onclick="changePaymentStatus(${r.id}, 'verified')" title="Mark Verified">Verify</button>
+                  <button class="btn btn-sm" style="background: #dc2626; color: #fff; font-size: 0.7rem; padding: 2px 6px;" onclick="changePaymentStatus(${r.id}, 'rejected')" title="Mark Rejected">Reject</button>
+                ` : `
+                  <a href="javascript:void(0)" onclick="changePaymentStatus(${r.id}, 'pending')" style="font-size: 0.7rem; color: var(--text-muted); text-decoration: underline;">Reset</a>
+                `}
+              </div>
+            </div>
+          `;
+        }
 
         return `
           <tr>
@@ -185,6 +238,7 @@
               <div>✉️ ${r.email}</div>
               <div>📞 ${r.phone}</div>
             </td>
+            <td>${paymentCell}</td>
             <td>${attBadge}</td>
             <td>
               ${hasCustom 
@@ -197,6 +251,37 @@
           </tr>
         `;
       }).join('');
+    }
+
+    async function changePaymentStatus(regId, status) {
+      try {
+        const res = await fetchJson(`/api/registrations/${regId}/payment-status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ payment_status: status })
+        });
+        if (res.success) {
+          showToast(`Payment marked as ${status}`, 'success');
+          loadRegistrations();
+        } else {
+          showToast(res.message || 'Failed to update payment status', 'error');
+        }
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    function viewReceipt(regId) {
+      const reg = registrationsData.find(r => r.id === regId);
+      if (!reg || !reg.payment_screenshot_url) return;
+      document.getElementById('receipt-modal-title').innerText = `Payment Receipt - ${reg.full_name} (${reg.registration_code})`;
+      document.getElementById('receipt-img').src = reg.payment_screenshot_url;
+      document.getElementById('receipt-utr').innerText = reg.transaction_id || 'N/A';
+      document.getElementById('receipt-modal').classList.add('open');
+    }
+
+    function closeReceiptModal() {
+      document.getElementById('receipt-modal').classList.remove('open');
     }
 
     function viewCustomData(regId) {

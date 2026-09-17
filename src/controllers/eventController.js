@@ -176,6 +176,10 @@ async function createEvent(req, res) {
       cert_winner_enabled,
       participation_type,
       max_team_members,
+      payment_required,
+      registration_fee,
+      payment_instructions,
+      upi_id,
       custom_fields // JSON string or array of custom fields from the dynamic form builder
     } = req.body;
 
@@ -193,9 +197,18 @@ async function createEvent(req, res) {
     }
 
     let posterUrl = null;
-    if (req.file) {
-      posterUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+    if (req.files && req.files['poster'] && req.files['poster'][0]) {
+      const pf = req.files['poster'][0];
+      posterUrl = `data:${pf.mimetype};base64,${pf.buffer.toString('base64')}`;
     }
+
+    let paymentQrUrl = null;
+    if (req.files && req.files['payment_qr'] && req.files['payment_qr'][0]) {
+      const qf = req.files['payment_qr'][0];
+      paymentQrUrl = `data:${qf.mimetype};base64,${qf.buffer.toString('base64')}`;
+    }
+
+    const isPaymentRequired = payment_required === 'true' || payment_required === true || payment_required === '1' || payment_required === 1 ? 1 : 0;
 
     const createdBy = req.session && req.session.admin ? req.session.admin.id : null;
 
@@ -204,9 +217,10 @@ async function createEvent(req, res) {
         code, title, slug, event_type, start_datetime, end_datetime, venue, description, rules, poster_url,
         status, registration_open, registration_start, registration_deadline, max_participants,
         participation_type, max_team_members,
+        payment_required, registration_fee, payment_qr_url, payment_instructions, upi_id,
         confirmation_message, cert_enabled, cert_title, cert_description,
         cert_signatory_name, cert_signatory_designation, cert_winner_enabled, created_by
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         eventCode,
         title,
@@ -225,6 +239,11 @@ async function createEvent(req, res) {
         parseInt(max_participants || 100, 10),
         participation_type === 'team' ? 'team' : 'individual',
         participation_type === 'team' ? (parseInt(max_team_members, 10) || null) : null,
+        isPaymentRequired,
+        isPaymentRequired ? (parseFloat(registration_fee) || 0) : 0,
+        isPaymentRequired ? paymentQrUrl : null,
+        isPaymentRequired ? (payment_instructions || null) : null,
+        isPaymentRequired ? (upi_id || null) : null,
         confirmation_message || 'Thank you for registering! Please save your registration details.',
         cert_enabled !== undefined ? (cert_enabled === 'true' || cert_enabled === true || cert_enabled === 1 ? 1 : 0) : 1,
         cert_title || 'Certificate of Participation',
@@ -316,6 +335,10 @@ async function updateEvent(req, res) {
       cert_winner_enabled,
       participation_type,
       max_team_members,
+      payment_required,
+      registration_fee,
+      payment_instructions,
+      upi_id,
       custom_fields
     } = req.body;
 
@@ -325,9 +348,20 @@ async function updateEvent(req, res) {
     }
 
     let posterUrl = existing[0].poster_url;
-    if (req.file) {
-      posterUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+    if (req.files && req.files['poster'] && req.files['poster'][0]) {
+      const pf = req.files['poster'][0];
+      posterUrl = `data:${pf.mimetype};base64,${pf.buffer.toString('base64')}`;
     }
+
+    let paymentQrUrl = existing[0].payment_qr_url;
+    if (req.files && req.files['payment_qr'] && req.files['payment_qr'][0]) {
+      const qf = req.files['payment_qr'][0];
+      paymentQrUrl = `data:${qf.mimetype};base64,${qf.buffer.toString('base64')}`;
+    }
+
+    const isPaymentRequired = payment_required !== undefined
+      ? (payment_required === 'true' || payment_required === true || payment_required === '1' || payment_required === 1 ? 1 : 0)
+      : existing[0].payment_required;
 
     await query(
       `UPDATE events SET 
@@ -335,6 +369,7 @@ async function updateEvent(req, res) {
         description = ?, rules = ?, poster_url = ?, status = ?, registration_open = ?,
         registration_start = ?, registration_deadline = ?, max_participants = ?, confirmation_message = ?,
         participation_type = ?, max_team_members = ?,
+        payment_required = ?, registration_fee = ?, payment_qr_url = ?, payment_instructions = ?, upi_id = ?,
         cert_enabled = ?, cert_title = ?, cert_description = ?, cert_signatory_name = ?,
         cert_signatory_designation = ?, cert_winner_enabled = ?
        WHERE id = ?`,
@@ -356,6 +391,11 @@ async function updateEvent(req, res) {
         confirmation_message || existing[0].confirmation_message,
         participation_type !== undefined ? (participation_type === 'team' ? 'team' : 'individual') : existing[0].participation_type,
         participation_type === 'team' ? (parseInt(max_team_members, 10) || existing[0].max_team_members) : null,
+        isPaymentRequired,
+        isPaymentRequired ? (parseFloat(registration_fee) || existing[0].registration_fee || 0) : 0,
+        isPaymentRequired ? (paymentQrUrl || existing[0].payment_qr_url) : null,
+        isPaymentRequired ? (payment_instructions !== undefined ? payment_instructions : existing[0].payment_instructions) : null,
+        isPaymentRequired ? (upi_id !== undefined ? upi_id : existing[0].upi_id) : null,
         cert_enabled !== undefined ? (cert_enabled === 'true' || cert_enabled === true || cert_enabled === 1 ? 1 : 0) : existing[0].cert_enabled,
         cert_title || existing[0].cert_title,
         cert_description || existing[0].cert_description,
