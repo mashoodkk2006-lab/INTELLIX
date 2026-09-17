@@ -99,6 +99,7 @@
       }
 
       tbody.innerHTML = filtered.map(evt => {
+        const isSpot = evt.spot_registration === 1 || evt.spot_registration === true;
         const regIsOpen = evt.registration_open === 1 || evt.registration_open === true;
         const toggleBtnText = regIsOpen ? 'Close Reg' : 'Open Reg';
         const toggleBtnClass = regIsOpen ? 'btn-outline' : 'btn-primary';
@@ -109,6 +110,7 @@
             <td>
               <div style="font-weight: 700;"><a href="/events/${evt.slug}" target="_blank">${evt.title}</a></div>
               <span class="badge" style="font-size: 0.7rem; margin-top: 0.2rem;">${evt.event_type}</span>
+              ${isSpot ? `<span class="badge" style="font-size: 0.7rem; margin-top: 0.2rem; margin-left: 0.25rem; background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3);">📍 Spot Admission</span>` : ''}
             </td>
             <td>
               <div style="font-size: 0.85rem;">📅 ${formatDate(evt.start_datetime, true)}</div>
@@ -119,9 +121,13 @@
               <div style="font-size: 0.75rem; color: var(--text-muted);">${evt.seats_available} seats left</div>
             </td>
             <td>
-              <button class="btn btn-sm ${toggleBtnClass}" onclick="toggleReg(${evt.id})">
-                ${toggleBtnText}
-              </button>
+              ${isSpot ? `
+                <span class="badge" style="background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); font-size: 0.72rem;">Spot Only</span>
+              ` : `
+                <button class="btn btn-sm ${toggleBtnClass}" onclick="toggleReg(${evt.id})">
+                  ${toggleBtnText}
+                </button>
+              `}
             </td>
             <td>
               <span class="badge ${evt.status === 'published' ? 'badge-success' : 'badge-warning'}">${evt.status}</span>

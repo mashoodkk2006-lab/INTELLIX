@@ -124,7 +124,8 @@ async function getEventBySlugOrId(req, res) {
 
     const isDeadlinePassed = now > deadline;
     const isFull = registered >= max;
-    const canRegister = event.registration_open === 1 && !isDeadlinePassed && !isFull && event.status === 'published';
+    const isSpot = event.spot_registration === 1 || event.spot_registration === true;
+    const canRegister = event.registration_open === 1 && !isDeadlinePassed && !isFull && event.status === 'published' && !isSpot;
 
     let timingState = 'upcoming';
     if (now > end || event.status === 'completed') {
@@ -177,6 +178,7 @@ async function createEvent(req, res) {
       participation_type,
       min_team_members,
       max_team_members,
+      spot_registration,
       payment_required,
       registration_fee,
       payment_instructions,
@@ -210,6 +212,7 @@ async function createEvent(req, res) {
     }
 
     const isPaymentRequired = payment_required === 'true' || payment_required === true || payment_required === '1' || payment_required === 1 ? 1 : 0;
+    const isSpot = spot_registration === 'true' || spot_registration === true || spot_registration === '1' || spot_registration === 1 ? 1 : 0;
 
     const createdBy = req.session && req.session.admin ? req.session.admin.id : null;
 
@@ -231,11 +234,11 @@ async function createEvent(req, res) {
       `INSERT INTO events (
         code, title, slug, event_type, start_datetime, end_datetime, venue, description, rules, poster_url,
         status, registration_open, registration_start, registration_deadline, max_participants,
-        participation_type, min_team_members, max_team_members,
+        participation_type, min_team_members, max_team_members, spot_registration,
         payment_required, registration_fee, payment_qr_url, payment_instructions, upi_id,
         confirmation_message, cert_enabled, cert_title, cert_description,
         cert_signatory_name, cert_signatory_designation, cert_winner_enabled, created_by
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         eventCode,
         title,
@@ -255,6 +258,7 @@ async function createEvent(req, res) {
         participation_type === 'team' ? 'team' : 'individual',
         participation_type === 'team' ? minTeam : null,
         participation_type === 'team' ? maxTeam : null,
+        isSpot,
         isPaymentRequired,
         isPaymentRequired ? (parseFloat(registration_fee) || 0) : 0,
         isPaymentRequired ? paymentQrUrl : null,
@@ -352,6 +356,7 @@ async function updateEvent(req, res) {
       participation_type,
       min_team_members,
       max_team_members,
+      spot_registration,
       payment_required,
       registration_fee,
       payment_instructions,
@@ -380,6 +385,10 @@ async function updateEvent(req, res) {
       ? (payment_required === 'true' || payment_required === true || payment_required === '1' || payment_required === 1 ? 1 : 0)
       : existing[0].payment_required;
 
+    const finalSpot = spot_registration !== undefined
+      ? (spot_registration === 'true' || spot_registration === true || spot_registration === '1' || spot_registration === 1 ? 1 : 0)
+      : (existing[0].spot_registration ? 1 : 0);
+
     const finalPartType = participation_type !== undefined ? (participation_type === 'team' ? 'team' : 'individual') : existing[0].participation_type;
     let finalMinTeam = null;
     let finalMaxTeam = null;
@@ -398,7 +407,7 @@ async function updateEvent(req, res) {
         title = ?, code = ?, event_type = ?, start_datetime = ?, end_datetime = ?, venue = ?,
         description = ?, rules = ?, poster_url = ?, status = ?, registration_open = ?,
         registration_start = ?, registration_deadline = ?, max_participants = ?, confirmation_message = ?,
-        participation_type = ?, min_team_members = ?, max_team_members = ?,
+        participation_type = ?, min_team_members = ?, max_team_members = ?, spot_registration = ?,
         payment_required = ?, registration_fee = ?, payment_qr_url = ?, payment_instructions = ?, upi_id = ?,
         cert_enabled = ?, cert_title = ?, cert_description = ?, cert_signatory_name = ?,
         cert_signatory_designation = ?, cert_winner_enabled = ?
@@ -422,6 +431,7 @@ async function updateEvent(req, res) {
         finalPartType,
         finalMinTeam,
         finalMaxTeam,
+        finalSpot,
         isPaymentRequired,
         isPaymentRequired ? (parseFloat(registration_fee) || existing[0].registration_fee || 0) : 0,
         isPaymentRequired ? (paymentQrUrl || existing[0].payment_qr_url) : null,

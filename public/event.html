@@ -542,8 +542,11 @@
       const endDateStr   = formatDate(evt.end_datetime, true);
       const deadlineStr  = formatDate(evt.registration_deadline, true);
 
+      const isSpot = evt.spot_registration === 1 || evt.spot_registration === true;
+
       let statusBadge = '';
       if (evt.timing_state === 'past')       statusBadge = `<span class="badge">Event Completed</span>`;
+      else if (isSpot)                       statusBadge = `<span class="badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.35);">📍 Spot Admission Only</span>`;
       else if (evt.can_register)             statusBadge = `<span class="badge badge-success">Registration Open</span>`;
       else if (evt.is_full)                  statusBadge = `<span class="badge badge-danger">Capacity Reached (Full)</span>`;
       else                                   statusBadge = `<span class="badge badge-danger">Registration Closed</span>`;
@@ -638,6 +641,7 @@
               <div class="event-meta-pill">&#128205; ${evt.venue}</div>
               <div class="event-meta-pill">&#128278; Code: ${evt.code}</div>
               <div class="event-meta-pill">${evt.participation_type === 'team' ? `&#128101; Team (${evt.min_team_members || 2}–${evt.max_team_members || 4} Members)` : '&#128100; Individual'}</div>
+              ${isSpot ? `<div class="event-meta-pill" style="background:rgba(245,158,11,0.12);color:#f59e0b;border-color:rgba(245,158,11,0.35);">&#128205; Spot Admission at Venue</div>` : ''}
             </div>
           </div>
         </div>
@@ -694,7 +698,21 @@
                   <div>&#127919; <strong>Participation:</strong> ${evt.participation_type === 'team' ? `Team (${evt.min_team_members || 2}–${evt.max_team_members || 4} Members)` : 'Individual'}</div>
                   <div>&#127903; <strong>Fee:</strong> ${feeDisplay}</div>
                 </div>
-                ${evt.can_register ? `
+                ${isSpot ? `
+                  <div class="spot-admission-card" style="background:rgba(245,158,11,0.06);border:1.5px dashed rgba(245,158,11,0.45);border-radius:var(--radius-md);padding:1.5rem 1.25rem;text-align:center;">
+                    <div style="font-size:2.25rem;margin-bottom:0.5rem;line-height:1;">📍</div>
+                    <h4 style="font-size:1.05rem;font-weight:700;color:#f59e0b;margin-bottom:0.4rem;">Spot Admission Event</h4>
+                    <p style="font-size:0.86rem;color:var(--text-secondary);line-height:1.5;margin-bottom:1rem;">
+                      Online registration is not required for this event. Direct spot registrations will be conducted at the venue counter on event day.
+                    </p>
+                    <div style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.82rem;font-weight:600;background:rgba(245,158,11,0.12);color:#f59e0b;padding:0.45rem 0.85rem;border-radius:var(--radius-full);border:1px solid rgba(245,158,11,0.25);">
+                      <span>🏢 Venue: ${escapeHtml(evt.venue)}</span>
+                    </div>
+                    <div style="font-size:0.75rem;color:var(--text-muted);margin-top:1rem;padding-top:0.75rem;border-top:1px dashed var(--border-color);">
+                      Please bring your college ID card on the event day to complete spot registration.
+                    </div>
+                  </div>
+                ` : (evt.can_register ? `
                   <button class="btn btn-primary btn-lg btn-block" id="sidebar-register-btn" onclick="openRegistrationModal()">
                     REGISTER NOW &rarr;
                   </button>
@@ -706,7 +724,7 @@
                   </button>
                   <p style="font-size:0.8rem;text-align:center;color:var(--text-muted);margin-top:0.75rem;">
                     Registrations for this event are currently unavailable.
-                  </p>`}
+                  </p>`)}
               </div>
             </div>
           </div>

@@ -42,6 +42,13 @@ async function register(req, res) {
       return res.status(400).json({ success: false, message: 'Registration for this event has been closed by the coordinator.' });
     }
 
+    if (event.spot_registration === 1 || event.spot_registration === true) {
+      return res.status(400).json({
+        success: false,
+        message: 'Online web registration is not enabled for this event. Please register via Spot Admission directly at the event venue.'
+      });
+    }
+
     const now = new Date();
     const deadline = new Date(event.registration_deadline);
     if (now > deadline) {

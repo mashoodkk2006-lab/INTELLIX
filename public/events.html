@@ -213,9 +213,13 @@
         const dateStr = formatDate(evt.start_datetime, true);
         const isUpcoming = evt.timing_state !== 'past';
 
+        const isSpot = evt.spot_registration === 1 || evt.spot_registration === true;
+
         let statusBadge = '';
         if (!isUpcoming) {
           statusBadge = `<span class="badge">Completed</span>`;
+        } else if (isSpot) {
+          statusBadge = `<span class="badge" style="background:rgba(245,158,11,0.18);color:#f59e0b;border:1px solid rgba(245,158,11,0.35);">📍 Spot Admission</span>`;
         } else if (evt.can_register) {
           statusBadge = `<span class="badge badge-success">Registration Open</span>`;
         } else {
@@ -245,7 +249,9 @@
             <div class="card-footer">
               ${evt.can_register
             ? `<a href="/events/${evt.slug}#register" class="btn btn-primary btn-sm btn-block">Register Now &rarr;</a>`
-            : `<a href="/events/${evt.slug}" class="btn btn-outline btn-sm btn-block">View Event Details &rarr;</a>`}
+            : (isSpot
+              ? `<a href="/events/${evt.slug}" class="btn btn-outline btn-sm btn-block" style="border-color:rgba(245,158,11,0.5);color:#f59e0b;">📍 Spot Admission &rarr;</a>`
+              : `<a href="/events/${evt.slug}" class="btn btn-outline btn-sm btn-block">View Event Details &rarr;</a>`)}
             </div>
           </div>
         `;

@@ -166,6 +166,28 @@
                 </div>
               </div>
 
+              <!-- Spot Admission / Registration Mode Selection -->
+              <div class="form-row" style="margin-top:1rem;">
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label">Admission / Registration Mode <span class="required-star">*</span></label>
+                  <select name="spot_registration" id="spot-registration-select" class="form-select">
+                    <option value="0" selected>Online Registration (Website Portal)</option>
+                    <option value="1">Spot Admission / Spot Registration (Venue Only)</option>
+                  </select>
+                  <span class="form-hint" id="spot-reg-hint">Students register online through the website portal.</span>
+                </div>
+              </div>
+
+              <!-- Spot Admission Info Notice -->
+              <div id="spot-admission-info-box" style="display:none;background:rgba(245,158,11,0.08);border:1.5px dashed rgba(245,158,11,0.35);border-radius:var(--radius-md);padding:1.15rem;margin-top:1.15rem;margin-bottom:0.75rem;">
+                <div style="font-weight:700;font-size:0.92rem;color:#f59e0b;margin-bottom:0.35rem;display:flex;align-items:center;gap:0.4rem;">
+                  <span>📍 Spot Admission Mode Active</span>
+                </div>
+                <p style="font-size:0.83rem;color:var(--text-secondary);margin:0;line-height:1.5;">
+                  Online web registration will be disabled for this event. The event page will display an official <strong>Spot Admission Notice</strong> directing attendees to register directly at the event venue desk.
+                </p>
+              </div>
+
               <!-- Team Size Configuration Section (Conditional for Team events) -->
               <div id="team-size-config-section" style="display:none;background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.2);border-radius:var(--radius-md);padding:1.25rem;margin-top:1.25rem;margin-bottom:0.75rem;">
                 <div style="font-weight:700;font-size:0.92rem;color:#3b82f6;margin-bottom:0.35rem;display:flex;align-items:center;gap:0.4rem;">
@@ -445,6 +467,23 @@
       minTeamInput.addEventListener('input', updateTeamSummary);
       maxTeamInput.addEventListener('input', updateTeamSummary);
       updatePartFields();
+
+      // Spot registration / admission mode toggle
+      const spotRegSelect = document.getElementById('spot-registration-select');
+      const spotInfoBox   = document.getElementById('spot-admission-info-box');
+      const spotRegHint   = document.getElementById('spot-reg-hint');
+
+      function updateSpotRegUI() {
+        const isSpot = spotRegSelect.value === '1';
+        spotInfoBox.style.display = isSpot ? 'block' : 'none';
+        if (isSpot) {
+          spotRegHint.textContent = 'Students do not register on the web. Registration takes place directly at the venue desk.';
+        } else {
+          spotRegHint.textContent = 'Students register online through the website portal.';
+        }
+      }
+      spotRegSelect.addEventListener('change', updateSpotRegUI);
+      updateSpotRegUI();
 
       // Payment toggle
       const payYes = document.getElementById('pay-yes');

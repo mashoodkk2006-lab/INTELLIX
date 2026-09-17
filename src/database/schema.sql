@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS events (
     participation_type ENUM('individual', 'team') NOT NULL DEFAULT 'individual',
     min_team_members INT DEFAULT 2,
     max_team_members INT DEFAULT NULL,
+    spot_registration TINYINT(1) NOT NULL DEFAULT 0,
     confirmation_message TEXT,
     cert_enabled TINYINT(1) NOT NULL DEFAULT 1,
     cert_title VARCHAR(180) DEFAULT 'Certificate of Participation',
