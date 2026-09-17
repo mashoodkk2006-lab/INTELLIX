@@ -1,4 +1,27 @@
 const { query } = require('../config/db');
+const { generateQRDataURL } = require('../services/qrService');
+
+// Helper to resolve or auto-generate a valid UPI QR code data URL for paid events
+async function resolvePaymentQrUrl(event) {
+  if (!event) return null;
+  const isPayment = event.payment_required === 1 || event.payment_required === true || event.payment_required === '1';
+  if (!isPayment) return null;
+  if (event.payment_qr_url && typeof event.payment_qr_url === 'string' && event.payment_qr_url.trim().length > 0) {
+    return event.payment_qr_url;
+  }
+  const upiId = (event.upi_id && event.upi_id.trim()) || 'intellix.assoc@okaxis';
+  const fee = parseFloat(event.registration_fee || 0).toFixed(2);
+  const title = (event.title || 'INTELLIX Event').trim();
+  const code = (event.code || 'REG').trim();
+  const upiUri = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(title)}&am=${fee}&cu=INR&tn=${encodeURIComponent(code + ' Registration Fee')}`;
+  try {
+    const generated = await generateQRDataURL(upiUri);
+    return generated;
+  } catch (err) {
+    console.error('[resolvePaymentQrUrl Error]', err);
+    return null;
+  }
+}
 
 // Helper to create URL-friendly slug
 function slugify(text) {
@@ -48,7 +71,7 @@ async function getAllEvents(req, res) {
 
     // Compute live attributes
     const now = new Date();
-    const enrichedEvents = events.map(evt => {
+    const enrichedEvents = await Promise.all(events.map(async evt => {
       const start = new Date(evt.start_datetime);
       const end = new Date(evt.end_datetime);
       const deadline = new Date(evt.registration_deadline);
@@ -67,15 +90,18 @@ async function getAllEvents(req, res) {
       const isFull = registered >= max;
       const canRegister = evt.registration_open === 1 && !isDeadlinePassed && !isFull && evt.status === 'published';
 
+      const paymentQrUrl = await resolvePaymentQrUrl(evt);
+
       return {
         ...evt,
+        payment_qr_url: paymentQrUrl,
         timing_state: timingState,
         seats_available: seatsAvailable,
         is_deadline_passed: isDeadlinePassed,
         is_full: isFull,
         can_register: canRegister
       };
-    });
+    }));
 
     return res.json({ success: true, events: enrichedEvents });
   } catch (err) {
@@ -134,10 +160,13 @@ async function getEventBySlugOrId(req, res) {
       timingState = 'ongoing';
     }
 
+    const paymentQrUrl = await resolvePaymentQrUrl(event);
+
     return res.json({
       success: true,
       event: {
         ...event,
+        payment_qr_url: paymentQrUrl,
         timing_state: timingState,
         seats_available: Math.max(0, max - registered),
         is_deadline_passed: isDeadlinePassed,
@@ -212,6 +241,15 @@ async function createEvent(req, res) {
     }
 
     const isPaymentRequired = payment_required === 'true' || payment_required === true || payment_required === '1' || payment_required === 1 ? 1 : 0;
+    if (isPaymentRequired && !paymentQrUrl) {
+      paymentQrUrl = await resolvePaymentQrUrl({
+        payment_required: 1,
+        upi_id,
+        registration_fee,
+        title,
+        code: eventCode
+      });
+    }
     const isSpot = spot_registration === 'true' || spot_registration === true || spot_registration === '1' || spot_registration === 1 ? 1 : 0;
 
     const createdBy = req.session && req.session.admin ? req.session.admin.id : null;
@@ -384,6 +422,16 @@ async function updateEvent(req, res) {
     const isPaymentRequired = payment_required !== undefined
       ? (payment_required === 'true' || payment_required === true || payment_required === '1' || payment_required === 1 ? 1 : 0)
       : existing[0].payment_required;
+
+    if (isPaymentRequired && !paymentQrUrl) {
+      paymentQrUrl = await resolvePaymentQrUrl({
+        payment_required: 1,
+        upi_id: upi_id !== undefined ? upi_id : existing[0].upi_id,
+        registration_fee: registration_fee !== undefined ? registration_fee : existing[0].registration_fee,
+        title: title || existing[0].title,
+        code: code || existing[0].code
+      });
+    }
 
     const finalSpot = spot_registration !== undefined
       ? (spot_registration === 'true' || spot_registration === true || spot_registration === '1' || spot_registration === 1 ? 1 : 0)

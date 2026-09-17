@@ -248,6 +248,157 @@
       justify-content: center;
     }
 
+    /* Modal Payment Section & QR */
+    .modal-payment-card {
+      background: linear-gradient(135deg, #0b1e36 0%, #0f2d52 100%);
+      border: 1px solid rgba(37,99,235,0.3);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(11,30,54,0.35);
+      margin-bottom: 1.25rem;
+    }
+    [data-theme="light"] .modal-payment-card {
+      background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
+      border-color: rgba(37,99,235,0.3);
+    }
+    .modal-payment-header {
+      padding: 0.9rem 1.25rem;
+      background: rgba(37,99,235,0.18);
+      border-bottom: 1px solid rgba(37,99,235,0.22);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .modal-payment-icon { font-size: 1.25rem; }
+    .modal-payment-title { font-size: 0.95rem; font-weight: 700; color: #93c5fd; }
+    [data-theme="light"] .modal-payment-title { color: #1d4ed8; }
+    .modal-payment-sub { font-size: 0.76rem; color: #60a5fa; opacity: 0.85; margin-top: 0.1rem; }
+    [data-theme="light"] .modal-payment-sub { color: #2563eb; }
+    .modal-payment-body { padding: 1.25rem; }
+    .modal-payment-grid {
+      display: grid;
+      grid-template-columns: 190px 1fr;
+      gap: 1.25rem;
+      align-items: start;
+    }
+    @media (max-width: 620px) {
+      .modal-payment-grid { grid-template-columns: 1fr; justify-items: center; }
+    }
+    .modal-qr-column {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .modal-qr-frame {
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 10px;
+      box-shadow: 0 0 0 2px rgba(37,99,235,0.35), 0 6px 20px rgba(0,0,0,0.3);
+      width: 170px;
+      height: 170px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .modal-qr-frame:hover {
+      transform: scale(1.02);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.6), 0 8px 24px rgba(37,99,235,0.3);
+    }
+    .modal-qr-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      image-rendering: crisp-edges;
+      display: block;
+    }
+    .upi-app-pills {
+      display: flex;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .upi-pill {
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.08);
+      color: #93c5fd;
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+    [data-theme="light"] .upi-pill {
+      background: rgba(37,99,235,0.1);
+      color: #1d4ed8;
+      border-color: rgba(37,99,235,0.25);
+    }
+    .modal-qr-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 0.2rem;
+    }
+    .modal-pay-details-column {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      min-width: 0;
+      width: 100%;
+    }
+    .modal-fee-box {
+      background: rgba(37,99,235,0.14);
+      border: 1px solid rgba(37,99,235,0.25);
+      border-radius: var(--radius-sm);
+      padding: 0.65rem 0.9rem;
+    }
+    [data-theme="light"] .modal-fee-box {
+      background: rgba(219,234,254,0.7);
+      border-color: rgba(37,99,235,0.3);
+    }
+    .btn-mobile-upi {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.5rem 0.9rem;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: #ffffff !important;
+      border-radius: var(--radius-sm);
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-decoration: none;
+      width: 100%;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(37,99,235,0.4);
+    }
+    .btn-mobile-upi:hover {
+      background: linear-gradient(135deg, #1d4ed8, #1e40af);
+      transform: translateY(-1px);
+    }
+    .modal-payment-steps {
+      background: rgba(0,0,0,0.18);
+      border-radius: var(--radius-sm);
+      padding: 0.65rem 0.85rem;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    [data-theme="light"] .modal-payment-steps {
+      background: rgba(255,255,255,0.55);
+      border-color: rgba(37,99,235,0.15);
+    }
+    .modal-steps-list {
+      margin: 0;
+      padding-left: 1.15rem;
+      font-size: 0.78rem;
+      color: #cbd5e1;
+      line-height: 1.5;
+    }
+    [data-theme="light"] .modal-steps-list { color: #334155; }
+
     @keyframes fadeInUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
   </style>
 </head>
@@ -439,26 +590,111 @@
           <div id="dynamic-form-fields-container" style="border-top:1px solid var(--border-color);padding-top:1.25rem;margin-top:0.5rem;"></div>
 
           <!-- Payment Details in Modal -->
-          <div id="modal-payment-section" style="display:none;margin-top:1rem;border-top:1px solid rgba(37,99,235,0.3);padding-top:1.25rem;">
-            <div style="background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.2);border-radius:var(--radius-md);padding:1rem;margin-bottom:1.25rem;">
-              <div style="font-weight:700;color:#60a5fa;margin-bottom:0.35rem;font-size:0.9rem;">&#128178; Payment Required</div>
-              <p style="font-size:0.83rem;color:var(--text-secondary);margin:0;" id="modal-payment-note">
-                Pay <strong id="modal-pay-amount"></strong> before completing registration. Save your screenshot and Transaction ID.
-              </p>
-            </div>
-            <div class="form-row">
-              <div class="form-group" style="grid-column:span 2;">
-                <label class="form-label" for="modal-transaction-id">Transaction ID / UTR Number <span class="required-star">*</span></label>
-                <input type="text" id="modal-transaction-id" class="form-control" placeholder="e.g. T2609XXXXXXXX or UTR1234567890">
-                <span class="form-hint">Enter the 12-digit Transaction ID / UTR from your UPI app after payment.</span>
+          <div id="modal-payment-section" style="display:none;margin-top:1.25rem;border-top:1px solid rgba(37,99,235,0.3);padding-top:1.25rem;">
+            <div class="modal-payment-card">
+              <!-- Header -->
+              <div class="modal-payment-header">
+                <div style="display:flex;align-items:center;gap:0.6rem;">
+                  <span class="modal-payment-icon">&#128178;</span>
+                  <div>
+                    <div class="modal-payment-title">Payment Required for Registration</div>
+                    <div class="modal-payment-sub">Scan the QR code below or pay via UPI to confirm your entry</div>
+                  </div>
+                </div>
+                <span class="badge" style="background:rgba(37,99,235,0.2);color:#93c5fd;border:1px solid rgba(37,99,235,0.4);font-size:0.75rem;padding:0.25rem 0.6rem;">
+                  Official UPI
+                </span>
+              </div>
+
+              <!-- Body: QR + Payment Info -->
+              <div class="modal-payment-body">
+                <div class="modal-payment-grid">
+                  <!-- QR Column -->
+                  <div class="modal-qr-column">
+                    <div class="modal-qr-frame" id="modal-qr-frame-box" onclick="openQRFullscreen()" title="Click to enlarge QR">
+                      <img id="modal-payment-qr-img" src="" alt="Payment QR Code">
+                    </div>
+                    <div class="qr-scan-badge" style="font-size:0.7rem;padding:0.25rem 0.75rem;">
+                      <span>&#128247;</span> Scan to Pay
+                    </div>
+                    <!-- Supported UPI Apps Badges -->
+                    <div class="upi-app-pills">
+                      <span class="upi-pill">GPay</span>
+                      <span class="upi-pill">PhonePe</span>
+                      <span class="upi-pill">Paytm</span>
+                      <span class="upi-pill">BHIM</span>
+                    </div>
+                    <div class="modal-qr-actions">
+                      <button type="button" class="btn-qr-action" onclick="downloadModalQR()" title="Download QR image">
+                        &#11015; Download QR
+                      </button>
+                      <button type="button" class="btn-qr-action" onclick="openQRFullscreen()" title="Enlarge QR in fullscreen">
+                        &#10066; Enlarge
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Details Column -->
+                  <div class="modal-pay-details-column">
+                    <!-- Fee Display -->
+                    <div class="modal-fee-box">
+                      <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;font-weight:700;color:#93c5fd;opacity:0.9;">Registration Fee</div>
+                      <div style="display:flex;align-items:baseline;gap:0.35rem;margin-top:0.2rem;">
+                        <span style="font-size:1.3rem;font-weight:700;color:#93c5fd;">&#8377;</span>
+                        <span id="modal-fee-amount" style="font-size:2.1rem;font-weight:800;color:#ffffff;line-height:1;">0</span>
+                        <span id="modal-fee-type" style="font-size:0.78rem;color:#93c5fd;font-weight:500;margin-left:0.25rem;">Per Participant</span>
+                      </div>
+                    </div>
+
+                    <!-- UPI ID Row -->
+                    <div id="modal-upi-container" class="payment-detail-row">
+                      <div class="payment-detail-label">Official UPI ID</div>
+                      <div class="upi-copy-row">
+                        <span class="upi-id-text" id="modal-upi-id-text" style="font-size:0.88rem;">-</span>
+                        <button type="button" class="btn-copy-upi" id="modal-copy-upi-btn" onclick="copyModalUPI()">&#128203; Copy</button>
+                      </div>
+                    </div>
+
+                    <!-- Direct Mobile Pay Button -->
+                    <div id="modal-upi-intent-container" style="display:none;">
+                      <a id="modal-upi-intent-btn" href="#" class="btn-mobile-upi" target="_blank" rel="noopener">
+                        <span>&#9889; Pay via UPI App (Mobile)</span>
+                      </a>
+                    </div>
+
+                    <!-- Quick Instructions List -->
+                    <div class="modal-payment-steps">
+                      <div style="font-size:0.72rem;text-transform:uppercase;font-weight:700;letter-spacing:0.05em;color:#60a5fa;margin-bottom:0.35rem;">
+                        Payment Steps
+                      </div>
+                      <ol class="modal-steps-list">
+                        <li><span>Scan QR with any UPI app or click pay button.</span></li>
+                        <li><span>Transfer exact fee: <strong id="modal-steps-amount">&#8377;0</strong>.</span></li>
+                        <li><span>Copy the 12-digit <strong>Transaction ID / UTR</strong>.</span></li>
+                        <li><span>Enter the UTR below to complete registration.</span></li>
+                      </ol>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="form-group">
-              <label class="form-label" for="modal-screenshot">Upload Payment Screenshot <span style="color:var(--text-muted);font-weight:400;">(Optional but recommended)</span></label>
-              <input type="file" id="modal-screenshot" class="form-control" accept="image/*">
-              <span class="form-hint">Take a screenshot of your successful payment and upload it here for faster verification.</span>
-              <div id="modal-screenshot-preview" style="display:none;margin-top:0.6rem;">
-                <img id="modal-screenshot-img" src="" alt="Payment Screenshot" style="max-height:120px;border-radius:var(--radius-sm);border:1px solid var(--border-color);">
+
+            <!-- Transaction Input & Screenshot -->
+            <div style="margin-top:1.25rem;">
+              <div class="form-row">
+                <div class="form-group" style="grid-column:span 2;">
+                  <label class="form-label" for="modal-transaction-id">Transaction ID / UTR Number <span class="required-star">*</span></label>
+                  <input type="text" id="modal-transaction-id" class="form-control" placeholder="e.g. 260901234567 or T2609XXXXXXXX" style="font-family:monospace;font-size:0.95rem;">
+                  <span class="form-hint">Enter the 12-digit Transaction ID or UTR number from your payment confirmation receipt.</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="modal-screenshot">Upload Payment Screenshot <span style="color:var(--text-muted);font-weight:400;">(Optional but recommended for faster verification)</span></label>
+                <input type="file" id="modal-screenshot" class="form-control" accept="image/*">
+                <span class="form-hint">Take a screenshot of your successful payment and upload it here. Max 5MB.</span>
+                <div id="modal-screenshot-preview" style="display:none;margin-top:0.6rem;">
+                  <img id="modal-screenshot-img" src="" alt="Payment Screenshot" style="max-height:120px;border-radius:var(--radius-sm);border:1px solid var(--border-color);">
+                </div>
               </div>
             </div>
           </div>
@@ -774,6 +1010,15 @@
     }
 
     function openQRFullscreen() {
+      const fsImg = document.getElementById('qr-fullscreen-img');
+      const modalQr = document.getElementById('modal-payment-qr-img');
+      const pageQr = document.getElementById('event-qr-img');
+      const src = (currentEvent && currentEvent.payment_qr_url) || (modalQr && modalQr.src) || (pageQr && pageQr.src);
+      if (fsImg && src) fsImg.src = src;
+      if (currentEvent) {
+        document.getElementById('qr-fullscreen-title').textContent = `Scan to Pay — ${currentEvent.title}`;
+        if (currentEvent.upi_id) document.getElementById('qr-fullscreen-sub').textContent = `UPI ID: ${currentEvent.upi_id}`;
+      }
       document.getElementById('qr-fullscreen-modal').classList.add('open');
     }
 
@@ -782,6 +1027,34 @@
       const btn = document.getElementById('copy-upi-btn');
       if (!upiText || !btn) return;
       navigator.clipboard.writeText(upiText.textContent).then(() => {
+        btn.textContent = '\u2713 Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = '\uD83D\uDCCB Copy'; btn.classList.remove('copied'); }, 2000);
+      }).catch(() => {
+        const range = document.createRange();
+        range.selectNodeContents(upiText);
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(range);
+      });
+    }
+
+    function downloadModalQR() {
+      if (!currentEvent) return;
+      const qrImg = document.getElementById('modal-payment-qr-img');
+      if (!qrImg || !qrImg.src) return;
+      const a = document.createElement('a');
+      a.href = qrImg.src;
+      a.download = `${currentEvent.code || 'event'}-payment-qr.png`;
+      a.click();
+    }
+
+    function copyModalUPI() {
+      const upiText = document.getElementById('modal-upi-id-text');
+      const btn = document.getElementById('modal-copy-upi-btn');
+      if (!upiText || !btn) return;
+      const val = upiText.textContent.trim();
+      if (!val || val === '-') return;
+      navigator.clipboard.writeText(val).then(() => {
         btn.textContent = '\u2713 Copied!';
         btn.classList.add('copied');
         setTimeout(() => { btn.textContent = '\uD83D\uDCCB Copy'; btn.classList.remove('copied'); }, 2000);
@@ -962,8 +1235,58 @@
       if (isPayment) {
         paySection.style.display = 'block';
         const fee = parseFloat(currentEvent.registration_fee || 0);
-        const upiText = currentEvent.upi_id ? ` to UPI ${currentEvent.upi_id}` : '';
-        document.getElementById('modal-pay-amount').textContent = `\u20b9${fee % 1 === 0 ? fee.toFixed(0) : fee.toFixed(2)}${upiText}`;
+        const formattedFee = fee % 1 === 0 ? fee.toFixed(0) : fee.toFixed(2);
+
+        // Update fee displays
+        const feeAmountEl = document.getElementById('modal-fee-amount');
+        if (feeAmountEl) feeAmountEl.textContent = formattedFee;
+        const stepsAmountEl = document.getElementById('modal-steps-amount');
+        if (stepsAmountEl) stepsAmountEl.textContent = `\u20b9${formattedFee}`;
+
+        // QR Code image
+        const qrImgEl = document.getElementById('modal-payment-qr-img');
+        if (qrImgEl) {
+          if (currentEvent.payment_qr_url) {
+            qrImgEl.src = currentEvent.payment_qr_url;
+            qrImgEl.style.display = 'block';
+          } else if (currentEvent.upi_id) {
+            const upiUri = `upi://pay?pa=${encodeURIComponent(currentEvent.upi_id)}&pn=${encodeURIComponent(currentEvent.title || 'INTELLIX')}&am=${fee.toFixed(2)}&cu=INR&tn=${encodeURIComponent((currentEvent.code || 'REG') + ' Fee')}`;
+            qrImgEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiUri)}`;
+            qrImgEl.style.display = 'block';
+          }
+        }
+
+        // UPI ID Row
+        const upiContainer = document.getElementById('modal-upi-container');
+        const upiIdText = document.getElementById('modal-upi-id-text');
+        if (currentEvent.upi_id) {
+          if (upiContainer) upiContainer.style.display = 'flex';
+          if (upiIdText) upiIdText.textContent = currentEvent.upi_id;
+        } else {
+          if (upiContainer) upiContainer.style.display = 'none';
+        }
+
+        // Direct Mobile Pay Intent Link
+        const upiIntentContainer = document.getElementById('modal-upi-intent-container');
+        const upiIntentBtn = document.getElementById('modal-upi-intent-btn');
+        if (currentEvent.upi_id) {
+          const upiUri = `upi://pay?pa=${encodeURIComponent(currentEvent.upi_id)}&pn=${encodeURIComponent(currentEvent.title || 'INTELLIX')}&am=${fee.toFixed(2)}&cu=INR&tn=${encodeURIComponent((currentEvent.code || 'REG') + ' Fee')}`;
+          if (upiIntentBtn) upiIntentBtn.href = upiUri;
+          if (upiIntentContainer) upiIntentContainer.style.display = 'block';
+        } else {
+          if (upiIntentContainer) upiIntentContainer.style.display = 'none';
+        }
+
+        // Fullscreen QR Modal sync
+        const fsImg = document.getElementById('qr-fullscreen-img');
+        if (fsImg && currentEvent.payment_qr_url) {
+          fsImg.src = currentEvent.payment_qr_url;
+          const fsTitle = document.getElementById('qr-fullscreen-title');
+          if (fsTitle) fsTitle.textContent = `Scan to Pay \u2014 ${currentEvent.title}`;
+          const fsSub = document.getElementById('qr-fullscreen-sub');
+          if (fsSub) fsSub.textContent = currentEvent.upi_id ? `UPI ID: ${currentEvent.upi_id}` : `Amount: \u20b9${formattedFee}`;
+        }
+
         document.getElementById('modal-transaction-id').required = true;
       } else {
         paySection.style.display = 'none';
