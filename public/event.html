@@ -312,7 +312,8 @@
     </div>
   </main>
 
-  <!-- Registration Modal -->
+  <!-- Registration Modal & Target -->
+  <a id="register" style="display:block;position:relative;top:-2rem;visibility:hidden;"></a>
   <div class="modal-backdrop" id="registration-modal">
     <div class="modal-dialog modal-dialog-lg">
       <div class="modal-header">
@@ -500,15 +501,29 @@
 
     function getEventIdentifier() {
       const pathParts = window.location.pathname.split('/').filter(Boolean);
-      if (pathParts[0] === 'events' && pathParts[1]) return pathParts[1];
+      if ((pathParts[0] === 'events' || pathParts[0] === 'event' || pathParts[0] === 'register') && pathParts[1]) {
+        return decodeURIComponent(pathParts[1]);
+      }
       const params = new URLSearchParams(window.location.search);
-      return params.get('id') || params.get('slug') || 'code-hunt-2026';
+      return params.get('id') || params.get('slug') || '';
     }
 
     async function loadEventDetails() {
       const identifier = getEventIdentifier();
+      if (!identifier) {
+        document.getElementById('event-main-content').innerHTML = `
+          <div class="container section">
+            <div class="empty-state">
+              <h2>No Event Selected</h2>
+              <p>Please select an event from our schedule to view its details.</p>
+              <a href="/events.html" class="btn btn-primary" style="margin-top:1rem;">Browse Events</a>
+            </div>
+          </div>`;
+        return;
+      }
+
       try {
-        const res = await fetchJson(`/api/events/${identifier}`);
+        const res = await fetchJson(`/api/events/${encodeURIComponent(identifier)}`);
         if (!res.success || !res.event) {
           document.getElementById('event-main-content').innerHTML = `
             <div class="container section">
@@ -522,7 +537,16 @@
         }
         currentEvent = res.event;
         renderEventPage(currentEvent);
-        if (window.location.hash === '#register' && currentEvent.can_register) openRegistrationModal();
+
+        const pathParts = window.location.pathname.split('/').filter(Boolean);
+        const shouldOpenReg = 
+          window.location.hash.toLowerCase() === '#register' ||
+          (pathParts.length >= 3 && pathParts[2].toLowerCase() === 'register') ||
+          (pathParts[0].toLowerCase() === 'register' && pathParts[1]);
+
+        if (shouldOpenReg && currentEvent.can_register) {
+          setTimeout(() => openRegistrationModal(), 50);
+        }
       } catch (err) {
         document.getElementById('event-main-content').innerHTML = `
           <div class="container section">
@@ -767,6 +791,8 @@
         window.getSelection().removeAllRanges();
         window.getSelection().addRange(range);
       });
+    }
+
     function escapeHtml(str) {
       if (!str) return '';
       return String(str)
@@ -806,7 +832,7 @@
       if (maxCountElem) maxCountElem.textContent = maxTeam;
 
       // Update Leader Name Display from form input
-      const leaderNameInput = document.getElementById('reg-full-name');
+      const leaderNameInput = document.getElementById('reg-fullname') || document.getElementById('reg-full-name');
       const leaderDisplay = document.getElementById('leader-name-display');
       if (leaderDisplay) {
         leaderDisplay.textContent = leaderNameInput && leaderNameInput.value.trim() ? `• ${leaderNameInput.value.trim()}` : '';
@@ -978,12 +1004,35 @@
         container.innerHTML = '';
       }
 
-      document.getElementById('registration-modal').classList.add('open');
+      const modal = document.getElementById('registration-modal');
+      if (modal) {
+        modal.classList.add('open');
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+
+      if (window.location.hash.toLowerCase() !== '#register') {
+        history.replaceState(null, '', window.location.pathname + window.location.search + '#register');
+      }
+
+      setTimeout(() => {
+        const firstInp = document.getElementById('reg-fullname') || document.getElementById('reg-full-name');
+        if (firstInp) firstInp.focus();
+      }, 100);
     }
 
     function closeRegistrationModal() {
-      document.getElementById('registration-modal').classList.remove('open');
-      document.getElementById('reg-error-msg').style.display = 'none';
+      const modal = document.getElementById('registration-modal');
+      if (modal) {
+        modal.classList.remove('open');
+        modal.style.display = '';
+      }
+      document.body.style.overflow = '';
+      const errEl = document.getElementById('reg-error-msg');
+      if (errEl) errEl.style.display = 'none';
+      if (window.location.hash.toLowerCase() === '#register') {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -991,13 +1040,36 @@
 
       document.getElementById('modal-close-btn').addEventListener('click', closeRegistrationModal);
       document.getElementById('modal-cancel-btn').addEventListener('click', closeRegistrationModal);
+
+      // Dismiss on backdrop click
+      const regModal = document.getElementById('registration-modal');
+      if (regModal) {
+        regModal.addEventListener('click', (e) => {
+          if (e.target === e.currentTarget) closeRegistrationModal();
+        });
+      }
+
+      // Dismiss on ESC key
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeRegistrationModal();
+      });
+
+      // Handle direct hash navigation
+      window.addEventListener('hashchange', () => {
+        if (window.location.hash.toLowerCase() === '#register') {
+          if (currentEvent && currentEvent.can_register) openRegistrationModal();
+        } else if (!window.location.hash) {
+          closeRegistrationModal();
+        }
+      });
+
       document.getElementById('qr-fullscreen-close').addEventListener('click', () => document.getElementById('qr-fullscreen-modal').classList.remove('open'));
       document.getElementById('qr-fullscreen-modal').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.classList.remove('open'); });
 
       const addMemberBtn = document.getElementById('add-team-member-btn');
       if (addMemberBtn) addMemberBtn.addEventListener('click', addTeamMemberRow);
 
-      const regFullNameInp = document.getElementById('reg-full-name');
+      const regFullNameInp = document.getElementById('reg-fullname') || document.getElementById('reg-full-name');
       if (regFullNameInp) {
         regFullNameInp.addEventListener('input', () => {
           const leaderDisplay = document.getElementById('leader-name-display');

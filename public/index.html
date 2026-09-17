@@ -457,7 +457,7 @@
                   </div>
                   <div class="card-footer">
                     <span style="font-size: 0.8rem; font-weight: 600;">${evt.seats_available} seats remaining</span>
-                    <a href="/events/${evt.slug}" class="btn btn-sm btn-primary">Details & Register &rarr;</a>
+                    <a href="/events/${evt.slug}${evt.can_register ? '#register' : ''}" class="btn btn-sm btn-primary">Details & Register &rarr;</a>
                   </div>
                 </div>
               `;

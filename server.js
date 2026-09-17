@@ -50,9 +50,17 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(uploadsDir));
 
 // Clean URL routing helpers
-app.get('/events/:slug', (req, res, next) => {
+app.get('/events', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/events.html'));
+});
+
+app.get(['/events/:slug', '/event/:slug', '/events/:slug/register', '/event/:slug/register', '/register/:slug'], (req, res, next) => {
   if (req.params.slug.includes('.')) return next();
   res.sendFile(path.join(__dirname, 'public/event.html'));
+});
+
+app.get(['/event', '/register'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/events.html'));
 });
 
 app.get('/verify', (req, res) => {
