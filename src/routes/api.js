@@ -31,6 +31,7 @@ router.get('/members', memberController.getAllMembers);
 
 // Certificate Verification & Download
 router.get('/certificates/verify', certificateController.verifyCertificate);
+router.get('/certificates/download/*', certificateController.downloadCertificate);
 router.get('/certificates/download/:code', certificateController.downloadCertificate);
 
 // ==========================================
@@ -145,6 +146,22 @@ router.get(
   requirePermission('can_generate_certificates'),
   requireEventAccess(),
   certificateController.getCertificatesByEvent
+);
+
+router.get(
+  '/events/:eventId/certificates/download-zip',
+  requireAuth,
+  requirePermission('can_generate_certificates'),
+  requireEventAccess(),
+  certificateController.downloadCertificatesZip
+);
+
+router.get(
+  '/events/:eventId/certificates/export',
+  requireAuth,
+  requirePermission('can_generate_certificates'),
+  requireEventAccess(),
+  certificateController.exportCertificateData
 );
 
 router.delete(

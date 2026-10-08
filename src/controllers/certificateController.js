@@ -1,8 +1,27 @@
 const path = require('path');
 const fs = require('fs');
+const archiver = require('archiver');
 const { query } = require('../config/db');
 const { generateCertificateCode } = require('../utils/idGenerator');
-const { generateCertificatePDF } = require('../services/certificateService');
+const {
+  generateCertificatePDF,
+  generateCertificateRecordsPDF,
+  getSafeDiskFilename,
+  sanitizeForFilename
+} = require('../services/certificateService');
+
+function buildSequentialCertificateCode(prefix, num) {
+  let cleanPrefix = String(prefix || '').trim();
+  const numStr = String(num).padStart(3, '0');
+  if (!cleanPrefix) {
+    return `CERT-${numStr}`;
+  }
+  if (cleanPrefix.endsWith('/') || cleanPrefix.endsWith('-') || cleanPrefix.endsWith('_')) {
+    return `${cleanPrefix}${numStr}`;
+  }
+  const sep = cleanPrefix.includes('/') ? '/' : (cleanPrefix.includes('-') ? '-' : '/');
+  return `${cleanPrefix}${sep}${numStr}`;
+}
 
 async function generateSingleCertificate(req, res) {
   try {
@@ -58,7 +77,7 @@ async function generateSingleCertificate(req, res) {
       [registration_id, mIdx, finalRecipientName]
     );
 
-    let finalCertCode = certificate_code ? String(certificate_code).trim().toUpperCase() : null;
+    let finalCertCode = certificate_code ? String(certificate_code).trim() : null;
 
     if (finalCertCode) {
       // Validate uniqueness if user provided a custom code
@@ -104,7 +123,8 @@ async function generateSingleCertificate(req, res) {
       const existingId = existingCerts[0].id;
       // If code changed, delete old file if present
       if (existingCerts[0].certificate_code !== finalCertCode) {
-        const oldFile = path.join(__dirname, '../../uploads/certificates', `${existingCerts[0].certificate_code}.pdf`);
+        const oldSafe = getSafeDiskFilename(existingCerts[0].certificate_code);
+        const oldFile = path.join(__dirname, '../../uploads/certificates', `${oldSafe}.pdf`);
         if (fs.existsSync(oldFile)) {
           try { fs.unlinkSync(oldFile); } catch (e) {}
         }
@@ -163,7 +183,7 @@ async function generateSingleCertificate(req, res) {
         certificate_code: finalCertCode,
         recipient_name: finalRecipientName,
         recipient_register_number: finalRecipientReg,
-        download_url: `/api/certificates/download/${finalCertCode}`
+        download_url: `/api/certificates/download/${encodeURIComponent(finalCertCode)}`
       }
     });
   } catch (err) {
@@ -174,7 +194,14 @@ async function generateSingleCertificate(req, res) {
 
 async function bulkGenerateForEvent(req, res) {
   const { eventId } = req.params;
-  const { code_prefix, certificate_type = 'participation', custom_title } = req.body || {};
+  const {
+    code_prefix,
+    starting_number = 1,
+    certificate_type = 'participation',
+    custom_title,
+    selected_participants = null
+  } = req.body || {};
+
   try {
     const [events] = await query('SELECT * FROM events WHERE id = ?', [eventId]);
     if (!events || events.length === 0) {
@@ -182,19 +209,19 @@ async function bulkGenerateForEvent(req, res) {
     }
     const event = events[0];
 
-    // Find all present registrations
+    // Find registrations for this event
     const [registrations] = await query(
       `SELECT er.*, COALESCE(att.status, 'unmarked') as attendance_status
        FROM event_registrations er
-       JOIN attendance att ON er.id = att.registration_id
-       WHERE er.event_id = ? AND att.status = 'present'`,
+       LEFT JOIN attendance att ON er.id = att.registration_id
+       WHERE er.event_id = ?`,
       [eventId]
     );
 
     if (registrations.length === 0) {
       return res.json({
         success: true,
-        message: 'No participants marked as Present were found for this event.',
+        message: 'No participant registrations found for this event.',
         generated_count: 0
       });
     }
@@ -209,21 +236,37 @@ async function bulkGenerateForEvent(req, res) {
       }
     }
 
-    const hostUrl = `${req.protocol}://${req.get('host')}`;
-    let count = 0;
-    const year = new Date().getFullYear();
-
-    // Prepare list of individuals needing certificates
+    // Build target individuals list
     const individuals = [];
+    const isSelectedMode = Array.isArray(selected_participants) && selected_participants.length > 0;
+    const selectedSet = new Set(
+      isSelectedMode ? selected_participants.map(p => `${p.registration_id}_${p.member_index ?? 0}`) : []
+    );
+
     for (const reg of registrations) {
       // 1. Leader / Individual participant
-      if (!certsMap[`${reg.id}_idx_0`] && !certsMap[`${reg.id}_name_${reg.full_name.trim().toLowerCase()}`]) {
-        individuals.push({
-          registration_id: reg.id,
-          recipient_name: reg.full_name,
-          recipient_register_number: reg.register_number,
-          member_index: 0
-        });
+      const leaderKey = `${reg.id}_0`;
+      const hasLeaderCert = !!(certsMap[`${reg.id}_idx_0`] || certsMap[`${reg.id}_name_${reg.full_name.trim().toLowerCase()}`]);
+
+      if (isSelectedMode) {
+        if (selectedSet.has(leaderKey) && !hasLeaderCert) {
+          individuals.push({
+            registration_id: reg.id,
+            recipient_name: reg.full_name,
+            recipient_register_number: reg.register_number,
+            member_index: 0
+          });
+        }
+      } else {
+        // Default mode: all ungenerated participants
+        if (!hasLeaderCert) {
+          individuals.push({
+            registration_id: reg.id,
+            recipient_name: reg.full_name,
+            recipient_register_number: reg.register_number,
+            member_index: 0
+          });
+        }
       }
 
       // 2. Additional team members
@@ -244,13 +287,27 @@ async function bulkGenerateForEvent(req, res) {
           const mName = typeof m === 'string' ? m.trim() : (m.name || m.full_name || '').trim();
           const mReg = typeof m === 'string' ? '' : (m.identifier || m.register_number || '').trim();
           const mIdx = idx + 1;
-          if (mName && !certsMap[`${reg.id}_idx_${mIdx}`] && !certsMap[`${reg.id}_name_${mName.toLowerCase()}`]) {
-            individuals.push({
-              registration_id: reg.id,
-              recipient_name: mName,
-              recipient_register_number: mReg || reg.register_number,
-              member_index: mIdx
-            });
+          const memberKey = `${reg.id}_${mIdx}`;
+          const hasMemberCert = !!(certsMap[`${reg.id}_idx_${mIdx}`] || certsMap[`${reg.id}_name_${mName.toLowerCase()}`]);
+
+          if (mName && !hasMemberCert) {
+            if (isSelectedMode) {
+              if (selectedSet.has(memberKey)) {
+                individuals.push({
+                  registration_id: reg.id,
+                  recipient_name: mName,
+                  recipient_register_number: mReg || reg.register_number,
+                  member_index: mIdx
+                });
+              }
+            } else {
+              individuals.push({
+                registration_id: reg.id,
+                recipient_name: mName,
+                recipient_register_number: mReg || reg.register_number,
+                member_index: mIdx
+              });
+            }
           }
         });
       }
@@ -259,27 +316,37 @@ async function bulkGenerateForEvent(req, res) {
     if (individuals.length === 0) {
       return res.json({
         success: true,
-        message: 'All present participants and team members already have certificates generated.',
+        message: 'No pending participants require certificate generation in the current selection.',
         generated_count: 0
       });
     }
 
+    const hostUrl = `${req.protocol}://${req.get('host')}`;
+    const issueDate = new Date().toISOString().split('T')[0];
+    const prefix = code_prefix && String(code_prefix).trim() ? String(code_prefix).trim() : 'CERT';
+
+    let currentNum = Math.max(1, parseInt(starting_number, 10) || 1);
+    let count = 0;
+    const generatedList = [];
+
     for (const ind of individuals) {
-      let certificateCode;
-      if (code_prefix && String(code_prefix).trim()) {
-        const cleanPref = String(code_prefix).trim().toUpperCase();
-        const [pRows] = await query('SELECT certificate_code FROM certificates WHERE certificate_code LIKE ? ORDER BY id DESC LIMIT 1', [`${cleanPref}%`]);
-        let nextNum = 1;
-        if (pRows.length > 0) {
-          const parts = pRows[0].certificate_code.split('-');
-          const lastNum = parseInt(parts[parts.length - 1], 10);
-          if (!isNaN(lastNum)) nextNum = lastNum + 1;
+      // Find the next available non-duplicate certificate code
+      let candidateNum = currentNum;
+      let candidateCode = buildSequentialCertificateCode(prefix, candidateNum);
+
+      while (true) {
+        const [existing] = await query('SELECT id FROM certificates WHERE certificate_code = ?', [candidateCode]);
+        if (!existing || existing.length === 0) {
+          break;
         }
-        certificateCode = `${cleanPref}${String(nextNum).padStart(4, '0')}`;
-      } else {
-        certificateCode = await generateCertificateCode(year);
+        candidateNum++;
+        candidateCode = buildSequentialCertificateCode(prefix, candidateNum);
       }
 
+      currentNum = candidateNum + 1;
+      const certificateCode = candidateCode;
+
+      // Generate PDF file
       const pdfResult = await generateCertificatePDF({
         certificateCode,
         participantName: ind.recipient_name,
@@ -294,8 +361,7 @@ async function bulkGenerateForEvent(req, res) {
         hostUrl
       });
 
-      const issueDate = new Date().toISOString().split('T')[0];
-
+      // Insert certificate
       await query(
         `INSERT INTO certificates 
          (certificate_code, registration_id, recipient_name, recipient_register_number, member_index, event_id, certificate_type, title, issue_date, pdf_path, qr_code_data)
@@ -314,13 +380,42 @@ async function bulkGenerateForEvent(req, res) {
           `CERT:${certificateCode}`
         ]
       );
+
+      // Auto update attendance to present
+      try {
+        await query(
+          `INSERT INTO attendance (registration_id, event_id, status, marked_at) 
+           VALUES (?, ?, 'present', CURRENT_TIMESTAMP)
+           ON DUPLICATE KEY UPDATE status = 'present', marked_at = CURRENT_TIMESTAMP`,
+          [ind.registration_id, eventId]
+        );
+      } catch (attErr) {
+        // Fallback for sqlite
+        try {
+          await query(`UPDATE attendance SET status = 'present' WHERE registration_id = ?`, [ind.registration_id]);
+        } catch (e2) {}
+      }
+
+      generatedList.push({
+        certificate_code: certificateCode,
+        recipient_name: ind.recipient_name,
+        download_url: `/api/certificates/download/${encodeURIComponent(certificateCode)}`
+      });
+
       count++;
     }
 
+    const firstCode = generatedList.length > 0 ? generatedList[0].certificate_code : '';
+    const lastCode = generatedList.length > 0 ? generatedList[generatedList.length - 1].certificate_code : '';
+
     return res.json({
       success: true,
-      message: `Successfully generated ${count} individual certificates for all present participants & team members.`,
-      generated_count: count
+      message: `✓ ${count} Certificates Generated Successfully`,
+      generated_count: count,
+      code_prefix: prefix,
+      start_code: firstCode,
+      end_code: lastCode,
+      certificates: generatedList
     });
   } catch (err) {
     console.error('[Bulk Certificate Error]', err);
@@ -335,7 +430,8 @@ async function getCertificatesByEvent(req, res) {
       `SELECT 
         c.id, c.certificate_code, c.certificate_type, c.title, c.issue_date, c.pdf_path,
         c.recipient_name, c.recipient_register_number, c.member_index,
-        er.full_name as reg_full_name, er.register_number as reg_number, er.department, er.team_name,
+        er.id as registration_id, er.registration_code, er.full_name as reg_full_name,
+        er.register_number as reg_number, er.department, er.semester, er.team_name,
         e.title as event_title
        FROM certificates c
        JOIN event_registrations er ON c.registration_id = er.id
@@ -351,7 +447,7 @@ async function getCertificatesByEvent(req, res) {
         ...r,
         participant_name: r.recipient_name || r.reg_full_name,
         participant_register_number: r.recipient_register_number || r.reg_number,
-        download_url: `/api/certificates/download/${r.certificate_code}`
+        download_url: `/api/certificates/download/${encodeURIComponent(r.certificate_code)}`
       }))
     });
   } catch (err) {
@@ -373,7 +469,8 @@ async function deleteCertificate(req, res) {
     // Remove PDF file if present
     const baseUploadDir = process.env.UPLOADS_DIR || path.join(__dirname, '../../uploads');
     const certDir = path.join(baseUploadDir, 'certificates');
-    const filePath = path.join(certDir, `${cert.certificate_code}.pdf`);
+    const safeDiskName = getSafeDiskFilename(cert.certificate_code);
+    const filePath = path.join(certDir, `${safeDiskName}.pdf`);
     if (fs.existsSync(filePath)) {
       try {
         fs.unlinkSync(filePath);
@@ -395,11 +492,17 @@ async function deleteCertificate(req, res) {
 }
 
 async function downloadCertificate(req, res) {
-  const { code } = req.params;
   try {
-    const cleanCode = code.trim().toUpperCase();
+    const rawParam = req.params[0] || req.params.code || req.query.code;
+    if (!rawParam) {
+      return res.status(400).send('Certificate code is required');
+    }
+
+    const cleanCode = decodeURIComponent(rawParam).trim();
+
     const [certs] = await query(
-      `SELECT c.*, er.full_name as reg_full_name, e.title as event_title, e.start_datetime as event_date,
+      `SELECT c.*, er.full_name as reg_full_name, er.register_number as reg_number,
+              e.title as event_title, e.start_datetime as event_date,
               e.cert_signatory_name, e.cert_signatory_designation
        FROM certificates c
        JOIN event_registrations er ON c.registration_id = er.id
@@ -416,9 +519,10 @@ async function downloadCertificate(req, res) {
     const participantName = cert.recipient_name || cert.reg_full_name;
     const baseUploadDir = process.env.UPLOADS_DIR || path.join(__dirname, '../../uploads');
     const certDir = path.join(baseUploadDir, 'certificates');
-    const filePath = path.join(certDir, `${cleanCode}.pdf`);
+    const safeFileCode = getSafeDiskFilename(cleanCode);
+    const filePath = path.join(certDir, `${safeFileCode}.pdf`);
 
-    // Regenerate if file was cleared (e.g. server restart)
+    // Regenerate if file is missing
     if (!fs.existsSync(filePath)) {
       const hostUrl = `${req.protocol}://${req.get('host')}`;
       await generateCertificatePDF({
@@ -436,13 +540,202 @@ async function downloadCertificate(req, res) {
       });
     }
 
+    const outputName = `${sanitizeForFilename(participantName)}_${safeFileCode}.pdf`;
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename="${cleanCode}.pdf"`);
+    res.setHeader('Content-Disposition', `inline; filename="${outputName}"`);
     const fileStream = fs.createReadStream(filePath);
     return fileStream.pipe(res);
   } catch (err) {
     console.error('[DownloadCertificate Error]', err);
-    return res.status(500).send('Error retrieving certificate file');
+    return res.status(500).send('Error retrieving certificate file: ' + err.message);
+  }
+}
+
+async function downloadCertificatesZip(req, res) {
+  const { eventId } = req.params;
+  const { ids } = req.query;
+
+  try {
+    const [events] = await query('SELECT * FROM events WHERE id = ?', [eventId]);
+    if (!events || events.length === 0) {
+      return res.status(404).send('Event not found');
+    }
+    const event = events[0];
+
+    let sql = `
+      SELECT c.*, er.full_name as reg_full_name, er.register_number as reg_number,
+             e.title as event_title, e.start_datetime as event_date,
+             e.cert_signatory_name, e.cert_signatory_designation
+      FROM certificates c
+      JOIN event_registrations er ON c.registration_id = er.id
+      JOIN events e ON c.event_id = e.id
+      WHERE c.event_id = ?
+    `;
+    const params = [eventId];
+
+    if (ids) {
+      const idList = String(ids).split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
+      if (idList.length > 0) {
+        sql += ` AND c.id IN (${idList.map(() => '?').join(',')})`;
+        params.push(...idList);
+      }
+    }
+
+    sql += ` ORDER BY c.id ASC`;
+    const [certs] = await query(sql, params);
+
+    if (!certs || certs.length === 0) {
+      return res.status(404).send('No certificates found to download');
+    }
+
+    const zipFilename = `${sanitizeForFilename(event.code || event.title)}_Certificates.zip`;
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="${zipFilename}"`);
+
+    const archive = archiver('zip', { zlib: { level: 9 } });
+    archive.pipe(res);
+
+    const baseUploadDir = process.env.UPLOADS_DIR || path.join(__dirname, '../../uploads');
+    const certDir = path.join(baseUploadDir, 'certificates');
+    const hostUrl = `${req.protocol}://${req.get('host')}`;
+
+    for (const cert of certs) {
+      const participantName = cert.recipient_name || cert.reg_full_name;
+      const safeFileCode = getSafeDiskFilename(cert.certificate_code);
+      const filePath = path.join(certDir, `${safeFileCode}.pdf`);
+
+      // Ensure PDF exists on disk
+      if (!fs.existsSync(filePath)) {
+        await generateCertificatePDF({
+          certificateCode: cert.certificate_code,
+          participantName,
+          eventTitle: cert.event_title,
+          eventDate: cert.event_date,
+          certificateType: cert.certificate_type,
+          certTitle: cert.title,
+          signatoryName: cert.cert_signatory_name,
+          signatoryDesignation: cert.cert_signatory_designation,
+          collegeName: process.env.COLLENAME || 'AL-AZHAR COLLEGE OF ENGINEERING AND TECHNOLOGY',
+          associationName: process.env.ASSOCIATION_NAME || 'INTELLIX Association',
+          hostUrl
+        });
+      }
+
+      const zipEntryName = `${sanitizeForFilename(participantName)}_${safeFileCode}.pdf`;
+      archive.file(filePath, { name: zipEntryName });
+    }
+
+    await archive.finalize();
+  } catch (err) {
+    console.error('[Download ZIP Error]', err);
+    if (!res.headersSent) {
+      return res.status(500).send('Error generating certificates ZIP: ' + err.message);
+    }
+  }
+}
+
+/**
+ * Export ONLY the 5 required fields:
+ * Student Name, Class, Team Name, Register Number, Certificate Code
+ */
+async function exportCertificateData(req, res) {
+  const { eventId } = req.params;
+  const { format = 'csv', ids } = req.query;
+
+  try {
+    const [events] = await query('SELECT * FROM events WHERE id = ?', [eventId]);
+    if (!events || events.length === 0) {
+      return res.status(404).json({ success: false, message: 'Event not found' });
+    }
+    const event = events[0];
+
+    let sql = `
+      SELECT c.id, c.certificate_code, c.recipient_name, c.recipient_register_number, c.member_index,
+             er.full_name as reg_full_name, er.register_number as reg_number,
+             er.department, er.semester, er.team_name,
+             e.title as event_title, e.start_datetime as event_date
+      FROM certificates c
+      JOIN event_registrations er ON c.registration_id = er.id
+      JOIN events e ON c.event_id = e.id
+      WHERE c.event_id = ?
+    `;
+    const params = [eventId];
+
+    if (ids) {
+      const idList = String(ids).split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
+      if (idList.length > 0) {
+        sql += ` AND c.id IN (${idList.map(() => '?').join(',')})`;
+        params.push(...idList);
+      }
+    }
+
+    sql += ` ORDER BY c.id ASC`;
+    const [certs] = await query(sql, params);
+
+    // Map strictly to the 5 specified fields
+    const records = certs.map(c => {
+      const studentName = c.recipient_name || c.reg_full_name || '—';
+      const className = [c.semester, c.department].filter(Boolean).join(' ') || '—';
+      const teamName = c.team_name || '—';
+      const regNo = c.recipient_register_number || c.reg_number || '—';
+      const certCode = c.certificate_code || '—';
+
+      return {
+        student_name: studentName,
+        class_name: className,
+        team_name: teamName,
+        register_number: regNo,
+        certificate_code: certCode
+      };
+    });
+
+    const eventSlug = sanitizeForFilename(event.code || event.title);
+
+    if (format === 'pdf') {
+      const pdfBuffer = await generateCertificateRecordsPDF({
+        eventTitle: event.title,
+        eventDate: event.start_datetime,
+        collegeName: process.env.COLLEGE_NAME || 'AL-AZHAR COLLEGE OF ENGINEERING AND TECHNOLOGY',
+        associationName: process.env.ASSOCIATION_NAME || 'INTELLIX Association',
+        records
+      });
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="${eventSlug}_Certificate_Records.pdf"`);
+      return res.send(pdfBuffer);
+    }
+
+    // Default: CSV Export
+    // Headers: Student Name,Class,Team Name,Register Number,Certificate Code
+    const csvRows = [
+      'Student Name,Class,Team Name,Register Number,Certificate Code'
+    ];
+
+    records.forEach(r => {
+      const escapeCsv = val => {
+        const str = String(val || '');
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      };
+
+      csvRows.push([
+        escapeCsv(r.student_name),
+        escapeCsv(r.class_name),
+        escapeCsv(r.team_name),
+        escapeCsv(r.register_number),
+        escapeCsv(r.certificate_code)
+      ].join(','));
+    });
+
+    const csvContent = csvRows.join('\r\n');
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${eventSlug}_Certificate_Data.csv"`);
+    return res.send(csvContent);
+  } catch (err) {
+    console.error('[ExportCertificateData Error]', err);
+    return res.status(500).json({ success: false, message: 'Export failed: ' + err.message });
   }
 }
 
@@ -453,7 +746,7 @@ async function verifyCertificate(req, res) {
   }
 
   try {
-    const cleanCode = code.trim().toUpperCase();
+    const cleanCode = decodeURIComponent(String(code)).trim();
     const [rows] = await query(
       `SELECT 
         c.certificate_code, c.certificate_type, c.title as cert_title, c.issue_date,
@@ -491,7 +784,7 @@ async function verifyCertificate(req, res) {
         issue_date: cert.issue_date,
         signatory_name: cert.signatory_name,
         signatory_designation: cert.signatory_designation,
-        download_url: `/api/certificates/download/${cert.certificate_code}`
+        download_url: `/api/certificates/download/${encodeURIComponent(cert.certificate_code)}`
       }
     });
   } catch (err) {
@@ -506,5 +799,7 @@ module.exports = {
   getCertificatesByEvent,
   deleteCertificate,
   downloadCertificate,
+  downloadCertificatesZip,
+  exportCertificateData,
   verifyCertificate
 };

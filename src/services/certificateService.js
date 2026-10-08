@@ -3,6 +3,17 @@ const fs = require('fs');
 const path = require('path');
 const { generateQRBuffer } = require('./qrService');
 
+function getSafeDiskFilename(code) {
+  return String(code || '').trim().toUpperCase().replace(/[\/\\?%*:|"<>]/g, '-');
+}
+
+function sanitizeForFilename(str) {
+  return String(str || '')
+    .trim()
+    .replace(/[\/\\?%*:|"<>]/g, '_')
+    .replace(/\s+/g, '_');
+}
+
 async function generateCertificatePDF({
   certificateCode,
   participantName,
@@ -31,7 +42,8 @@ async function generateCertificatePDF({
         fs.mkdirSync(certDir, { recursive: true });
       }
 
-      const filePath = path.join(certDir, `${certificateCode}.pdf`);
+      const safeFileCode = getSafeDiskFilename(certificateCode);
+      const filePath = path.join(certDir, `${safeFileCode}.pdf`);
       const writeStream = fs.createWriteStream(filePath);
       doc.pipe(writeStream);
 
@@ -187,7 +199,7 @@ async function generateCertificatePDF({
       writeStream.on('finish', () => {
         resolve({
           filePath,
-          relativeUrl: `/uploads/certificates/${certificateCode}.pdf`,
+          relativeUrl: `/uploads/certificates/${safeFileCode}.pdf`,
           certificateCode
         });
       });
@@ -201,6 +213,178 @@ async function generateCertificatePDF({
   });
 }
 
+/**
+ * Generates a clean, professional PDF table containing ONLY:
+ * | Student Name | Class | Team Name | Register No | Certificate Code |
+ */
+async function generateCertificateRecordsPDF({
+  eventTitle,
+  eventDate,
+  collegeName = 'AL-AZHAR COLLEGE OF ENGINEERING AND TECHNOLOGY',
+  associationName = 'INTELLIX Association',
+  records = []
+}) {
+  return new Promise((resolve, reject) => {
+    try {
+      const doc = new PDFDocument({
+        layout: 'portrait',
+        size: 'A4',
+        margin: 36,
+        bufferPages: true
+      });
+
+      const chunks = [];
+      doc.on('data', chunk => chunks.push(chunk));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', reject);
+
+      const pageWidth = doc.page.width;
+      const pageHeight = doc.page.height;
+      const margin = 36;
+      const contentWidth = pageWidth - (margin * 2);
+
+      let formattedDate = '';
+      try {
+        if (eventDate) {
+          formattedDate = new Date(eventDate).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          });
+        }
+      } catch (e) {}
+
+      // Table layout columns: Student Name (130), Class (75), Team Name (100), Register No (90), Certificate Code (125) -> Total: 520 (contentWidth is 523)
+      const cols = [
+        { key: 'student_name', label: 'Student Name', width: 130, align: 'left' },
+        { key: 'class_name', label: 'Class', width: 75, align: 'left' },
+        { key: 'team_name', label: 'Team Name', width: 95, align: 'left' },
+        { key: 'register_number', label: 'Register No', width: 95, align: 'left' },
+        { key: 'certificate_code', label: 'Certificate Code', width: 125, align: 'left' }
+      ];
+
+      function drawHeader(isFirstPage = false) {
+        let curY = margin;
+
+        if (isFirstPage) {
+          doc.font('Helvetica-Bold')
+             .fontSize(14)
+             .fillColor('#0f172a')
+             .text(collegeName.toUpperCase(), margin, curY, { width: contentWidth, align: 'center' });
+          curY += 18;
+
+          doc.font('Helvetica-Bold')
+             .fontSize(11)
+             .fillColor('#2563eb')
+             .text(associationName.toUpperCase(), margin, curY, { width: contentWidth, align: 'center' });
+          curY += 16;
+
+          doc.font('Helvetica-Bold')
+             .fontSize(12)
+             .fillColor('#1e293b')
+             .text(`CERTIFICATE ISSUANCE RECORD — ${eventTitle}`, margin, curY, { width: contentWidth, align: 'center' });
+          curY += 16;
+
+          const metaText = `Event Date: ${formattedDate || 'N/A'}  •  Total Certificates: ${records.length}  •  Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}`;
+          doc.font('Helvetica')
+             .fontSize(8.5)
+             .fillColor('#64748b')
+             .text(metaText, margin, curY, { width: contentWidth, align: 'center' });
+          curY += 18;
+
+          doc.moveTo(margin, curY).lineTo(pageWidth - margin, curY).lineWidth(1).stroke('#cbd5e1');
+          curY += 10;
+        } else {
+          doc.font('Helvetica-Bold')
+             .fontSize(9)
+             .fillColor('#64748b')
+             .text(`${eventTitle} — Certificate Issuance Record (Continued)`, margin, curY, { width: contentWidth, align: 'left' });
+          curY += 14;
+        }
+
+        // Table Header Row
+        const headerH = 22;
+        doc.rect(margin, curY, contentWidth, headerH).fill('#1e293b');
+
+        let colX = margin + 6;
+        cols.forEach(col => {
+          doc.font('Helvetica-Bold')
+             .fontSize(8.5)
+             .fillColor('#ffffff')
+             .text(col.label, colX, curY + 6, { width: col.width - 10, align: col.align });
+          colX += col.width;
+        });
+
+        curY += headerH;
+        return curY;
+      }
+
+      let y = drawHeader(true);
+      const rowHeight = 22;
+
+      records.forEach((rec, idx) => {
+        // Check if page overflow
+        if (y + rowHeight > pageHeight - margin - 25) {
+          doc.addPage();
+          y = drawHeader(false);
+        }
+
+        const isEven = idx % 2 === 0;
+        if (!isEven) {
+          doc.rect(margin, y, contentWidth, rowHeight).fill('#f8fafc');
+        }
+
+        // Row border bottom
+        doc.moveTo(margin, y + rowHeight).lineTo(pageWidth - margin, y + rowHeight).lineWidth(0.5).stroke('#e2e8f0');
+
+        let colX = margin + 6;
+        cols.forEach(col => {
+          const val = String(rec[col.key] || '—');
+          if (col.key === 'certificate_code') {
+            doc.font('Helvetica-Bold')
+               .fontSize(8)
+               .fillColor('#0284c7');
+          } else if (col.key === 'student_name') {
+            doc.font('Helvetica-Bold')
+               .fontSize(8.5)
+               .fillColor('#0f172a');
+          } else {
+            doc.font('Helvetica')
+               .fontSize(8)
+               .fillColor('#334155');
+          }
+
+          doc.text(val, colX, y + 6, { width: col.width - 10, align: col.align, lineBreak: false, ellipsis: true });
+          colX += col.width;
+        });
+
+        y += rowHeight;
+      });
+
+      // Page numbers on all pages
+      const range = doc.bufferedPageRange();
+      for (let i = range.start; i < range.start + range.count; i++) {
+        doc.switchToPage(i);
+        doc.font('Helvetica')
+           .fontSize(7.5)
+           .fillColor('#94a3b8')
+           .text(`Page ${i + 1} of ${range.count}  •  Official Record  •  INTELLIX Portal`, margin, pageHeight - margin + 8, {
+             width: contentWidth,
+             align: 'center'
+           });
+      }
+
+      doc.end();
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
 module.exports = {
-  generateCertificatePDF
+  generateCertificatePDF,
+  generateCertificateRecordsPDF,
+  getSafeDiskFilename,
+  sanitizeForFilename
 };
+

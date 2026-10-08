@@ -32,7 +32,7 @@
       background: var(--bg-card);
       border: 1px solid var(--border-color);
       border-radius: var(--radius-md);
-      max-width: 540px;
+      max-width: 580px;
       width: 100%;
       box-shadow: var(--shadow-lg);
       overflow: hidden;
@@ -110,6 +110,69 @@
       margin-top: 0.25rem;
       color: var(--text-primary);
     }
+    .preview-box {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 0.85rem 1rem;
+      font-family: monospace;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      color: var(--primary);
+      max-height: 120px;
+      overflow-y: auto;
+    }
+    .confirm-box {
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: var(--radius-sm);
+      padding: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    .confirm-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+    }
+    .confirm-item:last-child {
+      margin-bottom: 0;
+    }
+    .progress-bar-wrap {
+      width: 100%;
+      height: 12px;
+      background: var(--bg-secondary);
+      border-radius: 9999px;
+      overflow: hidden;
+      margin: 1rem 0;
+      border: 1px solid var(--border-color);
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #38bdf8, #818cf8);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+    .selection-bar {
+      position: sticky;
+      bottom: 1rem;
+      z-index: 100;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5);
+      padding: 0.75rem 1.25rem;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+      animation: modalSlideUp 0.2s ease-out;
+    }
+    .selection-bar.active {
+      display: flex;
+    }
   </style>
 </head>
 <body>
@@ -120,9 +183,15 @@
       <header class="dashboard-topbar">
         <div>
           <h3 style="font-size: 1.15rem; margin-bottom: 0.15rem;">Digital Certificate Issuance</h3>
-          <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0;">Issue individual certificates with custom codes, bulk generate, or delete records.</p>
+          <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0;">Issue individual certificates with custom sequential codes, bulk generate, ZIP package, or export records.</p>
         </div>
-        <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+          <button class="btn btn-outline btn-sm" id="open-export-modal-btn">
+            📊 Export Certificate Data
+          </button>
+          <button class="btn btn-outline btn-sm" id="download-all-zip-btn" title="Download all issued certificate PDFs as ZIP">
+            📦 Download ZIP
+          </button>
           <button class="btn btn-primary btn-sm" id="open-bulk-modal-btn">
             ⚡ Bulk Generate Certificates
           </button>
@@ -138,8 +207,8 @@
                 <label class="form-label" style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">Select Event for Certification</label>
                 <select id="event-select" class="form-select"></select>
               </div>
-              <div style="font-size: 0.85rem; color: var(--text-muted); max-width: 380px;">
-                💡 Individual certificates can be issued for <strong>all team members</strong>. You can enter your own <strong>custom certificate codes</strong> or auto-generate them.
+              <div style="font-size: 0.85rem; color: var(--text-muted); max-width: 420px;">
+                💡 Individual certificates can be issued for <strong>all team members</strong>. You can enter your own <strong>custom certificate prefix</strong> or auto-generate sequential codes.
               </div>
             </div>
           </div>
@@ -189,6 +258,9 @@
               <table class="table" id="cert-table">
                 <thead>
                   <tr>
+                    <th style="width: 40px; text-align: center;">
+                      <input type="checkbox" id="select-all-check" style="cursor: pointer;">
+                    </th>
                     <th>Participant Name</th>
                     <th>Role / Team</th>
                     <th>Register Number</th>
@@ -199,14 +271,275 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr><td colspan="7" style="text-align: center; padding: 2.5rem;"><span class="spinner"></span></td></tr>
+                  <tr><td colspan="8" style="text-align: center; padding: 2.5rem;"><span class="spinner"></span></td></tr>
                 </tbody>
               </table>
             </div>
           </div>
         </div>
+
+        <!-- Floating Selection Bar -->
+        <div class="selection-bar" id="selection-bar">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <span class="badge badge-primary" id="selected-count-badge" style="font-size: 0.85rem; padding: 0.35rem 0.7rem;">0 Selected</span>
+            <span style="font-size: 0.85rem; color: var(--text-secondary);">Selected participants</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+            <button class="btn btn-primary btn-sm" id="selection-bulk-btn">
+              ⚡ Generate for Selected
+            </button>
+            <button class="btn btn-outline btn-sm" id="selection-export-csv-btn">
+              📥 Export CSV
+            </button>
+            <button class="btn btn-outline btn-sm" id="selection-export-pdf-btn">
+              📄 Export PDF
+            </button>
+            <button class="btn btn-outline btn-sm" id="selection-download-zip-btn">
+              📦 Download ZIP
+            </button>
+            <button class="btn btn-sm btn-outline" id="selection-clear-btn" style="color: var(--text-muted);">
+              ✕ Clear
+            </button>
+          </div>
+        </div>
       </div>
     </main>
+  </div>
+
+  <!-- Modal: Bulk Certificate Generation System -->
+  <div class="modal-backdrop" id="bulk-modal">
+    <div class="modal-dialog" style="max-width: 580px;">
+      <!-- State 1: Configuration Form -->
+      <div id="bulk-step-config">
+        <div class="modal-header">
+          <h3 style="font-size: 1.15rem; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+            ⚡ Bulk Certificate Generation
+          </h3>
+          <button type="button" class="btn btn-sm btn-outline" onclick="closeBulkModal()" style="padding: 0.2rem 0.6rem;">&times;</button>
+        </div>
+        <form id="bulk-cert-form">
+          <div class="modal-body">
+            <div class="form-group" style="margin-bottom: 1rem;">
+              <label class="form-label" style="font-size: 0.8rem; text-transform: uppercase;">Event</label>
+              <input type="text" id="bulk-event-title-display" class="form-control" readonly style="background: var(--bg-secondary); color: var(--text-secondary); font-weight: 600;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1rem;">
+              <label class="form-label">Certificate Code Prefix / Model *</label>
+              <input type="text" id="bulk-code-prefix" class="form-control" placeholder="e.g. AACET/INTELLIX/AUR" required style="font-family: monospace; font-weight: 700; text-transform: uppercase;">
+              <small style="color: var(--text-muted); font-size: 0.75rem;">
+                The system will automatically append unique sequential certificate numbers (e.g. /001, /002, ...).
+              </small>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">Starting Certificate Number</label>
+                <input type="text" id="bulk-start-num" class="form-control" value="001" placeholder="001" style="font-family: monospace; font-weight: 700;">
+                <small style="color: var(--text-muted); font-size: 0.72rem;">Default: 001. Enter 101 to start at 101.</small>
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">Certificate Type</label>
+                <select id="bulk-cert-type" class="form-select">
+                  <option value="participation">Participation</option>
+                  <option value="winner">Winner (1st Place)</option>
+                  <option value="runner_up">Runner-Up (2nd Place)</option>
+                  <option value="merit">Merit / Excellence</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1rem;">
+              <label class="form-label">Target Participants</label>
+              <select id="bulk-target-scope" class="form-select">
+                <option value="all_pending">All Pending Participants without Certificate</option>
+                <option value="selected">Selected Participants Only (from table checkboxes)</option>
+              </select>
+              <div id="bulk-scope-count-note" style="font-size: 0.78rem; color: #38bdf8; margin-top: 0.35rem;"></div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1.25rem;">
+              <label class="form-label">Certificate Title Override (Optional)</label>
+              <input type="text" id="bulk-cert-title" class="form-control" placeholder="Leave empty to use event default">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                <label class="form-label" style="margin-bottom: 0; font-size: 0.8rem; text-transform: uppercase;">Example Preview</label>
+                <span style="font-size: 0.72rem; color: var(--text-muted);">Auto Sequential Codes</span>
+              </div>
+              <div class="preview-box" id="bulk-preview-box">
+                AACET/INTELLIX/AUR/001<br>
+                AACET/INTELLIX/AUR/002<br>
+                AACET/INTELLIX/AUR/003<br>
+                ...
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline btn-sm" onclick="closeBulkModal()">Cancel</button>
+            <button type="button" class="btn btn-primary btn-sm" id="to-bulk-confirm-btn">Generate Bulk Certificates &rarr;</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- State 2: Confirmation Dialog -->
+      <div id="bulk-step-confirm" style="display: none;">
+        <div class="modal-header">
+          <h3 style="font-size: 1.15rem; margin: 0;">Confirm Bulk Generation</h3>
+          <button type="button" class="btn btn-sm btn-outline" onclick="closeBulkModal()" style="padding: 0.2rem 0.6rem;">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p style="font-size: 0.95rem; color: var(--text-primary); margin-bottom: 1rem;">
+            You are about to generate <strong id="confirm-count-val">50</strong> certificates.
+          </p>
+
+          <div class="confirm-box">
+            <div class="confirm-item">
+              <span style="color: var(--text-muted);">Code Prefix:</span>
+              <strong style="font-family: monospace; color: #38bdf8;" id="confirm-prefix-val">AACET/INTELLIX/AUR</strong>
+            </div>
+            <div class="confirm-item">
+              <span style="color: var(--text-muted);">Number Range:</span>
+              <strong style="font-family: monospace;" id="confirm-range-val">001 - 050</strong>
+            </div>
+            <div class="confirm-item">
+              <span style="color: var(--text-muted);">Certificate Type:</span>
+              <span id="confirm-type-val" style="text-transform: capitalize;">Participation</span>
+            </div>
+            <div class="confirm-item">
+              <span style="color: var(--text-muted);">Target Count:</span>
+              <span id="confirm-target-val">50 Participants</span>
+            </div>
+          </div>
+
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0;">
+            Duplicate codes will be automatically detected and skipped. Generated certificates will be saved to the database and made available for instant download.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline btn-sm" id="bulk-confirm-back-btn">&larr; Back</button>
+          <button type="button" class="btn btn-primary btn-sm" id="bulk-confirm-execute-btn">Continue & Generate &rarr;</button>
+        </div>
+      </div>
+
+      <!-- State 3: Progress State -->
+      <div id="bulk-step-progress" style="display: none;">
+        <div class="modal-header">
+          <h3 style="font-size: 1.15rem; margin: 0;">Generating Certificates...</h3>
+        </div>
+        <div class="modal-body" style="text-align: center; padding: 2.5rem 1.5rem;">
+          <div style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem;" id="progress-status-text">
+            Compiling High-Resolution PDFs & QR Codes...
+          </div>
+          <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem;" id="progress-count-text">
+            0 / 50
+          </div>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-fill" id="progress-bar-fill"></div>
+          </div>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">
+            Please keep this window open while certificates are safely generated and registered.
+          </p>
+        </div>
+      </div>
+
+      <!-- State 4: Success View -->
+      <div id="bulk-step-success" style="display: none;">
+        <div class="modal-header">
+          <h3 style="font-size: 1.15rem; color: #22c55e; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+            ✓ Certificates Generated Successfully
+          </h3>
+          <button type="button" class="btn btn-sm btn-outline" onclick="closeBulkModal()" style="padding: 0.2rem 0.6rem;">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div style="text-align: center; margin-bottom: 1.5rem;">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🎉</div>
+            <h4 style="font-size: 1.25rem; font-weight: 800; color: #22c55e; margin-bottom: 0.35rem;" id="success-message-text">
+              50 Certificates Generated Successfully
+            </h4>
+            <p style="font-size: 0.85rem; color: var(--text-secondary);" id="success-sub-text">
+              All participant records and PDFs have been permanently created.
+            </p>
+          </div>
+
+          <div class="confirm-box" style="margin-bottom: 1.5rem;">
+            <div class="confirm-item">
+              <span style="color: var(--text-muted);">Code Range:</span>
+              <strong style="font-family: monospace; color: #38bdf8;" id="success-code-range">AACET/INTELLIX/AUR/001 — AACET/INTELLIX/AUR/050</strong>
+            </div>
+            <div class="confirm-item">
+              <span style="color: var(--text-muted);">Total Created:</span>
+              <strong id="success-total-created">50</strong>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.6rem;">
+            <button type="button" class="btn btn-outline btn-sm" id="success-zip-btn" style="justify-content: center;">
+              📦 Download ZIP
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" id="success-csv-btn" style="justify-content: center;">
+              📥 Download CSV
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" id="success-pdf-btn" style="justify-content: center;">
+              📄 Download PDF
+            </button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary btn-sm" onclick="closeBulkModal()">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Export Participant Certificate Data -->
+  <div class="modal-backdrop" id="export-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 style="font-size: 1.15rem; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+          📊 Export Certificate Data
+        </h3>
+        <button type="button" class="btn btn-sm btn-outline" onclick="closeExportModal()" style="padding: 0.2rem 0.6rem;">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1rem;">
+          Export cleanly formatted certificate records. Only the official 5 fields will be included:
+        </p>
+
+        <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.75rem 1rem; margin-bottom: 1.25rem;">
+          <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.4rem;">Included Fields:</div>
+          <div style="font-size: 0.85rem; color: var(--text-primary); line-height: 1.6;">
+            • Student Name &nbsp;•&nbsp; Class &nbsp;•&nbsp; Team Name &nbsp;•&nbsp; Register Number &nbsp;•&nbsp; Certificate Code
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label class="form-label">Select Export Scope</label>
+          <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;">
+            <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; cursor: pointer;">
+              <input type="radio" name="export-scope" value="all" checked id="export-scope-all">
+              <span>Export All Generated Certificates for this Event (<strong id="export-all-count">0</strong>)</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; cursor: pointer;">
+              <input type="radio" name="export-scope" value="selected" id="export-scope-selected">
+              <span>Export Selected Certificates Only (<strong id="export-selected-count">0</strong>)</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content: space-between;">
+        <button type="button" class="btn btn-outline btn-sm" onclick="closeExportModal()">Cancel</button>
+        <div style="display: flex; gap: 0.5rem;">
+          <button type="button" class="btn btn-primary btn-sm" id="export-csv-btn">
+            📥 Download CSV
+          </button>
+          <button type="button" class="btn btn-primary btn-sm" id="export-pdf-btn">
+            📄 Download PDF
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Modal: Generate / Edit Single Certificate -->
@@ -228,7 +561,7 @@
 
           <div class="form-group" style="margin-bottom: 1rem;">
             <label class="form-label">Register / Roll Number</label>
-            <input type="text" id="modal-recipient-reg" name="recipient_register_number" class="form-control" placeholder="e.g. 921721106001">
+            <input type="text" id="modal-recipient-reg" name="recipient_register_number" class="form-control" placeholder="e.g. 24AIML001">
           </div>
 
           <div class="form-group" style="margin-bottom: 1rem;">
@@ -236,8 +569,8 @@
               <label class="form-label" style="margin-bottom: 0;">Certificate Code / ID</label>
               <button type="button" class="btn btn-sm btn-outline" id="suggest-code-btn" style="font-size: 0.72rem; padding: 0.15rem 0.5rem;">✨ Suggest Auto Code</button>
             </div>
-            <input type="text" id="modal-cert-code" name="certificate_code" class="form-control" placeholder="Enter your custom code or leave blank to auto-generate" style="font-family: monospace; font-weight: 600; text-transform: uppercase;">
-            <small style="color: var(--text-muted); font-size: 0.75rem;">Enter your custom code (e.g. INTELLIX-CERT-001) or click suggest.</small>
+            <input type="text" id="modal-cert-code" name="certificate_code" class="form-control" placeholder="Enter custom code or leave blank to auto-generate" style="font-family: monospace; font-weight: 600; text-transform: uppercase;">
+            <small style="color: var(--text-muted); font-size: 0.75rem;">Enter your custom code (e.g. AACET/INTELLIX/AUR/001) or click suggest.</small>
           </div>
 
           <div class="form-group" style="margin-bottom: 1rem;">
@@ -258,48 +591,6 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-outline btn-sm" onclick="closeCertModal()">Cancel</button>
           <button type="submit" class="btn btn-primary btn-sm" id="save-cert-btn">Issue Certificate &rarr;</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Modal: Bulk Generate -->
-  <div class="modal-backdrop" id="bulk-modal">
-    <div class="modal-dialog">
-      <div class="modal-header">
-        <h3 style="font-size: 1.1rem; margin: 0;">⚡ Bulk Generate Certificates</h3>
-        <button type="button" class="btn btn-sm btn-outline" onclick="closeBulkModal()" style="padding: 0.2rem 0.6rem;">&times;</button>
-      </div>
-      <form id="bulk-cert-form">
-        <div class="modal-body">
-          <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1.25rem;">
-            This will generate individual certificates for <strong>all present participants and team members</strong> who do not have one yet.
-          </p>
-
-          <div class="form-group" style="margin-bottom: 1rem;">
-            <label class="form-label">Custom Code Prefix (Optional)</label>
-            <input type="text" id="bulk-code-prefix" class="form-control" placeholder="e.g. INTELLIX-CH26-2026-" style="font-family: monospace;">
-            <small style="color: var(--text-muted); font-size: 0.75rem;">If provided, codes will be formatted as PREFIX-0001, PREFIX-0002, etc. If blank, standard auto code is used.</small>
-          </div>
-
-          <div class="form-group" style="margin-bottom: 1rem;">
-            <label class="form-label">Certificate Type</label>
-            <select id="bulk-cert-type" class="form-select">
-              <option value="participation">Participation</option>
-              <option value="merit">Merit</option>
-              <option value="winner">Winner</option>
-              <option value="runner_up">Runner-Up</option>
-            </select>
-          </div>
-
-          <div class="form-group" style="margin-bottom: 0.5rem;">
-            <label class="form-label">Certificate Title Override (Optional)</label>
-            <input type="text" id="bulk-cert-title" class="form-control" placeholder="Leave empty to use event default">
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline btn-sm" onclick="closeBulkModal()">Cancel</button>
-          <button type="submit" class="btn btn-primary btn-sm" id="start-bulk-btn">Generate for All Present &rarr;</button>
         </div>
       </form>
     </div>
@@ -339,6 +630,7 @@
     let flatParticipants = [];
     let currentFilter = 'all';
     let certToDelete = null;
+    let selectedKeys = new Set(); // set of "regId_memberIndex"
 
     async function initPage() {
       try {
@@ -359,12 +651,14 @@
           select.addEventListener('change', () => {
             currentEventId = select.value;
             currentEvent = res.events.find(e => String(e.id) === String(currentEventId));
+            selectedKeys.clear();
+            updateSelectionBar();
             loadData();
           });
 
           loadData();
         } else {
-          document.querySelector('#cert-table tbody').innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">No events found in database.</td></tr>`;
+          document.querySelector('#cert-table tbody').innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">No events found in database.</td></tr>`;
         }
       } catch (e) {
         console.error(e);
@@ -374,7 +668,7 @@
     async function loadData() {
       if (!currentEventId) return;
       const tbody = document.querySelector('#cert-table tbody');
-      tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 2.5rem;"><span class="spinner"></span></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 2.5rem;"><span class="spinner"></span></td></tr>`;
 
       try {
         const [regRes, certRes] = await Promise.all([
@@ -385,7 +679,7 @@
         const registrations = (regRes.success && regRes.registrations) || [];
         const certificates = (certRes.success && certRes.certificates) || [];
 
-        // Build a map of certificates by registration_id + member_index or recipient_name
+        // Build map of certificates
         const certMap = {};
         certificates.forEach(c => {
           certMap[`${c.registration_id}_idx_${c.member_index || 0}`] = c;
@@ -394,14 +688,15 @@
           }
         });
 
-        // Flatten all registrations into individual participant items
+        // Flatten registrations
         flatParticipants = [];
         registrations.forEach(reg => {
           const isTeam = !!(reg.team_name || reg.team_members);
 
-          // 1. Team Leader / Individual Participant
+          // 1. Leader / Individual
           const leaderCert = certMap[`${reg.id}_idx_0`] || certMap[`${reg.id}_name_${reg.full_name.trim().toLowerCase()}`] || null;
           flatParticipants.push({
+            key: `${reg.id}_0`,
             registration_id: reg.id,
             registration_code: reg.registration_code,
             full_name: reg.full_name,
@@ -437,6 +732,7 @@
               const memberCert = certMap[`${reg.id}_idx_${memberIdx}`] || certMap[`${reg.id}_name_${mName.toLowerCase()}`] || null;
 
               flatParticipants.push({
+                key: `${reg.id}_${memberIdx}`,
                 registration_id: reg.id,
                 registration_code: reg.registration_code,
                 full_name: mName,
@@ -455,8 +751,9 @@
 
         updateStats();
         renderTable();
+        updateSelectionBar();
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #ef4444; padding: 2.5rem;">Failed to load records: ${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #ef4444; padding: 2.5rem;">Failed to load records: ${err.message}</td></tr>`;
       }
     }
 
@@ -470,19 +767,20 @@
       document.getElementById('stat-certs-issued').innerText = issued;
       document.getElementById('stat-certs-pending').innerText = pending;
       document.getElementById('stat-present-count').innerText = present;
+
+      // Update export counts
+      document.getElementById('export-all-count').innerText = issued;
+      const selectedIssued = flatParticipants.filter(p => selectedKeys.has(p.key) && !!p.certificate).length;
+      document.getElementById('export-selected-count').innerText = selectedIssued;
     }
 
-    function renderTable() {
-      const tbody = document.querySelector('#cert-table tbody');
+    function getFilteredParticipants() {
       const query = (document.getElementById('cert-search').value || '').toLowerCase().trim();
-
-      const filtered = flatParticipants.filter(p => {
-        // Status filter
+      return flatParticipants.filter(p => {
         if (currentFilter === 'issued' && !p.certificate) return false;
         if (currentFilter === 'pending' && !!p.certificate) return false;
         if (currentFilter === 'present' && p.attendance_status !== 'present') return false;
 
-        // Search query
         if (query) {
           const nameMatch = p.full_name.toLowerCase().includes(query);
           const regMatch = String(p.register_number).toLowerCase().includes(query);
@@ -493,16 +791,26 @@
         }
         return true;
       });
+    }
+
+    function renderTable() {
+      const tbody = document.querySelector('#cert-table tbody');
+      const filtered = getFilteredParticipants();
 
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">No participants matching filter criteria.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">No participants matching filter criteria.</td></tr>`;
+        document.getElementById('select-all-check').checked = false;
         return;
       }
 
-      tbody.innerHTML = filtered.map((p, idx) => {
+      const allSelected = filtered.every(p => selectedKeys.has(p.key));
+      document.getElementById('select-all-check').checked = allSelected && filtered.length > 0;
+
+      tbody.innerHTML = filtered.map(p => {
         const cert = p.certificate;
         const hasCert = !!cert;
         const isPresent = p.attendance_status === 'present';
+        const isChecked = selectedKeys.has(p.key);
 
         let roleBadge = '';
         if (p.role === 'Team Leader') {
@@ -516,10 +824,13 @@
         const teamInfo = p.team_name ? `<div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">Team: <strong>${escapeHtml(p.team_name)}</strong></div>` : '';
 
         return `
-          <tr>
+          <tr class="${isChecked ? 'row-selected' : ''}">
+            <td style="text-align: center;">
+              <input type="checkbox" class="row-checkbox" data-key="${p.key}" ${isChecked ? 'checked' : ''} style="cursor: pointer;">
+            </td>
             <td>
               <div style="font-weight: 700; font-size: 0.92rem;">${escapeHtml(p.full_name)}</div>
-              <div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(p.department || '')}</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(p.semester || '')} ${escapeHtml(p.department || '')}</div>
             </td>
             <td>
               ${roleBadge}
@@ -536,14 +847,14 @@
             <td>
               ${hasCert ? `
                 <span class="badge badge-success" style="font-size: 0.75rem;">✓ Issued</span>
-                <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">${cert.certificate_type || 'Participation'}</div>
+                <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; text-transform: capitalize;">${escapeHtml(cert.certificate_type || 'Participation')}</div>
               ` : `
                 <span class="badge" style="font-size: 0.75rem; background: var(--bg-secondary); color: var(--text-muted);">Not Generated</span>
               `}
             </td>
             <td>
               ${hasCert ? `
-                <code style="font-weight: 700; color: #38bdf8; font-size: 0.85rem;">${cert.certificate_code}</code>
+                <code style="font-weight: 700; color: #38bdf8; font-size: 0.85rem;">${escapeHtml(cert.certificate_code)}</code>
               ` : `
                 <span style="color: var(--text-muted); font-size: 0.8rem;">—</span>
               `}
@@ -551,7 +862,7 @@
             <td style="text-align: right;">
               <div style="display: inline-flex; gap: 0.4rem; justify-content: flex-end; flex-wrap: wrap;">
                 ${hasCert ? `
-                  <a href="/api/certificates/download/${cert.certificate_code}" target="_blank" class="btn btn-sm btn-outline" style="font-size: 0.75rem; padding: 0.25rem 0.55rem;" title="Download PDF">
+                  <a href="/api/certificates/download/${encodeURIComponent(cert.certificate_code)}" target="_blank" class="btn btn-sm btn-outline" style="font-size: 0.75rem; padding: 0.25rem 0.55rem;" title="Download PDF">
                     📥 Download
                   </a>
                   <button type="button" class="btn btn-sm btn-secondary" style="font-size: 0.75rem; padding: 0.25rem 0.55rem;" onclick="openEditCertModal(${p.registration_id}, ${p.member_index}, '${escapeHtml(p.full_name)}', '${escapeHtml(p.register_number)}', '${escapeHtml(cert.certificate_code)}', '${escapeHtml(cert.certificate_type)}', '${escapeHtml(cert.title || '')}')" title="Edit / Regenerate">
@@ -570,9 +881,378 @@
           </tr>
         `;
       }).join('');
+
+      // Bind row checkbox events
+      document.querySelectorAll('.row-checkbox').forEach(cb => {
+        cb.addEventListener('change', (e) => {
+          const key = e.target.dataset.key;
+          if (e.target.checked) {
+            selectedKeys.add(key);
+          } else {
+            selectedKeys.delete(key);
+          }
+          updateSelectionBar();
+          const filtered = getFilteredParticipants();
+          document.getElementById('select-all-check').checked = filtered.every(p => selectedKeys.has(p.key));
+        });
+      });
     }
 
-    // Modal Handlers
+    function updateSelectionBar() {
+      const bar = document.getElementById('selection-bar');
+      const count = selectedKeys.size;
+      document.getElementById('selected-count-badge').innerText = `${count} Selected`;
+
+      if (count > 0) {
+        bar.classList.add('active');
+      } else {
+        bar.classList.remove('active');
+      }
+
+      // Update export modal count
+      const selectedIssued = flatParticipants.filter(p => selectedKeys.has(p.key) && !!p.certificate).length;
+      document.getElementById('export-selected-count').innerText = selectedIssued;
+    }
+
+    // Master Select All Checkbox
+    document.getElementById('select-all-check').addEventListener('change', (e) => {
+      const checked = e.target.checked;
+      const filtered = getFilteredParticipants();
+      filtered.forEach(p => {
+        if (checked) selectedKeys.add(p.key);
+        else selectedKeys.delete(p.key);
+      });
+      renderTable();
+      updateSelectionBar();
+    });
+
+    document.getElementById('selection-clear-btn').addEventListener('click', () => {
+      selectedKeys.clear();
+      renderTable();
+      updateSelectionBar();
+    });
+
+    // =========================================================================
+    // BULK CERTIFICATE GENERATION SYSTEM
+    // =========================================================================
+    function formatCodePreview(prefix, startNum, count = 3) {
+      let cleanPrefix = (prefix || 'AACET/INTELLIX/AUR').trim().toUpperCase();
+      let start = parseInt(startNum, 10) || 1;
+      const lines = [];
+
+      for (let i = 0; i < Math.min(count, 4); i++) {
+        const num = start + i;
+        const numStr = String(num).padStart(3, '0');
+        let code = '';
+        if (cleanPrefix.endsWith('/') || cleanPrefix.endsWith('-') || cleanPrefix.endsWith('_')) {
+          code = `${cleanPrefix}${numStr}`;
+        } else {
+          const sep = cleanPrefix.includes('/') ? '/' : (cleanPrefix.includes('-') ? '-' : '/');
+          code = `${cleanPrefix}${sep}${numStr}`;
+        }
+        lines.push(code);
+      }
+      lines.push('...');
+      return lines.join('\n');
+    }
+
+    function updateBulkPreview() {
+      const prefix = document.getElementById('bulk-code-prefix').value;
+      const startNum = document.getElementById('bulk-start-num').value;
+      const previewBox = document.getElementById('bulk-preview-box');
+      previewBox.innerText = formatCodePreview(prefix, startNum);
+    }
+
+    function getBulkEligibleCount(scope) {
+      if (scope === 'selected') {
+        return flatParticipants.filter(p => selectedKeys.has(p.key) && !p.certificate).length;
+      }
+      // default: all ungenerated participants
+      return flatParticipants.filter(p => !p.certificate).length;
+    }
+
+    function updateBulkScopeNote() {
+      const scope = document.getElementById('bulk-target-scope').value;
+      const count = getBulkEligibleCount(scope);
+      const note = document.getElementById('bulk-scope-count-note');
+
+      if (scope === 'selected') {
+        note.innerText = `👉 ${count} uncertified participant(s) currently selected.`;
+      } else {
+        note.innerText = `👉 ${count} uncertified participant(s) will receive new certificates.`;
+      }
+    }
+
+    document.getElementById('open-bulk-modal-btn').addEventListener('click', () => {
+      openBulkGenerationModal();
+    });
+
+    document.getElementById('selection-bulk-btn').addEventListener('click', () => {
+      openBulkGenerationModal(true);
+    });
+
+    function openBulkGenerationModal(forceSelected = false) {
+      if (!currentEvent) {
+        showToast('Please select an event first.', 'error');
+        return;
+      }
+
+      // Reset steps
+      document.getElementById('bulk-step-config').style.display = 'block';
+      document.getElementById('bulk-step-confirm').style.display = 'none';
+      document.getElementById('bulk-step-progress').style.display = 'none';
+      document.getElementById('bulk-step-success').style.display = 'none';
+
+      document.getElementById('bulk-event-title-display').value = `${currentEvent.code}: ${currentEvent.title}`;
+
+      // Default prefix: AACET/INTELLIX/EVENTCODE
+      const eventCode = (currentEvent.code || 'AUR').toUpperCase();
+      const defaultPrefix = `AACET/INTELLIX/${eventCode}`;
+      const prefixInput = document.getElementById('bulk-code-prefix');
+      if (!prefixInput.value || prefixInput.value.startsWith('AACET/INTELLIX/')) {
+        prefixInput.value = defaultPrefix;
+      }
+
+      document.getElementById('bulk-start-num').value = '001';
+      document.getElementById('bulk-cert-title').value = currentEvent.cert_title || 'Certificate of Participation';
+
+      const scopeSelect = document.getElementById('bulk-target-scope');
+      if (forceSelected || selectedKeys.size > 0) {
+        scopeSelect.value = 'selected';
+      } else {
+        scopeSelect.value = 'all_pending';
+      }
+
+      updateBulkScopeNote();
+      updateBulkPreview();
+
+      document.getElementById('bulk-modal').classList.add('open');
+    }
+
+    function closeBulkModal() {
+      document.getElementById('bulk-modal').classList.remove('open');
+    }
+
+    document.getElementById('bulk-code-prefix').addEventListener('input', updateBulkPreview);
+    document.getElementById('bulk-start-num').addEventListener('input', updateBulkPreview);
+    document.getElementById('bulk-target-scope').addEventListener('change', updateBulkScopeNote);
+
+    // Step 1 -> Step 2: Confirm Screen
+    document.getElementById('to-bulk-confirm-btn').addEventListener('click', () => {
+      const prefix = document.getElementById('bulk-code-prefix').value.trim().toUpperCase();
+      if (!prefix) {
+        showToast('Please enter a Certificate Code Prefix.', 'error');
+        document.getElementById('bulk-code-prefix').focus();
+        return;
+      }
+
+      const scope = document.getElementById('bulk-target-scope').value;
+      const count = getBulkEligibleCount(scope);
+      if (count === 0) {
+        showToast('No pending participants found for the selected scope.', 'error');
+        return;
+      }
+
+      const startNum = parseInt(document.getElementById('bulk-start-num').value, 10) || 1;
+      const endNum = startNum + count - 1;
+
+      const startPad = String(startNum).padStart(3, '0');
+      const endPad = String(endNum).padStart(3, '0');
+
+      document.getElementById('confirm-count-val').innerText = count;
+      document.getElementById('confirm-prefix-val').innerText = prefix;
+      document.getElementById('confirm-range-val').innerText = `${startPad} — ${endPad}`;
+      document.getElementById('confirm-type-val').innerText = document.getElementById('bulk-cert-type').value;
+      document.getElementById('confirm-target-val').innerText = `${count} Participant(s)`;
+
+      document.getElementById('bulk-step-config').style.display = 'none';
+      document.getElementById('bulk-step-confirm').style.display = 'block';
+    });
+
+    document.getElementById('bulk-confirm-back-btn').addEventListener('click', () => {
+      document.getElementById('bulk-step-confirm').style.display = 'none';
+      document.getElementById('bulk-step-config').style.display = 'block';
+    });
+
+    // Step 2 -> Step 3 & 4: Execute Generation
+    document.getElementById('bulk-confirm-execute-btn').addEventListener('click', async () => {
+      if (!currentEventId) return;
+
+      document.getElementById('bulk-step-confirm').style.display = 'none';
+      document.getElementById('bulk-step-progress').style.display = 'block';
+
+      const scope = document.getElementById('bulk-target-scope').value;
+      const prefix = document.getElementById('bulk-code-prefix').value.trim().toUpperCase();
+      const startNum = parseInt(document.getElementById('bulk-start-num').value, 10) || 1;
+      const certType = document.getElementById('bulk-cert-type').value;
+      const customTitle = document.getElementById('bulk-cert-title').value.trim();
+
+      let selectedParticipants = null;
+      if (scope === 'selected') {
+        selectedParticipants = Array.from(selectedKeys).map(k => {
+          const parts = k.split('_');
+          return { registration_id: parseInt(parts[0], 10), member_index: parseInt(parts[1], 10) };
+        });
+      }
+
+      // Simulate smooth progress bar while request executes
+      let progress = 10;
+      const progressBar = document.getElementById('progress-bar-fill');
+      const progressText = document.getElementById('progress-count-text');
+      progressBar.style.width = '10%';
+
+      const progressInterval = setInterval(() => {
+        if (progress < 90) {
+          progress += Math.floor(Math.random() * 15) + 5;
+          if (progress > 90) progress = 90;
+          progressBar.style.width = `${progress}%`;
+        }
+      }, 300);
+
+      try {
+        const res = await fetchJson(`/api/events/${currentEventId}/certificates/bulk-generate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code_prefix: prefix,
+            starting_number: startNum,
+            certificate_type: certType,
+            custom_title: customTitle || undefined,
+            selected_participants: selectedParticipants
+          })
+        });
+
+        clearInterval(progressInterval);
+        progressBar.style.width = '100%';
+
+        if (res.success) {
+          setTimeout(() => {
+            document.getElementById('bulk-step-progress').style.display = 'none';
+            document.getElementById('bulk-step-success').style.display = 'block';
+
+            document.getElementById('success-message-text').innerText = `${res.generated_count} Certificates Generated Successfully`;
+            document.getElementById('success-total-created').innerText = res.generated_count;
+            document.getElementById('success-code-range').innerText = res.start_code ? `${res.start_code} — ${res.end_code}` : prefix;
+
+            selectedKeys.clear();
+            loadData();
+          }, 400);
+        } else {
+          showToast(res.message || 'Generation failed', 'error');
+          document.getElementById('bulk-step-progress').style.display = 'none';
+          document.getElementById('bulk-step-config').style.display = 'block';
+        }
+      } catch (err) {
+        clearInterval(progressInterval);
+        showToast(err.message, 'error');
+        document.getElementById('bulk-step-progress').style.display = 'none';
+        document.getElementById('bulk-step-config').style.display = 'block';
+      }
+    });
+
+    // Success Screen Action Buttons
+    document.getElementById('success-zip-btn').addEventListener('click', () => {
+      window.location.href = `/api/events/${currentEventId}/certificates/download-zip`;
+    });
+    document.getElementById('success-csv-btn').addEventListener('click', () => {
+      window.location.href = `/api/events/${currentEventId}/certificates/export?format=csv`;
+    });
+    document.getElementById('success-pdf-btn').addEventListener('click', () => {
+      window.open(`/api/events/${currentEventId}/certificates/export?format=pdf`, '_blank');
+    });
+
+    // =========================================================================
+    // EXPORT PARTICIPANT CERTIFICATE DATA (5 Fields Only)
+    // =========================================================================
+    document.getElementById('open-export-modal-btn').addEventListener('click', () => {
+      openExportModal();
+    });
+
+    document.getElementById('selection-export-csv-btn').addEventListener('click', () => {
+      downloadExport('csv', true);
+    });
+
+    document.getElementById('selection-export-pdf-btn').addEventListener('click', () => {
+      downloadExport('pdf', true);
+    });
+
+    document.getElementById('selection-download-zip-btn').addEventListener('click', () => {
+      downloadZip(true);
+    });
+
+    document.getElementById('download-all-zip-btn').addEventListener('click', () => {
+      downloadZip(false);
+    });
+
+    function openExportModal() {
+      updateStats();
+      if (selectedKeys.size > 0) {
+        document.getElementById('export-scope-selected').checked = true;
+      } else {
+        document.getElementById('export-scope-all').checked = true;
+      }
+      document.getElementById('export-modal').classList.add('open');
+    }
+
+    function closeExportModal() {
+      document.getElementById('export-modal').classList.remove('open');
+    }
+
+    function getSelectedCertIds() {
+      const ids = [];
+      flatParticipants.forEach(p => {
+        if (selectedKeys.has(p.key) && p.certificate && p.certificate.id) {
+          ids.push(p.certificate.id);
+        }
+      });
+      return ids;
+    }
+
+    function downloadExport(format, forceSelected = false) {
+      if (!currentEventId) return;
+
+      const isSelected = forceSelected || (document.getElementById('export-scope-selected') && document.getElementById('export-scope-selected').checked);
+      let url = `/api/events/${currentEventId}/certificates/export?format=${format}`;
+
+      if (isSelected) {
+        const certIds = getSelectedCertIds();
+        if (certIds.length === 0) {
+          showToast('None of the selected participants have certificates issued yet.', 'error');
+          return;
+        }
+        url += `&ids=${certIds.join(',')}`;
+      }
+
+      if (format === 'pdf') {
+        window.open(url, '_blank');
+      } else {
+        window.location.href = url;
+      }
+      closeExportModal();
+    }
+
+    function downloadZip(onlySelected = false) {
+      if (!currentEventId) return;
+      let url = `/api/events/${currentEventId}/certificates/download-zip`;
+
+      if (onlySelected) {
+        const certIds = getSelectedCertIds();
+        if (certIds.length === 0) {
+          showToast('None of the selected participants have certificates issued yet.', 'error');
+          return;
+        }
+        url += `?ids=${certIds.join(',')}`;
+      }
+
+      window.location.href = url;
+    }
+
+    document.getElementById('export-csv-btn').addEventListener('click', () => downloadExport('csv'));
+    document.getElementById('export-pdf-btn').addEventListener('click', () => downloadExport('pdf'));
+
+    // =========================================================================
+    // SINGLE CERTIFICATE ISSUANCE & EDITING
+    // =========================================================================
     function openGenerateModal(regId, memberIndex, name, regNo) {
       document.getElementById('cert-modal-heading').innerText = 'Issue Individual Certificate';
       document.getElementById('modal-reg-id').value = regId;
@@ -607,10 +1287,10 @@
 
     // Auto Suggest Code
     document.getElementById('suggest-code-btn').addEventListener('click', () => {
-      const year = new Date().getFullYear();
-      const rand = Math.floor(1000 + Math.random() * 9000);
-      const evtCode = (currentEvent && currentEvent.code) ? currentEvent.code.toUpperCase() : 'INTELLIX';
-      document.getElementById('modal-cert-code').value = `INTELLIX-${evtCode}-${year}-${rand}`;
+      const evtCode = (currentEvent && currentEvent.code) ? currentEvent.code.toUpperCase() : 'AUR';
+      const rand = Math.floor(1 + Math.random() * 999);
+      const padded = String(rand).padStart(3, '0');
+      document.getElementById('modal-cert-code').value = `AACET/INTELLIX/${evtCode}/${padded}`;
     });
 
     // Single Cert Form Submit
@@ -647,51 +1327,6 @@
       } finally {
         saveBtn.disabled = false;
         saveBtn.innerText = 'Issue Certificate \u2192';
-      }
-    });
-
-    // Bulk Modal Handlers
-    document.getElementById('open-bulk-modal-btn').addEventListener('click', () => {
-      document.getElementById('bulk-cert-title').value = (currentEvent && currentEvent.cert_title) || '';
-      document.getElementById('bulk-code-prefix').value = (currentEvent && currentEvent.code) ? `INTELLIX-${currentEvent.code.toUpperCase()}-${new Date().getFullYear()}-` : '';
-      document.getElementById('bulk-modal').classList.add('open');
-    });
-
-    function closeBulkModal() {
-      document.getElementById('bulk-modal').classList.remove('open');
-    }
-
-    document.getElementById('bulk-cert-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (!currentEventId) return;
-
-      const startBtn = document.getElementById('start-bulk-btn');
-      startBtn.disabled = true;
-      startBtn.innerText = 'Generating Certificates...';
-
-      const payload = {
-        code_prefix: document.getElementById('bulk-code-prefix').value.trim() || undefined,
-        certificate_type: document.getElementById('bulk-cert-type').value,
-        custom_title: document.getElementById('bulk-cert-title').value.trim() || undefined
-      };
-
-      try {
-        const res = await fetchJson(`/api/events/${currentEventId}/certificates/bulk-generate`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        if (res.success) {
-          showToast(res.message, 'success');
-          closeBulkModal();
-          loadData();
-        }
-      } catch (err) {
-        showToast(err.message, 'error');
-      } finally {
-        startBtn.disabled = false;
-        startBtn.innerText = 'Generate for All Present \u2192';
       }
     });
 
