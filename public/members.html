@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Association Members | INTELLIX</title>
-  <meta name="description" content="Faculty advisors, student coordinators, and executive committee of the INTELLIX.">
+  <title>Association Executive Board | INTELLIX</title>
+  <meta name="description" content="Faculty patrons, student coordinators, and executive board members of the INTELLIX Association.">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,6 +23,77 @@
     })();
   </script>
   <script src="/js/welcome-loader.js" defer></script>
+  <style>
+    .member-card {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      border-radius: var(--radius-md);
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .member-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+      border-color: var(--primary);
+    }
+    .member-avatar-wrap {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      background: var(--bg-tertiary);
+      border: 3px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin: 0 auto 1.25rem auto;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      transition: border-color 0.2s ease;
+    }
+    .member-card:hover .member-avatar-wrap {
+      border-color: var(--primary);
+    }
+    .member-avatar-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .social-links-bar {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: auto;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--border-color);
+    }
+    .social-icon-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+    .social-icon-btn:hover {
+      background: var(--primary);
+      color: #000;
+      border-color: var(--primary);
+      transform: translateY(-2px);
+    }
+  </style>
 </head>
 <body>
   <!-- Animated Welcome / Loading Screen -->
@@ -53,8 +124,7 @@
         <div class="nav-brand-logo" id="target-brand-logo"><img src="/assets/logo.png" alt="Intellix Logo"></div>
         <div id="target-brand-text">
           <div id="target-brand-title">INTELLIX</div>
-          <div id="target-brand-subtitle" style="font-size: 0.68rem; font-weight: 500; color: var(--text-muted); line-height: 1;">AL-AZHAR College of
-            Engg & Tech</div>
+          <div id="target-brand-subtitle" style="font-size: 0.68rem; font-weight: 500; color: var(--text-muted); line-height: 1;">AL-AZHAR College of Engg & Tech</div>
         </div>
       </a>
       <ul class="nav-links">
@@ -73,15 +143,15 @@
 
   <main class="section">
     <div class="container">
-      <div style="margin-bottom: 2.5rem;">
-        <div class="badge" style="margin-bottom: 0.5rem;">LEADERSHIP & COMMITTEE</div>
-        <h1>Association Executive Board</h1>
-        <p style="font-size: 1.1rem; margin-top: 0.5rem; max-width: 600px;">
-          Meet the faculty patrons and student coordinators spearheading technical workshops, symposiums, and student mentorship.
+      <div style="margin-bottom: 2.75rem; text-align: center; max-width: 720px; margin-left: auto; margin-right: auto;">
+        <div class="badge badge-pill" style="margin-bottom: 0.75rem;">LEADERSHIP & EXECUTIVE COMMITTEE</div>
+        <h1 style="font-size: 2.25rem; margin-bottom: 0.75rem;">Association Executive Board</h1>
+        <p style="font-size: 1.05rem; color: var(--text-secondary); line-height: 1.6; margin: 0;">
+          Meet the dedicated faculty patrons, student coordinators, and executive leaders steering INTELLIX hackathons, technical bootcamps, and student innovation cohorts.
         </p>
       </div>
 
-      <div id="members-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.75rem;">
+      <div id="members-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 1.75rem;">
         <div style="grid-column: 1/-1; text-align: center; padding: 4rem;">
           <span class="spinner"></span>
         </div>
@@ -92,7 +162,8 @@
   <footer class="footer">
     <div class="container">
       <div class="footer-bottom">
-        <div>&copy; 2026 INTELLIX • AL-AZHAR College of Engg & Tech.</div>
+        <div>&copy; 2026 INTELLIX • Department of AI & ML • AL-AZHAR College of Engg & Tech.</div>
+        <div>All rights reserved.</div>
       </div>
     </div>
   </footer>
@@ -105,29 +176,85 @@
       try {
         const res = await fetchJson('/api/members');
         const grid = document.getElementById('members-grid');
-        if (res.success) {
-          grid.innerHTML = res.members.map(m => `
-            <div class="card card-hover fade-in-up">
-              <div class="card-body" style="align-items: center; text-align: center; padding: 2.25rem 1.5rem;">
-                <div style="width: 72px; height: 72px; border-radius: 50%; background: var(--bg-tertiary); border: 2px solid var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1rem;">
-                  ${m.photo_url ? `<img src="${m.photo_url}" alt="${m.name}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : m.name.charAt(0)}
-                </div>
-                <h3 style="font-size: 1.2rem; margin-bottom: 0.25rem;">${m.name}</h3>
-                <span class="badge badge-pill" style="margin-bottom: 0.75rem;">${m.role}</span>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">${m.department}</p>
-                <p style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.6;">
-                  ${m.short_bio || ''}
-                </p>
-              </div>
-            </div>
-          `).join('');
 
-          initScrollReveals();
+        if (res.success && res.members && res.members.length > 0) {
+          grid.innerHTML = res.members.map(m => {
+            const avatarHtml = m.photo_url 
+              ? `<img src="${m.photo_url}" class="member-avatar-img" alt="${escapeHtml(m.name)}">`
+              : escapeHtml((m.name || 'M').charAt(0));
+
+            // Social Buttons
+            const socials = [];
+            if (m.linkedin_url) {
+              socials.push(`<a href="${escapeHtml(m.linkedin_url)}" target="_blank" rel="noopener noreferrer" class="social-icon-btn" title="LinkedIn Profile">in</a>`);
+            }
+            if (m.instagram_url) {
+              socials.push(`<a href="${escapeHtml(m.instagram_url)}" target="_blank" rel="noopener noreferrer" class="social-icon-btn" title="Instagram Profile">ig</a>`);
+            }
+            if (m.whatsapp_number) {
+              const cleanWa = String(m.whatsapp_number).replace(/[^0-9]/g, '');
+              socials.push(`<a href="https://wa.me/${cleanWa}" target="_blank" rel="noopener noreferrer" class="social-icon-btn" title="Chat on WhatsApp">💬</a>`);
+            }
+            if (m.email) {
+              socials.push(`<a href="mailto:${escapeHtml(m.email)}" class="social-icon-btn" title="Send Email">✉️</a>`);
+            }
+            if (m.phone) {
+              socials.push(`<a href="tel:${escapeHtml(m.phone)}" class="social-icon-btn" title="Call Phone">📞</a>`);
+            }
+
+            const socialsBar = socials.length > 0 ? `
+              <div class="social-links-bar">
+                ${socials.join('')}
+              </div>
+            ` : '';
+
+            const deptInfo = m.semester 
+              ? `${escapeHtml(m.department)} • <span style="color:var(--text-muted);">${escapeHtml(m.semester)}</span>`
+              : escapeHtml(m.department);
+
+            return `
+              <div class="card member-card fade-in-up">
+                <div class="card-body" style="align-items: center; text-align: center; padding: 2.25rem 1.5rem; height: 100%; display: flex; flex-direction: column;">
+                  <div class="member-avatar-wrap">
+                    ${avatarHtml}
+                  </div>
+                  <h3 style="font-size: 1.2rem; margin-bottom: 0.35rem; color: var(--text-primary); font-weight: 700;">${escapeHtml(m.name)}</h3>
+                  <span class="badge badge-primary" style="margin-bottom: 0.6rem; font-size: 0.76rem; font-weight: 600;">${escapeHtml(m.role)}</span>
+                  <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.85rem;">
+                    ${deptInfo}
+                  </div>
+                  ${m.short_bio ? `
+                    <p style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 1rem; flex-grow: 1;">
+                      ${escapeHtml(m.short_bio)}
+                    </p>
+                  ` : '<div style="flex-grow: 1;"></div>'}
+                  ${socialsBar}
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          if (typeof initScrollReveals === 'function') {
+            initScrollReveals();
+          }
+        } else {
+          grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 3rem;">No Executive Board members currently listed.</p>`;
         }
       } catch (err) {
-        document.getElementById('members-grid').innerHTML = `<p style="color:#ef4444;text-align:center;">Failed to load members</p>`;
+        console.error(err);
+        document.getElementById('members-grid').innerHTML = `<p style="color:#ef4444;text-align:center;grid-column:1/-1;">Failed to load Executive Board members.</p>`;
       }
     });
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
   </script>
 </body>
 </html>

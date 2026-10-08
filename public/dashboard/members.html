@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Manage Association Members | Admin Portal</title>
+  <title>Manage Executive Board Members | Admin Portal</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,6 +13,138 @@
   <link rel="stylesheet" href="/css/components.css">
   <link rel="stylesheet" href="/css/animations.css">
   <link rel="stylesheet" href="/css/dashboard.css">
+  <style>
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 1rem;
+    }
+    .modal-backdrop.open {
+      display: flex;
+    }
+    .modal-dialog {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      max-width: 640px;
+      width: 100%;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      animation: modalSlideUp 0.2s ease-out;
+    }
+    @keyframes modalSlideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .modal-body {
+      padding: 1.5rem;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border-color);
+      background: rgba(255,255,255,0.02);
+    }
+    /* Drag & Drop Styles */
+    .drag-row {
+      cursor: grab;
+      user-select: none;
+      transition: background 0.15s ease, transform 0.15s ease;
+    }
+    .drag-row:active {
+      cursor: grabbing;
+    }
+    .drag-row.dragging {
+      opacity: 0.45;
+      background: rgba(59, 130, 246, 0.15) !important;
+      border: 2px dashed var(--primary);
+    }
+    .drag-row.drag-over {
+      border-top: 2px solid var(--primary);
+      background: rgba(59, 130, 246, 0.08);
+    }
+    .drag-handle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      cursor: grab;
+      padding: 0.25rem 0.5rem;
+      font-size: 1.1rem;
+      border-radius: var(--radius-sm);
+    }
+    .drag-handle:hover {
+      color: var(--text-primary);
+      background: var(--bg-tertiary);
+    }
+    .order-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+    .save-order-bar {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(90deg, rgba(59, 130, 246, 0.15), rgba(147, 51, 234, 0.15));
+      border: 1px solid var(--primary);
+      border-radius: var(--radius-sm);
+      padding: 0.75rem 1.25rem;
+      margin-bottom: 1.25rem;
+      animation: fadeIn 0.2s ease-in;
+    }
+    .save-order-bar.show {
+      display: flex;
+    }
+    .photo-preview-wrap {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+    .photo-preview-img {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--border-color);
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    @media (max-width: 600px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
 <body>
   <div class="dashboard-layout">
@@ -21,29 +153,67 @@
     <main class="dashboard-main">
       <header class="dashboard-topbar">
         <div>
-          <h3 style="font-size: 1.15rem;">Association Executive Board</h3>
+          <h3 style="font-size: 1.15rem; margin-bottom: 0.2rem;">Executive Board Members</h3>
+          <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0;">Manage leadership hierarchy, custom display order, and profile details.</p>
         </div>
-        <div>
-          <button class="btn btn-primary btn-sm" onclick="openMemberModal()">+ Add Member</button>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <button class="btn btn-primary btn-sm" onclick="openCreateModal()">
+            + Add Member
+          </button>
         </div>
       </header>
 
       <div class="dashboard-content">
+        <!-- Reorder Notification Bar -->
+        <div class="save-order-bar" id="save-order-bar">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <span style="font-size: 1.25rem;">⚠️</span>
+            <div>
+              <strong style="color: var(--text-primary); font-size: 0.9rem;">Order Changed</strong>
+              <div style="font-size: 0.8rem; color: var(--text-secondary);">You have rearranged member positions. Click "Save Order" to apply changes to the Student Portal.</div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <button type="button" class="btn btn-outline btn-sm" onclick="cancelReorder()">Cancel</button>
+            <button type="button" class="btn btn-primary btn-sm" id="save-order-btn" onclick="saveNewOrder()">💾 Save Order</button>
+          </div>
+        </div>
+
+        <!-- Info Card -->
+        <div class="card" style="margin-bottom: 1.25rem;">
+          <div class="card-body" style="padding: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div>
+              <h4 style="font-size: 0.95rem; margin-bottom: 0.2rem;">💡 Drag & Drop Hierarchy Reordering</h4>
+              <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0;">
+                Grab the <strong>⋮⋮ handle</strong> to drag members up or down into your preferred hierarchy, or use the <strong>▲ / ▼</strong> nudge buttons. Click <strong>Save Order</strong> to persist.
+              </p>
+            </div>
+            <div>
+              <button class="btn btn-secondary btn-sm" id="header-save-order-btn" onclick="saveNewOrder()" style="display: none;">
+                💾 Save Order
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Members Table -->
         <div class="card">
-          <div class="card-body" style="padding: 1.5rem;">
+          <div class="card-body" style="padding: 1.25rem;">
             <div class="table-container">
               <table class="table" id="members-table">
                 <thead>
                   <tr>
-                    <th>Name</th>
-                    <th>Role / Position</th>
-                    <th>Department</th>
-                    <th>Bio</th>
-                    <th>Actions</th>
+                    <th style="width: 50px; text-align: center;">Order</th>
+                    <th style="width: 50px; text-align: center;">Move</th>
+                    <th>Member Profile</th>
+                    <th>Designation & Dept</th>
+                    <th>Contact & Social</th>
+                    <th>Bio Summary</th>
+                    <th style="text-align: right;">Actions</th>
                   </tr>
                 </thead>
-                <tbody>
-                  <tr><td colspan="5" style="text-align: center; padding: 2.5rem;"><span class="spinner"></span></td></tr>
+                <tbody id="members-tbody">
+                  <tr><td colspan="7" style="text-align: center; padding: 2.5rem;"><span class="spinner"></span></td></tr>
                 </tbody>
               </table>
             </div>
@@ -53,55 +223,89 @@
     </main>
   </div>
 
-  <!-- Add Member Modal -->
+  <!-- Member Form Modal (Create / Edit) -->
   <div class="modal-backdrop" id="member-modal">
     <div class="modal-dialog">
       <div class="modal-header">
-        <h3>Add Committee Member</h3>
-        <button class="modal-close-btn" onclick="closeMemberModal()">&times;</button>
+        <h3 style="font-size: 1.15rem; margin: 0;" id="member-modal-title">Add Executive Member</h3>
+        <button class="btn btn-sm btn-outline" onclick="closeMemberModal()" style="padding: 0.2rem 0.6rem;">&times;</button>
       </div>
-      <div class="modal-body">
-        <form id="member-form">
-          <div class="form-group">
-            <label class="form-label">Full Name <span class="required-star">*</span></label>
-            <input type="text" name="name" class="form-control" placeholder="" required>
-          </div>
+      <form id="member-form">
+        <div class="modal-body">
+          <input type="hidden" id="form-member-id" name="id">
+          <input type="hidden" id="form-remove-photo" name="remove_photo" value="false">
+
+          <!-- Full Name & Role -->
           <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Position / Role <span class="required-star">*</span></label>
-              <input type="text" name="role" class="form-control" placeholder="" required>
+            <div class="form-group" style="margin-bottom: 1rem;">
+              <label class="form-label">Full Name <span class="required-star">*</span></label>
+              <input type="text" id="form-name" name="name" class="form-control" placeholder="e.g. Dr. Eleanor Sterling / Mashood" required>
             </div>
-            <div class="form-group">
-              <label class="form-label">Department <span class="required-star">*</span></label>
-              <select name="department" class="form-select" required>
-                <option value="">Select Department</option>
-                <option value="AI&ML">AI&ML</option>
-                <option value="CSE">CSE</option>
-                <option value="CYBER SECURITY">CYBER SECURITY</option>
-                <option value="AUTOMOBILE">AUTOMOBILE</option>
-                <option value="MECHANICAL">MECHANICAL</option>
-                <option value="BIOMEDICAL">BIOMEDICAL</option>
-                <option value="ELECTRICAL AND ELECTRONICS">ELECTRICAL AND ELECTRONICS</option>
-                <option value="BBA">BBA</option>
-                <option value="BCA">BCA</option>
-              </select>
+            <div class="form-group" style="margin-bottom: 1rem;">
+              <label class="form-label">Designation / Position <span class="required-star">*</span></label>
+              <input type="text" id="form-role" name="role" class="form-control" placeholder="e.g. Faculty Patron / Student Coordinator" required>
             </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Short Bio</label>
-            <textarea name="short_bio" class="form-control" placeholder=""></textarea>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Photo (Optional)</label>
-            <input type="file" name="photo" class="form-control" accept="image/*">
           </div>
 
-          <div class="modal-footer" style="padding-left:0; padding-right:0;">
-            <button type="button" class="btn btn-secondary" onclick="closeMemberModal()">Cancel</button>
-            <button type="submit" class="btn btn-primary" id="save-member-btn">Save Member</button>
+          <!-- Department & Semester/Year -->
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom: 1rem;">
+              <label class="form-label">Department <span class="required-star">*</span></label>
+              <input type="text" id="form-department" name="department" class="form-control" placeholder="e.g. AI & Data Science" required>
+            </div>
+            <div class="form-group" style="margin-bottom: 1rem;">
+              <label class="form-label">Semester / Year (Optional)</label>
+              <input type="text" id="form-semester" name="semester" class="form-control" placeholder="e.g. Semester 6 / 3rd Year">
+            </div>
           </div>
-        </form>
-      </div>
+
+          <!-- Email & Phone -->
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom: 1rem;">
+              <label class="form-label">Email Address (Optional)</label>
+              <input type="email" id="form-email" name="email" class="form-control" placeholder="e.g. member@intellix.edu">
+            </div>
+            <div class="form-group" style="margin-bottom: 1rem;">
+              <label class="form-label">Phone / WhatsApp (Optional)</label>
+              <input type="text" id="form-phone" name="phone" class="form-control" placeholder="e.g. +91 98765 43210">
+            </div>
+          </div>
+
+          <!-- Social Links -->
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom: 1rem;">
+              <label class="form-label">LinkedIn Profile URL</label>
+              <input type="url" id="form-linkedin" name="linkedin_url" class="form-control" placeholder="https://linkedin.com/in/username">
+            </div>
+            <div class="form-group" style="margin-bottom: 1rem;">
+              <label class="form-label">Instagram Profile URL</label>
+              <input type="url" id="form-instagram" name="instagram_url" class="form-control" placeholder="https://instagram.com/username">
+            </div>
+          </div>
+
+          <!-- Bio -->
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label class="form-label">Short Bio / Leadership Summary</label>
+            <textarea id="form-bio" name="short_bio" class="form-control" rows="3" placeholder="Brief statement regarding role, expertise, or association leadership duties..."></textarea>
+          </div>
+
+          <!-- Photo Upload & Preview -->
+          <div class="form-group" style="margin-bottom: 0.5rem;">
+            <label class="form-label">Profile Photo</label>
+            <input type="file" id="form-photo-input" name="photo" class="form-control" accept="image/*">
+            <div class="photo-preview-wrap" id="photo-preview-container" style="display: none;">
+              <img src="" id="photo-preview-img" class="photo-preview-img" alt="Photo Preview">
+              <div>
+                <button type="button" class="btn btn-sm btn-outline" style="font-size: 0.75rem; color: #ef4444;" onclick="removeCurrentPhoto()">🗑️ Remove Photo</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline btn-sm" onclick="closeMemberModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm" id="save-member-btn">Save Member Details &rarr;</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -110,96 +314,342 @@
   <script src="/dashboard/js/dashboard-common.js"></script>
   <script>
     let membersList = [];
+    let initialOrderIds = [];
+    let hasOrderChanges = false;
+    let draggedRow = null;
 
     async function loadMembers() {
       try {
         const res = await fetchJson('/api/members');
         if (res.success) {
-          membersList = res.members;
+          membersList = res.members || [];
+          initialOrderIds = membersList.map(m => m.id);
+          setOrderChanged(false);
           renderMembersTable();
         }
       } catch (e) {
         console.error("Failed to load members:", e);
-        showToast("Failed to fetch members", "error");
+        showToast("Failed to fetch members: " + e.message, "error");
       }
     }
 
     function renderMembersTable() {
-      const tbody = document.querySelector('#members-table tbody');
+      const tbody = document.getElementById('members-tbody');
       if (!membersList || membersList.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">No members added yet.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 3rem;">No Executive Board members added yet. Click "+ Add Member" to get started.</td></tr>`;
         return;
       }
 
-      tbody.innerHTML = membersList.map(m => `
-        <tr>
-          <td style="font-weight: 700;">
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-              ${m.photo_url ? `<img src="${m.photo_url}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">` : `<div style="width: 32px; height: 32px; border-radius: 50%; background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center;">${m.name.charAt(0)}</div>`}
-              ${m.name}
-            </div>
-          </td>
-          <td><span class="badge">${m.role}</span></td>
-          <td>${m.department}</td>
-          <td style="font-size: 0.85rem; color: var(--text-secondary); max-width: 320px;">${m.short_bio || '-'}</td>
-          <td>
-            <button class="btn btn-sm btn-danger" onclick="deleteMember(${m.id})">Delete</button>
-          </td>
-        </tr>
-      `).join('');
+      tbody.innerHTML = membersList.map((m, index) => {
+        const avatar = m.photo_url 
+          ? `<img src="${m.photo_url}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color);" alt="${escapeHtml(m.name)}">`
+          : `<div style="width: 36px; height: 36px; border-radius: 50%; background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; color: var(--text-primary); border: 1px solid var(--border-color);">${escapeHtml((m.name || 'M').charAt(0))}</div>`;
+
+        let socials = [];
+        if (m.email) socials.push(`✉️ <a href="mailto:${escapeHtml(m.email)}" style="color:var(--text-secondary); text-decoration:underline;">${escapeHtml(m.email)}</a>`);
+        if (m.phone) socials.push(`📞 ${escapeHtml(m.phone)}`);
+        if (m.linkedin_url) socials.push(`🔗 <a href="${escapeHtml(m.linkedin_url)}" target="_blank" style="color:#38bdf8;">LinkedIn</a>`);
+        if (m.instagram_url) socials.push(`📷 <a href="${escapeHtml(m.instagram_url)}" target="_blank" style="color:#f43f5e;">Instagram</a>`);
+
+        const contactHtml = socials.length > 0 ? socials.join('<br>') : '<span style="color:var(--text-muted);font-size:0.78rem;">No socials added</span>';
+
+        return `
+          <tr class="drag-row" draggable="true" data-id="${m.id}" data-index="${index}">
+            <td style="text-align: center;">
+              <span class="order-badge">${index + 1}</span>
+            </td>
+            <td style="text-align: center;">
+              <div style="display: flex; align-items: center; justify-content: center; gap: 2px;">
+                <span class="drag-handle" title="Drag to rearrange position">⋮⋮</span>
+                <div style="display: flex; flex-direction: column; gap: 1px;">
+                  <button type="button" class="btn btn-sm btn-outline" style="padding: 1px 4px; font-size: 0.65rem; line-height: 1;" onclick="moveItem(${index}, -1)" ${index === 0 ? 'disabled' : ''} title="Move Up">▲</button>
+                  <button type="button" class="btn btn-sm btn-outline" style="padding: 1px 4px; font-size: 0.65rem; line-height: 1;" onclick="moveItem(${index}, 1)" ${index === membersList.length - 1 ? 'disabled' : ''} title="Move Down">▼</button>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 0.75rem;">
+                ${avatar}
+                <div>
+                  <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-primary);">${escapeHtml(m.name)}</div>
+                  ${m.semester ? `<div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(m.semester)}</div>` : ''}
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="badge badge-primary" style="font-size: 0.75rem; font-weight: 600;">${escapeHtml(m.role)}</span>
+              <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 3px;">${escapeHtml(m.department)}</div>
+            </td>
+            <td style="font-size: 0.78rem; line-height: 1.4;">
+              ${contactHtml}
+            </td>
+            <td style="font-size: 0.8rem; color: var(--text-secondary); max-width: 260px;">
+              ${m.short_bio ? `<div style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(m.short_bio)}</div>` : '<span style="color:var(--text-muted);">-</span>'}
+            </td>
+            <td style="text-align: right;">
+              <div style="display: inline-flex; gap: 0.4rem; justify-content: flex-end;">
+                <button type="button" class="btn btn-sm btn-secondary" style="font-size: 0.78rem; padding: 0.25rem 0.65rem;" onclick="openEditModal(${m.id})">
+                  ✏️ Edit
+                </button>
+                <button type="button" class="btn btn-sm btn-danger" style="font-size: 0.78rem; padding: 0.25rem 0.65rem; background: #dc2626; color: #fff;" onclick="deleteMemberItem(${m.id}, '${escapeHtml(m.name)}')">
+                  🗑️ Delete
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      initDragAndDrop();
     }
 
-    function openMemberModal() { document.getElementById('member-modal').classList.add('open'); }
-    function closeMemberModal() { document.getElementById('member-modal').classList.remove('open'); }
+    // Drag and Drop Handling
+    function initDragAndDrop() {
+      const rows = document.querySelectorAll('.drag-row');
+      rows.forEach(row => {
+        row.addEventListener('dragstart', (e) => {
+          draggedRow = row;
+          row.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', row.dataset.index);
+        });
 
-    async function deleteMember(id) {
-      if (!confirm('Remove member?')) return;
+        row.addEventListener('dragend', () => {
+          if (draggedRow) draggedRow.classList.remove('dragging');
+          draggedRow = null;
+          document.querySelectorAll('.drag-row').forEach(r => r.classList.remove('drag-over'));
+        });
+
+        row.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          if (draggedRow && draggedRow !== row) {
+            row.classList.add('drag-over');
+          }
+        });
+
+        row.addEventListener('dragleave', () => {
+          row.classList.remove('drag-over');
+        });
+
+        row.addEventListener('drop', (e) => {
+          e.preventDefault();
+          row.classList.remove('drag-over');
+          if (!draggedRow || draggedRow === row) return;
+
+          const fromIndex = parseInt(draggedRow.dataset.index, 10);
+          const toIndex = parseInt(row.dataset.index, 10);
+
+          if (!isNaN(fromIndex) && !isNaN(toIndex) && fromIndex !== toIndex) {
+            const [movedItem] = membersList.splice(fromIndex, 1);
+            membersList.splice(toIndex, 0, movedItem);
+            checkIfOrderChanged();
+            renderMembersTable();
+          }
+        });
+      });
+    }
+
+    function moveItem(index, direction) {
+      const newIndex = index + direction;
+      if (newIndex < 0 || newIndex >= membersList.length) return;
+
+      const [movedItem] = membersList.splice(index, 1);
+      membersList.splice(newIndex, 0, movedItem);
+      checkIfOrderChanged();
+      renderMembersTable();
+    }
+
+    function checkIfOrderChanged() {
+      const currentIds = membersList.map(m => m.id);
+      const isChanged = JSON.stringify(currentIds) !== JSON.stringify(initialOrderIds);
+      setOrderChanged(isChanged);
+    }
+
+    function setOrderChanged(changed) {
+      hasOrderChanges = changed;
+      const saveBar = document.getElementById('save-order-bar');
+      const headerBtn = document.getElementById('header-save-order-btn');
+      if (changed) {
+        saveBar.classList.add('show');
+        headerBtn.style.display = 'inline-flex';
+      } else {
+        saveBar.classList.remove('show');
+        headerBtn.style.display = 'none';
+      }
+    }
+
+    function cancelReorder() {
+      loadMembers();
+    }
+
+    async function saveNewOrder() {
+      const saveBtn = document.getElementById('save-order-btn');
+      const headerBtn = document.getElementById('header-save-order-btn');
+      saveBtn.disabled = true;
+      saveBtn.innerText = 'Saving Order...';
+      if (headerBtn) headerBtn.disabled = true;
+
+      const orderPayload = membersList.map((m, idx) => ({
+        id: m.id,
+        display_order: idx + 1
+      }));
+
       try {
-        const res = await fetchJson(`/api/members/${id}`, { method: 'DELETE' });
+        const res = await fetchJson('/api/members/reorder', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ order: orderPayload })
+        });
+
         if (res.success) {
-          showToast('Member removed', 'success');
+          showToast(res.message || 'Member display order saved successfully!', 'success');
+          initialOrderIds = membersList.map(m => m.id);
+          setOrderChanged(false);
+          renderMembersTable();
+        }
+      } catch (err) {
+        showToast(err.message || 'Failed to save order', 'error');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerText = '💾 Save Order';
+        if (headerBtn) headerBtn.disabled = false;
+      }
+    }
+
+    // Modal Create / Edit
+    function openCreateModal() {
+      document.getElementById('member-form').reset();
+      document.getElementById('form-member-id').value = '';
+      document.getElementById('form-remove-photo').value = 'false';
+      document.getElementById('photo-preview-container').style.display = 'none';
+      document.getElementById('photo-preview-img').src = '';
+      document.getElementById('member-modal-title').innerText = 'Add Executive Board Member';
+      document.getElementById('save-member-btn').innerText = 'Save Member \u2192';
+      document.getElementById('member-modal').classList.add('open');
+    }
+
+    function openEditModal(id) {
+      const m = membersList.find(item => item.id === id);
+      if (!m) return;
+
+      document.getElementById('member-form').reset();
+      document.getElementById('form-member-id').value = m.id;
+      document.getElementById('form-remove-photo').value = 'false';
+      document.getElementById('form-name').value = m.name || '';
+      document.getElementById('form-role').value = m.role || '';
+      document.getElementById('form-department').value = m.department || '';
+      document.getElementById('form-semester').value = m.semester || '';
+      document.getElementById('form-email').value = m.email || '';
+      document.getElementById('form-phone').value = m.phone || '';
+      document.getElementById('form-linkedin').value = m.linkedin_url || '';
+      document.getElementById('form-instagram').value = m.instagram_url || '';
+      document.getElementById('form-bio').value = m.short_bio || '';
+
+      if (m.photo_url) {
+        document.getElementById('photo-preview-img').src = m.photo_url;
+        document.getElementById('photo-preview-container').style.display = 'flex';
+      } else {
+        document.getElementById('photo-preview-container').style.display = 'none';
+        document.getElementById('photo-preview-img').src = '';
+      }
+
+      document.getElementById('member-modal-title').innerText = `Edit Member: ${m.name}`;
+      document.getElementById('save-member-btn').innerText = 'Update Member Details \u2192';
+      document.getElementById('member-modal').classList.add('open');
+    }
+
+    function closeMemberModal() {
+      document.getElementById('member-modal').classList.remove('open');
+    }
+
+    function removeCurrentPhoto() {
+      document.getElementById('form-remove-photo').value = 'true';
+      document.getElementById('photo-preview-container').style.display = 'none';
+      document.getElementById('photo-preview-img').src = '';
+      document.getElementById('form-photo-input').value = '';
+    }
+
+    // Photo input live preview
+    document.getElementById('form-photo-input').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          document.getElementById('photo-preview-img').src = ev.target.result;
+          document.getElementById('photo-preview-container').style.display = 'flex';
+          document.getElementById('form-remove-photo').value = 'false';
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Form submission
+    document.getElementById('member-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const memberId = document.getElementById('form-member-id').value;
+      const isEdit = !!memberId;
+
+      const saveBtn = document.getElementById('save-member-btn');
+      const origText = saveBtn.innerHTML;
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<span class="spinner" style="width: 14px; height: 14px; border-width: 2px; display: inline-block; vertical-align: middle; margin-right: 6px;"></span> Saving...';
+
+      const formData = new FormData(form);
+      const photoInput = document.getElementById('form-photo-input');
+      if (!photoInput.files || photoInput.files.length === 0) {
+        formData.delete('photo');
+      }
+
+      try {
+        const url = isEdit ? `/api/members/${memberId}` : '/api/members';
+        const method = isEdit ? 'PUT' : 'POST';
+
+        const res = await fetchJson(url, {
+          method: method,
+          body: formData
+        });
+
+        if (res.success) {
+          showToast(res.message || (isEdit ? 'Member updated successfully' : 'Member added successfully'), 'success');
+          closeMemberModal();
+          form.reset();
           loadMembers();
         }
       } catch (err) {
-        showToast(err.message, 'error');
+        showToast(err.message || 'Failed to save member', 'error');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = origText;
       }
+    });
+
+    async function deleteMemberItem(id, name) {
+      if (!confirm(`Are you sure you want to remove "${name}" from the Executive Board?`)) return;
+      try {
+        const res = await fetchJson(`/api/members/${id}`, { method: 'DELETE' });
+        if (res.success) {
+          showToast(`"${name}" removed successfully`, 'success');
+          loadMembers();
+        }
+      } catch (err) {
+        showToast(err.message || 'Failed to delete member', 'error');
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
     }
 
     document.addEventListener('DOMContentLoaded', () => {
       loadMembers();
-
-      document.getElementById('member-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const form = e.target;
-        const btn = document.getElementById('save-member-btn');
-        const origText = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner" style="width: 14px; height: 14px; border-width: 2px; display: inline-block; vertical-align: middle; margin-right: 6px;"></span> Saving...';
-
-        const formData = new FormData(form);
-        const photoInput = form.querySelector('input[name="photo"]');
-        if (photoInput && (!photoInput.files || photoInput.files.length === 0)) {
-          formData.delete('photo');
-        }
-
-        try {
-          const res = await fetchJson('/api/members', {
-            method: 'POST',
-            body: formData
-          });
-          if (res.success) {
-            showToast('Member added successfully', 'success');
-            closeMemberModal();
-            form.reset();
-            loadMembers();
-          }
-        } catch (err) {
-          showToast(err.message || 'Failed to create member', 'error');
-        } finally {
-          btn.disabled = false;
-          btn.innerHTML = origText;
-        }
-      });
     });
   </script>
 </body>

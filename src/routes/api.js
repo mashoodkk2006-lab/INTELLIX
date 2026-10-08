@@ -224,6 +224,20 @@ router.delete(
 );
 
 // Members Admin
+router.put(
+  '/members/reorder',
+  requireAuth,
+  requireRole(['coordinator', 'hod']),
+  memberController.reorderMembers
+);
+
+router.post(
+  '/members/reorder',
+  requireAuth,
+  requireRole(['coordinator', 'hod']),
+  memberController.reorderMembers
+);
+
 router.post(
   '/members',
   requireAuth,

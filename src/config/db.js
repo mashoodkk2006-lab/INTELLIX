@@ -190,7 +190,13 @@ async function initMySQLSchema(pool) {
     'ALTER TABLE certificates ADD COLUMN recipient_name VARCHAR(120) DEFAULT NULL',
     'ALTER TABLE certificates ADD COLUMN recipient_register_number VARCHAR(40) DEFAULT NULL',
     'ALTER TABLE certificates ADD COLUMN member_index INT NOT NULL DEFAULT 0',
-    'ALTER TABLE certificates DROP INDEX registration_id'
+    'ALTER TABLE certificates DROP INDEX registration_id',
+    'ALTER TABLE association_members ADD COLUMN semester VARCHAR(40) DEFAULT NULL',
+    'ALTER TABLE association_members ADD COLUMN email VARCHAR(120) DEFAULT NULL',
+    'ALTER TABLE association_members ADD COLUMN phone VARCHAR(30) DEFAULT NULL',
+    'ALTER TABLE association_members ADD COLUMN instagram_url VARCHAR(255) DEFAULT NULL',
+    'ALTER TABLE association_members ADD COLUMN linkedin_url VARCHAR(255) DEFAULT NULL',
+    'ALTER TABLE association_members ADD COLUMN whatsapp_number VARCHAR(30) DEFAULT NULL'
   ];
   for (const altSql of alters) {
     try { await pool.query(altSql); } catch (e) {}
@@ -358,8 +364,14 @@ async function initSQLiteSchema(client) {
       name TEXT NOT NULL,
       role TEXT NOT NULL,
       department TEXT NOT NULL,
+      semester TEXT DEFAULT NULL,
       short_bio TEXT,
       photo_url TEXT,
+      email TEXT DEFAULT NULL,
+      phone TEXT DEFAULT NULL,
+      instagram_url TEXT DEFAULT NULL,
+      linkedin_url TEXT DEFAULT NULL,
+      whatsapp_number TEXT DEFAULT NULL,
       display_order INTEGER NOT NULL DEFAULT 0,
       is_active INTEGER NOT NULL DEFAULT 1,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -406,7 +418,13 @@ async function initSQLiteSchema(client) {
     `ALTER TABLE event_registrations ADD COLUMN payment_status TEXT DEFAULT 'pending'`,
     `ALTER TABLE certificates ADD COLUMN recipient_name TEXT DEFAULT NULL`,
     `ALTER TABLE certificates ADD COLUMN recipient_register_number TEXT DEFAULT NULL`,
-    `ALTER TABLE certificates ADD COLUMN member_index INTEGER NOT NULL DEFAULT 0`
+    `ALTER TABLE certificates ADD COLUMN member_index INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE association_members ADD COLUMN semester TEXT DEFAULT NULL`,
+    `ALTER TABLE association_members ADD COLUMN email TEXT DEFAULT NULL`,
+    `ALTER TABLE association_members ADD COLUMN phone TEXT DEFAULT NULL`,
+    `ALTER TABLE association_members ADD COLUMN instagram_url TEXT DEFAULT NULL`,
+    `ALTER TABLE association_members ADD COLUMN linkedin_url TEXT DEFAULT NULL`,
+    `ALTER TABLE association_members ADD COLUMN whatsapp_number TEXT DEFAULT NULL`
   ];
   for (const migration of migrations) {
     try {
