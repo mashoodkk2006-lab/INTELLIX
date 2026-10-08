@@ -133,7 +133,10 @@ CREATE TABLE IF NOT EXISTS attendance (
 CREATE TABLE IF NOT EXISTS certificates (
     id INT AUTO_INCREMENT PRIMARY KEY,
     certificate_code VARCHAR(50) NOT NULL UNIQUE,
-    registration_id INT NOT NULL UNIQUE,
+    registration_id INT NOT NULL,
+    recipient_name VARCHAR(120) DEFAULT NULL,
+    recipient_register_number VARCHAR(40) DEFAULT NULL,
+    member_index INT NOT NULL DEFAULT 0,
     event_id INT NOT NULL,
     certificate_type ENUM('participation', 'winner', 'runner_up', 'merit') NOT NULL DEFAULT 'participation',
     title VARCHAR(180) NOT NULL,

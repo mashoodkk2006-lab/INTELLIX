@@ -253,20 +253,17 @@ async function getRegistrationsByEvent(req, res) {
         er.department, er.semester, er.email, er.phone, er.team_name, er.team_members, er.created_at,
         er.transaction_id, er.payment_screenshot_url, er.payment_status,
         COALESCE(att.status, 'unmarked') as attendance_status,
-        att.marked_at,
-        cert.certificate_code,
-        cert.id as certificate_id
+        att.marked_at
       FROM event_registrations er
       LEFT JOIN attendance att ON er.id = att.registration_id
-      LEFT JOIN certificates cert ON er.id = cert.registration_id
       WHERE er.event_id = ?
     `;
     const params = [eventId];
 
     if (search) {
-      sql += ` AND (er.full_name LIKE ? OR er.register_number LIKE ? OR er.registration_code LIKE ? OR er.email LIKE ?)`;
+      sql += ` AND (er.full_name LIKE ? OR er.register_number LIKE ? OR er.registration_code LIKE ? OR er.email LIKE ? OR er.team_name LIKE ?)`;
       const p = `%${search}%`;
-      params.push(p, p, p, p);
+      params.push(p, p, p, p, p);
     }
 
     if (attendance_status) {
@@ -303,10 +300,28 @@ async function getRegistrationsByEvent(req, res) {
       };
     }
 
-    const enriched = registrations.map(reg => ({
-      ...reg,
-      custom_fields: valuesByRegId[reg.id] || {}
-    }));
+    // Fetch all certificates for this event
+    const [allCerts] = await query('SELECT * FROM certificates WHERE event_id = ? ORDER BY id ASC', [eventId]);
+    const certsByRegId = {};
+    for (const c of allCerts) {
+      if (!certsByRegId[c.registration_id]) certsByRegId[c.registration_id] = [];
+      certsByRegId[c.registration_id].push({
+        ...c,
+        download_url: `/api/certificates/download/${c.certificate_code}`
+      });
+    }
+
+    const enriched = registrations.map(reg => {
+      const regCerts = certsByRegId[reg.id] || [];
+      const leaderCert = regCerts.find(c => c.member_index === 0 || (!c.member_index && !c.recipient_name) || (c.recipient_name && c.recipient_name.toLowerCase() === reg.full_name.toLowerCase()));
+      return {
+        ...reg,
+        certificate_code: leaderCert ? leaderCert.certificate_code : (regCerts[0] ? regCerts[0].certificate_code : null),
+        certificate_id: leaderCert ? leaderCert.id : (regCerts[0] ? regCerts[0].id : null),
+        custom_fields: valuesByRegId[reg.id] || {},
+        certificates: regCerts
+      };
+    });
 
     return res.json({
       success: true,
@@ -323,7 +338,7 @@ async function getRegistrationsByEvent(req, res) {
 async function exportRegistrationsCSV(req, res) {
   const { eventId } = req.params;
   try {
-    const [events] = await query('SELECT title, code FROM events WHERE id = ?', [eventId]);
+    const [events] = await query('SELECT title, code, participation_type FROM events WHERE id = ?', [eventId]);
     if (!events || events.length === 0) {
       return res.status(404).send('Event not found');
     }
@@ -334,15 +349,26 @@ async function exportRegistrationsCSV(req, res) {
         er.id, er.registration_code, er.full_name, er.register_number,
         er.department, er.semester, er.email, er.phone, er.team_name, er.team_members, er.created_at,
         er.transaction_id, er.payment_status,
-        COALESCE(att.status, 'unmarked') as attendance,
-        cert.certificate_code
+        COALESCE(att.status, 'unmarked') as attendance
       FROM event_registrations er
       LEFT JOIN attendance att ON er.id = att.registration_id
-      LEFT JOIN certificates cert ON er.id = cert.registration_id
       WHERE er.event_id = ?
       ORDER BY er.id ASC`,
       [eventId]
     );
+
+    // Fetch all certificates for this event to match with leaders & members
+    const [certs] = await query(
+      `SELECT registration_id, certificate_code, member_index, recipient_name FROM certificates WHERE event_id = ?`,
+      [eventId]
+    );
+    const certsMap = {};
+    for (const c of certs) {
+      certsMap[`${c.registration_id}_idx_${c.member_index || 0}`] = c.certificate_code;
+      if (c.recipient_name) {
+        certsMap[`${c.registration_id}_name_${c.recipient_name.trim().toLowerCase()}`] = c.certificate_code;
+      }
+    }
 
     // Fetch custom form field headers
     const [fields] = await query(
@@ -368,8 +394,10 @@ async function exportRegistrationsCSV(req, res) {
     const headers = [
       'Sl No',
       'Registration ID',
-      'Full Name',
-      'Register Number',
+      'Participant Name',
+      'Register Number / ID',
+      'Participant Role',
+      'Team Name',
       'Department',
       'Semester',
       'Email',
@@ -383,18 +411,27 @@ async function exportRegistrationsCSV(req, res) {
     ];
 
     const rows = [headers.join(',')];
+    let slNo = 1;
 
-    registrations.forEach((reg, index) => {
+    registrations.forEach(reg => {
       const customCols = fields.map(f => {
         const val = (valuesMap[reg.id] && valuesMap[reg.id][f.id]) || '';
         return `"${String(val).replace(/"/g, '""')}"`;
       });
 
-      const row = [
-        index + 1,
+      const isTeam = !!(reg.team_name || (event.participation_type === 'team') || reg.team_members);
+      const teamLabel = reg.team_name || (isTeam ? 'Team' : 'N/A');
+      const leaderRole = isTeam ? 'Team Leader' : 'Individual Participant';
+      const leaderCert = certsMap[`${reg.id}_idx_0`] || certsMap[`${reg.id}_name_${reg.full_name.trim().toLowerCase()}`] || 'N/A';
+
+      // 1. Output Team Leader / Individual Row
+      const leaderRow = [
+        slNo++,
         `"${reg.registration_code}"`,
         `"${reg.full_name.replace(/"/g, '""')}"`,
         `"${reg.register_number}"`,
+        `"${leaderRole}"`,
+        `"${teamLabel.replace(/"/g, '""')}"`,
         `"${reg.department.replace(/"/g, '""')}"`,
         `"${reg.semester}"`,
         `"${reg.email}"`,
@@ -403,15 +440,57 @@ async function exportRegistrationsCSV(req, res) {
         `"${(reg.payment_status || 'N/A').toUpperCase()}"`,
         `"${reg.transaction_id || 'N/A'}"`,
         `"${reg.attendance.toUpperCase()}"`,
-        `"${reg.certificate_code || 'N/A'}"`,
+        `"${leaderCert}"`,
         `"${new Date(reg.created_at).toLocaleString()}"`
       ];
+      rows.push(leaderRow.join(','));
 
-      rows.push(row.join(','));
+      // 2. Output Each Additional Team Member Row
+      if (isTeam && reg.team_members) {
+        let members = [];
+        try {
+          const parsed = typeof reg.team_members === 'string' ? JSON.parse(reg.team_members) : reg.team_members;
+          if (Array.isArray(parsed)) {
+            members = parsed;
+          } else if (typeof reg.team_members === 'string') {
+            members = reg.team_members.split(/\r?\n/).map(s => s.trim()).filter(Boolean).map(s => ({ name: s, identifier: '' }));
+          }
+        } catch {
+          members = String(reg.team_members).split(/\r?\n/).map(s => s.trim()).filter(Boolean).map(s => ({ name: s, identifier: '' }));
+        }
+
+        members.forEach((m, mIdx) => {
+          const mName = typeof m === 'string' ? m.trim() : (m.name || m.full_name || '').trim();
+          const mReg = typeof m === 'string' ? '' : (m.identifier || m.register_number || '').trim();
+          if (!mName) return;
+
+          const memberCert = certsMap[`${reg.id}_idx_${mIdx + 1}`] || certsMap[`${reg.id}_name_${mName.toLowerCase()}`] || 'N/A';
+
+          const memberRow = [
+            slNo++,
+            `"${reg.registration_code}"`,
+            `"${mName.replace(/"/g, '""')}"`,
+            `"${mReg || 'N/A'}"`,
+            `"Team Member (Member ${mIdx + 2})"`,
+            `"${teamLabel.replace(/"/g, '""')}"`,
+            `"${reg.department.replace(/"/g, '""')}"`,
+            `"${reg.semester}"`,
+            `"${reg.email} (Leader)"`,
+            `"${reg.phone} (Leader)"`,
+            ...customCols,
+            `"${(reg.payment_status || 'N/A').toUpperCase()}"`,
+            `"${reg.transaction_id || 'N/A'}"`,
+            `"${reg.attendance.toUpperCase()}"`,
+            `"${memberCert}"`,
+            `"${new Date(reg.created_at).toLocaleString()}"`
+          ];
+          rows.push(memberRow.join(','));
+        });
+      }
     });
 
     const csvContent = rows.join('\r\n');
-    const filename = `${event.code}_registrations_${Date.now()}.csv`;
+    const filename = `${event.code}_all_participants_${Date.now()}.csv`;
 
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);

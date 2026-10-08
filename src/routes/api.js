@@ -147,6 +147,13 @@ router.get(
   certificateController.getCertificatesByEvent
 );
 
+router.delete(
+  '/certificates/:id',
+  requireAuth,
+  requirePermission('can_generate_certificates'),
+  certificateController.deleteCertificate
+);
+
 // Admin Account Management (Student Coordinator Exclusive)
 router.get(
   '/admins',

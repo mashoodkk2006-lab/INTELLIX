@@ -13,6 +13,104 @@
   <link rel="stylesheet" href="/css/components.css">
   <link rel="stylesheet" href="/css/animations.css">
   <link rel="stylesheet" href="/css/dashboard.css">
+  <style>
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 1rem;
+    }
+    .modal-backdrop.open {
+      display: flex;
+    }
+    .modal-dialog {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      max-width: 540px;
+      width: 100%;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      animation: modalSlideUp 0.2s ease-out;
+    }
+    @keyframes modalSlideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .modal-body {
+      padding: 1.5rem;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border-color);
+      background: rgba(255,255,255,0.02);
+    }
+    .filter-pills {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .filter-pill {
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .filter-pill.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #000;
+    }
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+    .stat-mini-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+    }
+    .stat-mini-title {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    .stat-mini-val {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-top: 0.25rem;
+      color: var(--text-primary);
+    }
+  </style>
 </head>
 <body>
   <div class="dashboard-layout">
@@ -21,26 +119,64 @@
     <main class="dashboard-main">
       <header class="dashboard-topbar">
         <div>
-          <h3 style="font-size: 1.15rem;">Digital Certificate Issuance</h3>
+          <h3 style="font-size: 1.15rem; margin-bottom: 0.15rem;">Digital Certificate Issuance</h3>
+          <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0;">Issue individual certificates with custom codes, bulk generate, or delete records.</p>
         </div>
         <div style="display: flex; align-items: center; gap: 0.75rem;">
-          <button class="btn btn-primary btn-sm" id="bulk-generate-btn">
-            ⚡ Bulk Generate for All Present Participants
+          <button class="btn btn-primary btn-sm" id="open-bulk-modal-btn">
+            ⚡ Bulk Generate Certificates
           </button>
         </div>
       </header>
 
       <div class="dashboard-content">
         <!-- Event Selection -->
-        <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card" style="margin-bottom: 1.25rem;">
           <div class="card-body" style="padding: 1.25rem;">
             <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; justify-content: space-between;">
-              <div class="form-group" style="margin-bottom: 0; width: 320px;">
-                <label class="form-label">Select Event for Certification</label>
+              <div class="form-group" style="margin-bottom: 0; min-width: 320px; flex: 1;">
+                <label class="form-label" style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">Select Event for Certification</label>
                 <select id="event-select" class="form-select"></select>
               </div>
-              <div style="font-size: 0.85rem; color: var(--text-muted);">
-                Participants marked as <strong>Present</strong> are eligible for certificate issuance.
+              <div style="font-size: 0.85rem; color: var(--text-muted); max-width: 380px;">
+                💡 Individual certificates can be issued for <strong>all team members</strong>. You can enter your own <strong>custom certificate codes</strong> or auto-generate them.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="stats-row">
+          <div class="stat-mini-card">
+            <span class="stat-mini-title">Total Eligible Students</span>
+            <span class="stat-mini-val" id="stat-total-students">0</span>
+          </div>
+          <div class="stat-mini-card">
+            <span class="stat-mini-title">Certificates Issued</span>
+            <span class="stat-mini-val" style="color: #22c55e;" id="stat-certs-issued">0</span>
+          </div>
+          <div class="stat-mini-card">
+            <span class="stat-mini-title">Pending Issuance</span>
+            <span class="stat-mini-val" style="color: #f59e0b;" id="stat-certs-pending">0</span>
+          </div>
+          <div class="stat-mini-card">
+            <span class="stat-mini-title">Present Attendees</span>
+            <span class="stat-mini-val" id="stat-present-count">0</span>
+          </div>
+        </div>
+
+        <!-- Filter & Search Toolbar -->
+        <div class="card" style="margin-bottom: 1rem;">
+          <div class="card-body" style="padding: 1rem 1.25rem;">
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: space-between; align-items: center;">
+              <div class="filter-pills" id="status-filters">
+                <button class="filter-pill active" data-filter="all">All Participants</button>
+                <button class="filter-pill" data-filter="issued">Issued Only</button>
+                <button class="filter-pill" data-filter="pending">Pending Only</button>
+                <button class="filter-pill" data-filter="present">Present Only</button>
+              </div>
+              <div style="min-width: 260px; flex: 1; max-width: 380px;">
+                <input type="text" id="cert-search" class="form-control form-control-sm" placeholder="🔍 Search by name, reg no, code, team...">
               </div>
             </div>
           </div>
@@ -48,21 +184,22 @@
 
         <!-- Attendees & Issued Certificates -->
         <div class="card">
-          <div class="card-body" style="padding: 1.5rem;">
+          <div class="card-body" style="padding: 1.25rem;">
             <div class="table-container">
               <table class="table" id="cert-table">
                 <thead>
                   <tr>
-                    <th>Participant</th>
+                    <th>Participant Name</th>
+                    <th>Role / Team</th>
                     <th>Register Number</th>
                     <th>Attendance</th>
                     <th>Certificate Status</th>
-                    <th>Certificate ID</th>
-                    <th>Action</th>
+                    <th>Certificate Code</th>
+                    <th style="text-align: right;">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr><td colspan="6" style="text-align: center; padding: 2.5rem;"><span class="spinner"></span></td></tr>
+                  <tr><td colspan="7" style="text-align: center; padding: 2.5rem;"><span class="spinner"></span></td></tr>
                 </tbody>
               </table>
             </div>
@@ -72,12 +209,136 @@
     </main>
   </div>
 
+  <!-- Modal: Generate / Edit Single Certificate -->
+  <div class="modal-backdrop" id="cert-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 style="font-size: 1.1rem; margin: 0;" id="cert-modal-heading">Issue Certificate</h3>
+        <button type="button" class="btn btn-sm btn-outline" onclick="closeCertModal()" style="padding: 0.2rem 0.6rem;">&times;</button>
+      </div>
+      <form id="single-cert-form">
+        <div class="modal-body">
+          <input type="hidden" id="modal-reg-id" name="registration_id">
+          <input type="hidden" id="modal-member-index" name="member_index" value="0">
+
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label class="form-label">Participant Name *</label>
+            <input type="text" id="modal-recipient-name" name="recipient_name" class="form-control" required>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label class="form-label">Register / Roll Number</label>
+            <input type="text" id="modal-recipient-reg" name="recipient_register_number" class="form-control" placeholder="e.g. 921721106001">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+              <label class="form-label" style="margin-bottom: 0;">Certificate Code / ID</label>
+              <button type="button" class="btn btn-sm btn-outline" id="suggest-code-btn" style="font-size: 0.72rem; padding: 0.15rem 0.5rem;">✨ Suggest Auto Code</button>
+            </div>
+            <input type="text" id="modal-cert-code" name="certificate_code" class="form-control" placeholder="Enter your custom code or leave blank to auto-generate" style="font-family: monospace; font-weight: 600; text-transform: uppercase;">
+            <small style="color: var(--text-muted); font-size: 0.75rem;">Enter your custom code (e.g. INTELLIX-CERT-001) or click suggest.</small>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label class="form-label">Certificate Type</label>
+            <select id="modal-cert-type" name="certificate_type" class="form-select">
+              <option value="participation">Participation</option>
+              <option value="winner">Winner (1st Prize)</option>
+              <option value="runner_up">Runner-Up (2nd Prize)</option>
+              <option value="merit">Merit / Excellence</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0.5rem;">
+            <label class="form-label">Certificate Title / Heading</label>
+            <input type="text" id="modal-cert-title" name="custom_title" class="form-control" placeholder="Certificate of Participation">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline btn-sm" onclick="closeCertModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm" id="save-cert-btn">Issue Certificate &rarr;</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Bulk Generate -->
+  <div class="modal-backdrop" id="bulk-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 style="font-size: 1.1rem; margin: 0;">⚡ Bulk Generate Certificates</h3>
+        <button type="button" class="btn btn-sm btn-outline" onclick="closeBulkModal()" style="padding: 0.2rem 0.6rem;">&times;</button>
+      </div>
+      <form id="bulk-cert-form">
+        <div class="modal-body">
+          <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1.25rem;">
+            This will generate individual certificates for <strong>all present participants and team members</strong> who do not have one yet.
+          </p>
+
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label class="form-label">Custom Code Prefix (Optional)</label>
+            <input type="text" id="bulk-code-prefix" class="form-control" placeholder="e.g. INTELLIX-CH26-2026-" style="font-family: monospace;">
+            <small style="color: var(--text-muted); font-size: 0.75rem;">If provided, codes will be formatted as PREFIX-0001, PREFIX-0002, etc. If blank, standard auto code is used.</small>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label class="form-label">Certificate Type</label>
+            <select id="bulk-cert-type" class="form-select">
+              <option value="participation">Participation</option>
+              <option value="merit">Merit</option>
+              <option value="winner">Winner</option>
+              <option value="runner_up">Runner-Up</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0.5rem;">
+            <label class="form-label">Certificate Title Override (Optional)</label>
+            <input type="text" id="bulk-cert-title" class="form-control" placeholder="Leave empty to use event default">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline btn-sm" onclick="closeBulkModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm" id="start-bulk-btn">Generate for All Present &rarr;</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Delete Confirmation -->
+  <div class="modal-backdrop" id="delete-modal">
+    <div class="modal-dialog" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3 style="font-size: 1.1rem; color: #ef4444; margin: 0;">🗑️ Delete Certificate</h3>
+        <button type="button" class="btn btn-sm btn-outline" onclick="closeDeleteModal()" style="padding: 0.2rem 0.6rem;">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.9rem; color: var(--text-primary); margin-bottom: 0.75rem;">
+          Are you sure you want to delete the certificate for <strong id="delete-participant-name">Student</strong>?
+        </p>
+        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-sm); padding: 0.75rem; font-family: monospace; font-size: 0.85rem; color: #ef4444; margin-bottom: 0.75rem;" id="delete-cert-code">
+          CERT-CODE
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">
+          This will delete the certificate record and its PDF. You can regenerate a new certificate with a corrected code anytime.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline btn-sm" onclick="closeDeleteModal()">Cancel</button>
+        <button type="button" class="btn btn-sm" id="confirm-delete-btn" style="background: #ef4444; color: #fff;">Yes, Delete Certificate</button>
+      </div>
+    </div>
+  </div>
+
   <script src="/js/theme.js"></script>
   <script src="/js/api.js"></script>
   <script src="/dashboard/js/dashboard-common.js"></script>
   <script>
     let currentEventId = null;
-    let eventParticipants = [];
+    let currentEvent = null;
+    let flatParticipants = [];
+    let currentFilter = 'all';
+    let certToDelete = null;
 
     async function initPage() {
       try {
@@ -88,117 +349,414 @@
 
           const urlParams = new URLSearchParams(window.location.search);
           const initial = urlParams.get('eventId');
-          if (initial) select.value = initial;
+          if (initial && res.events.some(e => String(e.id) === String(initial))) {
+            select.value = initial;
+          }
 
           currentEventId = select.value;
+          currentEvent = res.events.find(e => String(e.id) === String(currentEventId));
+
           select.addEventListener('change', () => {
             currentEventId = select.value;
+            currentEvent = res.events.find(e => String(e.id) === String(currentEventId));
             loadData();
           });
 
           loadData();
+        } else {
+          document.querySelector('#cert-table tbody').innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">No events found in database.</td></tr>`;
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error(e);
+      }
     }
 
     async function loadData() {
       if (!currentEventId) return;
       const tbody = document.querySelector('#cert-table tbody');
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 2.5rem;"><span class="spinner"></span></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 2.5rem;"><span class="spinner"></span></td></tr>`;
 
       try {
-        const res = await fetchJson(`/api/events/${currentEventId}/registrations`);
-        if (res.success) {
-          eventParticipants = res.registrations;
-          renderTable();
-        }
+        const [regRes, certRes] = await Promise.all([
+          fetchJson(`/api/events/${currentEventId}/registrations`),
+          fetchJson(`/api/events/${currentEventId}/certificates`)
+        ]);
+
+        const registrations = (regRes.success && regRes.registrations) || [];
+        const certificates = (certRes.success && certRes.certificates) || [];
+
+        // Build a map of certificates by registration_id + member_index or recipient_name
+        const certMap = {};
+        certificates.forEach(c => {
+          certMap[`${c.registration_id}_idx_${c.member_index || 0}`] = c;
+          if (c.recipient_name) {
+            certMap[`${c.registration_id}_name_${c.recipient_name.trim().toLowerCase()}`] = c;
+          }
+        });
+
+        // Flatten all registrations into individual participant items
+        flatParticipants = [];
+        registrations.forEach(reg => {
+          const isTeam = !!(reg.team_name || reg.team_members);
+
+          // 1. Team Leader / Individual Participant
+          const leaderCert = certMap[`${reg.id}_idx_0`] || certMap[`${reg.id}_name_${reg.full_name.trim().toLowerCase()}`] || null;
+          flatParticipants.push({
+            registration_id: reg.id,
+            registration_code: reg.registration_code,
+            full_name: reg.full_name,
+            register_number: reg.register_number,
+            department: reg.department,
+            semester: reg.semester,
+            role: isTeam ? 'Team Leader' : 'Individual',
+            team_name: reg.team_name || null,
+            member_index: 0,
+            attendance_status: reg.attendance_status || 'unmarked',
+            certificate: leaderCert
+          });
+
+          // 2. Team Members
+          if (isTeam && reg.team_members) {
+            let members = [];
+            try {
+              const parsed = typeof reg.team_members === 'string' ? JSON.parse(reg.team_members) : reg.team_members;
+              if (Array.isArray(parsed)) members = parsed;
+              else if (typeof reg.team_members === 'string') {
+                members = reg.team_members.split(/\r?\n/).map(s => s.trim()).filter(Boolean).map(s => ({ name: s, identifier: '' }));
+              }
+            } catch {
+              members = String(reg.team_members).split(/\r?\n/).map(s => s.trim()).filter(Boolean).map(s => ({ name: s, identifier: '' }));
+            }
+
+            members.forEach((m, mIdx) => {
+              const mName = typeof m === 'string' ? m.trim() : (m.name || m.full_name || '').trim();
+              const mReg = typeof m === 'string' ? '' : (m.identifier || m.register_number || '').trim();
+              if (!mName) return;
+
+              const memberIdx = mIdx + 1;
+              const memberCert = certMap[`${reg.id}_idx_${memberIdx}`] || certMap[`${reg.id}_name_${mName.toLowerCase()}`] || null;
+
+              flatParticipants.push({
+                registration_id: reg.id,
+                registration_code: reg.registration_code,
+                full_name: mName,
+                register_number: mReg || 'N/A',
+                department: reg.department,
+                semester: reg.semester,
+                role: `Member #${memberIdx + 1}`,
+                team_name: reg.team_name || null,
+                member_index: memberIdx,
+                attendance_status: reg.attendance_status || 'unmarked',
+                certificate: memberCert
+              });
+            });
+          }
+        });
+
+        updateStats();
+        renderTable();
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #ef4444;">Failed to load records: ${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #ef4444; padding: 2.5rem;">Failed to load records: ${err.message}</td></tr>`;
       }
+    }
+
+    function updateStats() {
+      const total = flatParticipants.length;
+      const issued = flatParticipants.filter(p => !!p.certificate).length;
+      const pending = total - issued;
+      const present = flatParticipants.filter(p => p.attendance_status === 'present').length;
+
+      document.getElementById('stat-total-students').innerText = total;
+      document.getElementById('stat-certs-issued').innerText = issued;
+      document.getElementById('stat-certs-pending').innerText = pending;
+      document.getElementById('stat-present-count').innerText = present;
     }
 
     function renderTable() {
       const tbody = document.querySelector('#cert-table tbody');
-      if (eventParticipants.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">No participants registered for this event.</td></tr>`;
+      const query = (document.getElementById('cert-search').value || '').toLowerCase().trim();
+
+      const filtered = flatParticipants.filter(p => {
+        // Status filter
+        if (currentFilter === 'issued' && !p.certificate) return false;
+        if (currentFilter === 'pending' && !!p.certificate) return false;
+        if (currentFilter === 'present' && p.attendance_status !== 'present') return false;
+
+        // Search query
+        if (query) {
+          const nameMatch = p.full_name.toLowerCase().includes(query);
+          const regMatch = String(p.register_number).toLowerCase().includes(query);
+          const teamMatch = (p.team_name || '').toLowerCase().includes(query);
+          const certCodeMatch = p.certificate && p.certificate.certificate_code.toLowerCase().includes(query);
+          const regCodeMatch = (p.registration_code || '').toLowerCase().includes(query);
+          return nameMatch || regMatch || teamMatch || certCodeMatch || regCodeMatch;
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">No participants matching filter criteria.</td></tr>`;
         return;
       }
 
-      tbody.innerHTML = eventParticipants.map(p => {
-        const hasCert = !!p.certificate_code;
+      tbody.innerHTML = filtered.map((p, idx) => {
+        const cert = p.certificate;
+        const hasCert = !!cert;
         const isPresent = p.attendance_status === 'present';
+
+        let roleBadge = '';
+        if (p.role === 'Team Leader') {
+          roleBadge = `<span class="badge" style="background:#3b82f6; color:#fff; font-size:0.7rem;">👑 Team Leader</span>`;
+        } else if (p.role.startsWith('Member')) {
+          roleBadge = `<span class="badge" style="background:#6366f1; color:#fff; font-size:0.7rem;">👥 ${p.role}</span>`;
+        } else {
+          roleBadge = `<span class="badge" style="background:#64748b; color:#fff; font-size:0.7rem;">👤 Individual</span>`;
+        }
+
+        const teamInfo = p.team_name ? `<div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">Team: <strong>${escapeHtml(p.team_name)}</strong></div>` : '';
 
         return `
           <tr>
-            <td style="font-weight: 700;">${p.full_name}</td>
-            <td>${p.register_number}</td>
             <td>
-              <span class="badge ${isPresent ? 'badge-success' : 'badge-danger'}">${p.attendance_status || 'unmarked'}</span>
+              <div style="font-weight: 700; font-size: 0.92rem;">${escapeHtml(p.full_name)}</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(p.department || '')}</div>
             </td>
             <td>
-              ${hasCert ? '<span class="badge badge-success">✓ Issued</span>' : '<span class="badge">Not Generated</span>'}
+              ${roleBadge}
+              ${teamInfo}
             </td>
             <td>
-              ${hasCert ? `<code style="font-weight:700;">${p.certificate_code}</code>` : '<span style="color:var(--text-muted);">-</span>'}
+              <code style="font-size: 0.85rem;">${escapeHtml(p.register_number || 'N/A')}</code>
+            </td>
+            <td>
+              <span class="badge ${isPresent ? 'badge-success' : 'badge-danger'}" style="font-size: 0.75rem;">
+                ${p.attendance_status.toUpperCase()}
+              </span>
             </td>
             <td>
               ${hasCert ? `
-                <a href="/api/certificates/download/${p.certificate_code}" target="_blank" class="btn btn-sm btn-outline">
-                  📥 Download PDF
-                </a>
+                <span class="badge badge-success" style="font-size: 0.75rem;">✓ Issued</span>
+                <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">${cert.certificate_type || 'Participation'}</div>
               ` : `
-                <button class="btn btn-sm btn-primary" onclick="generateSingle(${p.id})">
-                  Generate Certificate
-                </button>
+                <span class="badge" style="font-size: 0.75rem; background: var(--bg-secondary); color: var(--text-muted);">Not Generated</span>
               `}
+            </td>
+            <td>
+              ${hasCert ? `
+                <code style="font-weight: 700; color: #38bdf8; font-size: 0.85rem;">${cert.certificate_code}</code>
+              ` : `
+                <span style="color: var(--text-muted); font-size: 0.8rem;">—</span>
+              `}
+            </td>
+            <td style="text-align: right;">
+              <div style="display: inline-flex; gap: 0.4rem; justify-content: flex-end; flex-wrap: wrap;">
+                ${hasCert ? `
+                  <a href="/api/certificates/download/${cert.certificate_code}" target="_blank" class="btn btn-sm btn-outline" style="font-size: 0.75rem; padding: 0.25rem 0.55rem;" title="Download PDF">
+                    📥 Download
+                  </a>
+                  <button type="button" class="btn btn-sm btn-secondary" style="font-size: 0.75rem; padding: 0.25rem 0.55rem;" onclick="openEditCertModal(${p.registration_id}, ${p.member_index}, '${escapeHtml(p.full_name)}', '${escapeHtml(p.register_number)}', '${escapeHtml(cert.certificate_code)}', '${escapeHtml(cert.certificate_type)}', '${escapeHtml(cert.title || '')}')" title="Edit / Regenerate">
+                    ✏️ Edit
+                  </button>
+                  <button type="button" class="btn btn-sm btn-danger" style="font-size: 0.75rem; padding: 0.25rem 0.55rem; background: #dc2626; color: #fff;" onclick="openDeleteModal(${cert.id}, '${escapeHtml(cert.certificate_code)}', '${escapeHtml(p.full_name)}')" title="Delete Certificate">
+                    🗑️ Delete
+                  </button>
+                ` : `
+                  <button type="button" class="btn btn-sm btn-primary" style="font-size: 0.75rem; padding: 0.25rem 0.65rem;" onclick="openGenerateModal(${p.registration_id}, ${p.member_index}, '${escapeHtml(p.full_name)}', '${escapeHtml(p.register_number)}')">
+                    ➕ Issue Certificate
+                  </button>
+                `}
+              </div>
             </td>
           </tr>
         `;
       }).join('');
     }
 
-    async function generateSingle(regId) {
+    // Modal Handlers
+    function openGenerateModal(regId, memberIndex, name, regNo) {
+      document.getElementById('cert-modal-heading').innerText = 'Issue Individual Certificate';
+      document.getElementById('modal-reg-id').value = regId;
+      document.getElementById('modal-member-index').value = memberIndex;
+      document.getElementById('modal-recipient-name').value = name;
+      document.getElementById('modal-recipient-reg').value = regNo !== 'N/A' ? regNo : '';
+      document.getElementById('modal-cert-code').value = '';
+      document.getElementById('modal-cert-type').value = 'participation';
+      document.getElementById('modal-cert-title').value = (currentEvent && currentEvent.cert_title) || 'Certificate of Participation';
+      document.getElementById('save-cert-btn').innerText = 'Issue Certificate \u2192';
+
+      document.getElementById('cert-modal').classList.add('open');
+    }
+
+    function openEditCertModal(regId, memberIndex, name, regNo, certCode, certType, certTitle) {
+      document.getElementById('cert-modal-heading').innerText = 'Edit / Regenerate Certificate';
+      document.getElementById('modal-reg-id').value = regId;
+      document.getElementById('modal-member-index').value = memberIndex;
+      document.getElementById('modal-recipient-name').value = name;
+      document.getElementById('modal-recipient-reg').value = regNo !== 'N/A' ? regNo : '';
+      document.getElementById('modal-cert-code').value = certCode;
+      document.getElementById('modal-cert-type').value = certType || 'participation';
+      document.getElementById('modal-cert-title').value = certTitle || (currentEvent && currentEvent.cert_title) || 'Certificate of Participation';
+      document.getElementById('save-cert-btn').innerText = 'Save & Regenerate \u2192';
+
+      document.getElementById('cert-modal').classList.add('open');
+    }
+
+    function closeCertModal() {
+      document.getElementById('cert-modal').classList.remove('open');
+    }
+
+    // Auto Suggest Code
+    document.getElementById('suggest-code-btn').addEventListener('click', () => {
+      const year = new Date().getFullYear();
+      const rand = Math.floor(1000 + Math.random() * 9000);
+      const evtCode = (currentEvent && currentEvent.code) ? currentEvent.code.toUpperCase() : 'INTELLIX';
+      document.getElementById('modal-cert-code').value = `INTELLIX-${evtCode}-${year}-${rand}`;
+    });
+
+    // Single Cert Form Submit
+    document.getElementById('single-cert-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const saveBtn = document.getElementById('save-cert-btn');
+      saveBtn.disabled = true;
+      saveBtn.innerText = 'Issuing...';
+
+      const payload = {
+        registration_id: parseInt(document.getElementById('modal-reg-id').value, 10),
+        member_index: parseInt(document.getElementById('modal-member-index').value, 10) || 0,
+        recipient_name: document.getElementById('modal-recipient-name').value.trim(),
+        recipient_register_number: document.getElementById('modal-recipient-reg').value.trim(),
+        certificate_code: document.getElementById('modal-cert-code').value.trim() || undefined,
+        certificate_type: document.getElementById('modal-cert-type').value,
+        custom_title: document.getElementById('modal-cert-title').value.trim()
+      };
+
       try {
         const res = await fetchJson('/api/certificates/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ registration_id: regId, certificate_type: 'participation' })
+          body: JSON.stringify(payload)
         });
+
         if (res.success) {
-          showToast(`Certificate generated: ${res.certificate.certificate_code}`, 'success');
+          showToast(`Certificate issued: ${res.certificate.certificate_code}`, 'success');
+          closeCertModal();
           loadData();
         }
       } catch (err) {
         showToast(err.message, 'error');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerText = 'Issue Certificate \u2192';
       }
+    });
+
+    // Bulk Modal Handlers
+    document.getElementById('open-bulk-modal-btn').addEventListener('click', () => {
+      document.getElementById('bulk-cert-title').value = (currentEvent && currentEvent.cert_title) || '';
+      document.getElementById('bulk-code-prefix').value = (currentEvent && currentEvent.code) ? `INTELLIX-${currentEvent.code.toUpperCase()}-${new Date().getFullYear()}-` : '';
+      document.getElementById('bulk-modal').classList.add('open');
+    });
+
+    function closeBulkModal() {
+      document.getElementById('bulk-modal').classList.remove('open');
     }
 
-    async function bulkGenerate() {
+    document.getElementById('bulk-cert-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
       if (!currentEventId) return;
-      const btn = document.getElementById('bulk-generate-btn');
-      btn.disabled = true;
-      btn.innerText = 'Generating Certificates...';
+
+      const startBtn = document.getElementById('start-bulk-btn');
+      startBtn.disabled = true;
+      startBtn.innerText = 'Generating Certificates...';
+
+      const payload = {
+        code_prefix: document.getElementById('bulk-code-prefix').value.trim() || undefined,
+        certificate_type: document.getElementById('bulk-cert-type').value,
+        custom_title: document.getElementById('bulk-cert-title').value.trim() || undefined
+      };
 
       try {
         const res = await fetchJson(`/api/events/${currentEventId}/certificates/bulk-generate`, {
-          method: 'POST'
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
         });
 
         if (res.success) {
           showToast(res.message, 'success');
+          closeBulkModal();
+          loadData();
+        }
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        startBtn.disabled = false;
+        startBtn.innerText = 'Generate for All Present \u2192';
+      }
+    });
+
+    // Delete Modal Handlers
+    function openDeleteModal(certId, certCode, participantName) {
+      certToDelete = certId;
+      document.getElementById('delete-participant-name').innerText = participantName;
+      document.getElementById('delete-cert-code').innerText = certCode;
+      document.getElementById('delete-modal').classList.add('open');
+    }
+
+    function closeDeleteModal() {
+      certToDelete = null;
+      document.getElementById('delete-modal').classList.remove('open');
+    }
+
+    document.getElementById('confirm-delete-btn').addEventListener('click', async () => {
+      if (!certToDelete) return;
+      const btn = document.getElementById('confirm-delete-btn');
+      btn.disabled = true;
+      btn.innerText = 'Deleting...';
+
+      try {
+        const res = await fetchJson(`/api/certificates/${certToDelete}`, {
+          method: 'DELETE'
+        });
+
+        if (res.success) {
+          showToast(res.message, 'success');
+          closeDeleteModal();
           loadData();
         }
       } catch (err) {
         showToast(err.message, 'error');
       } finally {
         btn.disabled = false;
-        btn.innerText = '⚡ Bulk Generate for All Present Participants';
+        btn.innerText = 'Yes, Delete Certificate';
       }
+    });
+
+    // Status Filter Pills
+    document.querySelectorAll('#status-filters .filter-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('#status-filters .filter-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        currentFilter = pill.dataset.filter;
+        renderTable();
+      });
+    });
+
+    // Search Input Filter
+    document.getElementById('cert-search').addEventListener('input', renderTable);
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
     }
 
     document.addEventListener('DOMContentLoaded', () => {
       initPage();
-      document.getElementById('bulk-generate-btn').addEventListener('click', bulkGenerate);
     });
   </script>
 </body>

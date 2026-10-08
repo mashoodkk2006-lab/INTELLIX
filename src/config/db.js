@@ -186,7 +186,11 @@ async function initMySQLSchema(pool) {
     'ALTER TABLE events ADD COLUMN upi_id VARCHAR(120) DEFAULT NULL',
     'ALTER TABLE event_registrations ADD COLUMN transaction_id VARCHAR(120) DEFAULT NULL',
     'ALTER TABLE event_registrations ADD COLUMN payment_screenshot_url LONGTEXT DEFAULT NULL',
-    'ALTER TABLE event_registrations ADD COLUMN payment_status VARCHAR(30) DEFAULT \'pending\''
+    'ALTER TABLE event_registrations ADD COLUMN payment_status VARCHAR(30) DEFAULT \'pending\'',
+    'ALTER TABLE certificates ADD COLUMN recipient_name VARCHAR(120) DEFAULT NULL',
+    'ALTER TABLE certificates ADD COLUMN recipient_register_number VARCHAR(40) DEFAULT NULL',
+    'ALTER TABLE certificates ADD COLUMN member_index INT NOT NULL DEFAULT 0',
+    'ALTER TABLE certificates DROP INDEX registration_id'
   ];
   for (const altSql of alters) {
     try { await pool.query(altSql); } catch (e) {}
@@ -317,7 +321,10 @@ async function initSQLiteSchema(client) {
     `CREATE TABLE IF NOT EXISTS certificates (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       certificate_code TEXT NOT NULL UNIQUE,
-      registration_id INTEGER NOT NULL UNIQUE,
+      registration_id INTEGER NOT NULL,
+      recipient_name TEXT DEFAULT NULL,
+      recipient_register_number TEXT DEFAULT NULL,
+      member_index INTEGER NOT NULL DEFAULT 0,
       event_id INTEGER NOT NULL,
       certificate_type TEXT NOT NULL DEFAULT 'participation',
       title TEXT NOT NULL,
@@ -396,7 +403,10 @@ async function initSQLiteSchema(client) {
     `ALTER TABLE events ADD COLUMN upi_id TEXT DEFAULT NULL`,
     `ALTER TABLE event_registrations ADD COLUMN transaction_id TEXT DEFAULT NULL`,
     `ALTER TABLE event_registrations ADD COLUMN payment_screenshot_url TEXT DEFAULT NULL`,
-    `ALTER TABLE event_registrations ADD COLUMN payment_status TEXT DEFAULT 'pending'`
+    `ALTER TABLE event_registrations ADD COLUMN payment_status TEXT DEFAULT 'pending'`,
+    `ALTER TABLE certificates ADD COLUMN recipient_name TEXT DEFAULT NULL`,
+    `ALTER TABLE certificates ADD COLUMN recipient_register_number TEXT DEFAULT NULL`,
+    `ALTER TABLE certificates ADD COLUMN member_index INTEGER NOT NULL DEFAULT 0`
   ];
   for (const migration of migrations) {
     try {
@@ -404,6 +414,42 @@ async function initSQLiteSchema(client) {
     } catch (e) {
       // Column already exists — safe to ignore
     }
+  }
+
+  // SQLite migration: Check if certificates table has UNIQUE constraint on registration_id and rebuild if needed
+  try {
+    const [tableInfo] = await client.query("SELECT sql FROM sqlite_master WHERE type='table' AND name='certificates'");
+    if (tableInfo.length > 0 && tableInfo[0].sql && tableInfo[0].sql.includes('registration_id INTEGER NOT NULL UNIQUE')) {
+      await client.query("PRAGMA foreign_keys=off;");
+      await client.query(`
+        CREATE TABLE certificates_temp (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          certificate_code TEXT NOT NULL UNIQUE,
+          registration_id INTEGER NOT NULL,
+          recipient_name TEXT DEFAULT NULL,
+          recipient_register_number TEXT DEFAULT NULL,
+          member_index INTEGER NOT NULL DEFAULT 0,
+          event_id INTEGER NOT NULL,
+          certificate_type TEXT NOT NULL DEFAULT 'participation',
+          title TEXT NOT NULL,
+          issue_date DATE NOT NULL,
+          pdf_path TEXT,
+          qr_code_data TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (registration_id) REFERENCES event_registrations(id) ON DELETE CASCADE,
+          FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+        )
+      `);
+      await client.query(`
+        INSERT INTO certificates_temp (id, certificate_code, registration_id, recipient_name, recipient_register_number, member_index, event_id, certificate_type, title, issue_date, pdf_path, qr_code_data, created_at)
+        SELECT id, certificate_code, registration_id, recipient_name, recipient_register_number, COALESCE(member_index, 0), event_id, certificate_type, title, issue_date, pdf_path, qr_code_data, created_at FROM certificates
+      `);
+      await client.query("DROP TABLE certificates;");
+      await client.query("ALTER TABLE certificates_temp RENAME TO certificates;");
+      await client.query("PRAGMA foreign_keys=on;");
+    }
+  } catch (sqErr) {
+    console.warn('[Database] SQLite certificates table constraint migration note:', sqErr.message);
   }
 }
 
