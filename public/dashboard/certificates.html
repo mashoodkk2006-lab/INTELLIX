@@ -34,9 +34,12 @@
       border-radius: var(--radius-md);
       max-width: 580px;
       width: 100%;
+      max-height: 92vh;
       box-shadow: var(--shadow-lg);
       overflow: hidden;
       animation: modalSlideUp 0.2s ease-out;
+      display: flex;
+      flex-direction: column;
     }
     @keyframes modalSlideUp {
       from { transform: translateY(20px); opacity: 0; }
@@ -48,11 +51,13 @@
       align-items: center;
       padding: 1.25rem 1.5rem;
       border-bottom: 1px solid var(--border-color);
+      flex-shrink: 0;
     }
     .modal-body {
       padding: 1.5rem;
-      max-height: 80vh;
       overflow-y: auto;
+      flex: 1;
+      min-height: 0;
     }
     .modal-footer {
       display: flex;
@@ -61,6 +66,7 @@
       padding: 1rem 1.5rem;
       border-top: 1px solid var(--border-color);
       background: rgba(255,255,255,0.02);
+      flex-shrink: 0;
     }
     .filter-pills {
       display: flex;
@@ -862,7 +868,7 @@
             <td style="text-align: right;">
               <div style="display: inline-flex; gap: 0.4rem; justify-content: flex-end; flex-wrap: wrap;">
                 ${hasCert ? `
-                  <a href="/api/certificates/download/${encodeURIComponent(cert.certificate_code)}" target="_blank" class="btn btn-sm btn-outline" style="font-size: 0.75rem; padding: 0.25rem 0.55rem;" title="Download PDF">
+                  <a href="/api/certificates/download?code=${encodeURIComponent(cert.certificate_code)}" target="_blank" class="btn btn-sm btn-outline" style="font-size: 0.75rem; padding: 0.25rem 0.55rem;" title="Download PDF">
                     📥 Download
                   </a>
                   <button type="button" class="btn btn-sm btn-secondary" style="font-size: 0.75rem; padding: 0.25rem 0.55rem;" onclick="openEditCertModal(${p.registration_id}, ${p.member_index}, '${escapeHtml(p.full_name)}', '${escapeHtml(p.register_number)}', '${escapeHtml(cert.certificate_code)}', '${escapeHtml(cert.certificate_type)}', '${escapeHtml(cert.title || '')}')" title="Edit / Regenerate">

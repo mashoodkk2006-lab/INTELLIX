@@ -31,7 +31,6 @@ router.get('/members', memberController.getAllMembers);
 
 // Certificate Verification & Download
 router.get('/certificates/verify', certificateController.verifyCertificate);
-router.get('/certificates/download/*', certificateController.downloadCertificate);
 router.get('/certificates/download/:code', certificateController.downloadCertificate);
 
 // ==========================================

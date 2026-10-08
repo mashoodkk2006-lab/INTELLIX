@@ -183,7 +183,7 @@ async function generateSingleCertificate(req, res) {
         certificate_code: finalCertCode,
         recipient_name: finalRecipientName,
         recipient_register_number: finalRecipientReg,
-        download_url: `/api/certificates/download/${encodeURIComponent(finalCertCode)}`
+        download_url: `/api/certificates/download?code=${encodeURIComponent(finalCertCode)}`
       }
     });
   } catch (err) {
@@ -399,7 +399,7 @@ async function bulkGenerateForEvent(req, res) {
       generatedList.push({
         certificate_code: certificateCode,
         recipient_name: ind.recipient_name,
-        download_url: `/api/certificates/download/${encodeURIComponent(certificateCode)}`
+        download_url: `/api/certificates/download?code=${encodeURIComponent(certificateCode)}`
       });
 
       count++;
@@ -447,7 +447,7 @@ async function getCertificatesByEvent(req, res) {
         ...r,
         participant_name: r.recipient_name || r.reg_full_name,
         participant_register_number: r.recipient_register_number || r.reg_number,
-        download_url: `/api/certificates/download/${encodeURIComponent(r.certificate_code)}`
+        download_url: `/api/certificates/download?code=${encodeURIComponent(r.certificate_code)}`
       }))
     });
   } catch (err) {
@@ -493,12 +493,13 @@ async function deleteCertificate(req, res) {
 
 async function downloadCertificate(req, res) {
   try {
-    const rawParam = req.params[0] || req.params.code || req.query.code;
+    // Prefer ?code= query param so slash-containing codes work correctly
+    const rawParam = req.query.code || req.params.code;
     if (!rawParam) {
-      return res.status(400).send('Certificate code is required');
+      return res.status(400).send('Certificate code is required. Use ?code=CERT-CODE');
     }
 
-    const cleanCode = decodeURIComponent(rawParam).trim();
+    const cleanCode = decodeURIComponent(String(rawParam)).trim();
 
     const [certs] = await query(
       `SELECT c.*, er.full_name as reg_full_name, er.register_number as reg_number,
@@ -784,7 +785,7 @@ async function verifyCertificate(req, res) {
         issue_date: cert.issue_date,
         signatory_name: cert.signatory_name,
         signatory_designation: cert.signatory_designation,
-        download_url: `/api/certificates/download/${encodeURIComponent(cert.certificate_code)}`
+        download_url: `/api/certificates/download?code=${encodeURIComponent(cert.certificate_code)}`
       }
     });
   } catch (err) {
