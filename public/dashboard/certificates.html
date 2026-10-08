@@ -23,7 +23,8 @@
       align-items: center;
       justify-content: center;
       z-index: 1000;
-      padding: 1rem;
+      padding: 1.25rem;
+      overflow-y: auto;
     }
     .modal-backdrop.open {
       display: flex;
@@ -34,30 +35,71 @@
       border-radius: var(--radius-md);
       max-width: 580px;
       width: 100%;
-      max-height: 92vh;
+      max-height: 90vh;
       box-shadow: var(--shadow-lg);
-      overflow: hidden;
+      overflow-y: auto;
+      overflow-x: hidden;
       animation: modalSlideUp 0.2s ease-out;
       display: flex;
       flex-direction: column;
+      margin: auto;
+      position: relative;
     }
     @keyframes modalSlideUp {
       from { transform: translateY(20px); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
     }
+    .modal-step {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+    }
+    #bulk-step-config,
+    #bulk-step-confirm,
+    #bulk-step-progress,
+    #bulk-step-success {
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+    }
+    #bulk-step-config:not([style*="none"]),
+    #bulk-step-confirm:not([style*="none"]),
+    #bulk-step-progress:not([style*="none"]),
+    #bulk-step-success:not([style*="none"]) {
+      display: flex !important;
+    }
+    .modal-dialog form,
+    #bulk-cert-form,
+    #single-cert-form {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+    }
     .modal-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 1.25rem 1.5rem;
+      padding: 1.15rem 1.5rem;
       border-bottom: 1px solid var(--border-color);
       flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      background: var(--bg-card);
+      z-index: 15;
     }
     .modal-body {
-      padding: 1.5rem;
+      padding: 1.25rem 1.5rem;
       overflow-y: auto;
+      overscroll-behavior: contain;
       flex: 1;
       min-height: 0;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
     }
     .modal-footer {
       display: flex;
@@ -65,8 +107,34 @@
       gap: 0.75rem;
       padding: 1rem 1.5rem;
       border-top: 1px solid var(--border-color);
-      background: rgba(255,255,255,0.02);
+      background: var(--bg-card);
       flex-shrink: 0;
+      position: sticky;
+      bottom: 0;
+      z-index: 15;
+    }
+    .modal-body::-webkit-scrollbar,
+    .modal-dialog::-webkit-scrollbar,
+    .preview-box::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .modal-body::-webkit-scrollbar-track,
+    .modal-dialog::-webkit-scrollbar-track,
+    .preview-box::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.15);
+      border-radius: 6px;
+    }
+    .modal-body::-webkit-scrollbar-thumb,
+    .modal-dialog::-webkit-scrollbar-thumb,
+    .preview-box::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.25);
+      border-radius: 6px;
+    }
+    .modal-body::-webkit-scrollbar-thumb:hover,
+    .modal-dialog::-webkit-scrollbar-thumb:hover,
+    .preview-box::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.45);
     }
     .filter-pills {
       display: flex;
@@ -316,7 +384,7 @@
   <div class="modal-backdrop" id="bulk-modal">
     <div class="modal-dialog" style="max-width: 580px;">
       <!-- State 1: Configuration Form -->
-      <div id="bulk-step-config">
+      <div id="bulk-step-config" class="modal-step">
         <div class="modal-header">
           <h3 style="font-size: 1.15rem; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
             ⚡ Bulk Certificate Generation
@@ -390,7 +458,7 @@
       </div>
 
       <!-- State 2: Confirmation Dialog -->
-      <div id="bulk-step-confirm" style="display: none;">
+      <div id="bulk-step-confirm" class="modal-step" style="display: none;">
         <div class="modal-header">
           <h3 style="font-size: 1.15rem; margin: 0;">Confirm Bulk Generation</h3>
           <button type="button" class="btn btn-sm btn-outline" onclick="closeBulkModal()" style="padding: 0.2rem 0.6rem;">&times;</button>
@@ -430,7 +498,7 @@
       </div>
 
       <!-- State 3: Progress State -->
-      <div id="bulk-step-progress" style="display: none;">
+      <div id="bulk-step-progress" class="modal-step" style="display: none;">
         <div class="modal-header">
           <h3 style="font-size: 1.15rem; margin: 0;">Generating Certificates...</h3>
         </div>
@@ -451,7 +519,7 @@
       </div>
 
       <!-- State 4: Success View -->
-      <div id="bulk-step-success" style="display: none;">
+      <div id="bulk-step-success" class="modal-step" style="display: none;">
         <div class="modal-header">
           <h3 style="font-size: 1.15rem; color: #22c55e; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
             ✓ Certificates Generated Successfully
@@ -1004,7 +1072,7 @@
       }
 
       // Reset steps
-      document.getElementById('bulk-step-config').style.display = 'block';
+      document.getElementById('bulk-step-config').style.display = 'flex';
       document.getElementById('bulk-step-confirm').style.display = 'none';
       document.getElementById('bulk-step-progress').style.display = 'none';
       document.getElementById('bulk-step-success').style.display = 'none';
@@ -1072,12 +1140,12 @@
       document.getElementById('confirm-target-val').innerText = `${count} Participant(s)`;
 
       document.getElementById('bulk-step-config').style.display = 'none';
-      document.getElementById('bulk-step-confirm').style.display = 'block';
+      document.getElementById('bulk-step-confirm').style.display = 'flex';
     });
 
     document.getElementById('bulk-confirm-back-btn').addEventListener('click', () => {
       document.getElementById('bulk-step-confirm').style.display = 'none';
-      document.getElementById('bulk-step-config').style.display = 'block';
+      document.getElementById('bulk-step-config').style.display = 'flex';
     });
 
     // Step 2 -> Step 3 & 4: Execute Generation
@@ -1085,7 +1153,7 @@
       if (!currentEventId) return;
 
       document.getElementById('bulk-step-confirm').style.display = 'none';
-      document.getElementById('bulk-step-progress').style.display = 'block';
+      document.getElementById('bulk-step-progress').style.display = 'flex';
 
       const scope = document.getElementById('bulk-target-scope').value;
       const prefix = document.getElementById('bulk-code-prefix').value.trim().toUpperCase();
@@ -1134,7 +1202,7 @@
         if (res.success) {
           setTimeout(() => {
             document.getElementById('bulk-step-progress').style.display = 'none';
-            document.getElementById('bulk-step-success').style.display = 'block';
+            document.getElementById('bulk-step-success').style.display = 'flex';
 
             document.getElementById('success-message-text').innerText = `${res.generated_count} Certificates Generated Successfully`;
             document.getElementById('success-total-created').innerText = res.generated_count;
@@ -1146,13 +1214,13 @@
         } else {
           showToast(res.message || 'Generation failed', 'error');
           document.getElementById('bulk-step-progress').style.display = 'none';
-          document.getElementById('bulk-step-config').style.display = 'block';
+          document.getElementById('bulk-step-config').style.display = 'flex';
         }
       } catch (err) {
         clearInterval(progressInterval);
         showToast(err.message, 'error');
         document.getElementById('bulk-step-progress').style.display = 'none';
-        document.getElementById('bulk-step-config').style.display = 'block';
+        document.getElementById('bulk-step-config').style.display = 'flex';
       }
     });
 
